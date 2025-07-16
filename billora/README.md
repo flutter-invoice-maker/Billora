@@ -1,16 +1,32 @@
-# billora
+# Billora
 
-A new Flutter project.
+Billora là ứng dụng Flutter quản lý hóa đơn, sử dụng Clean Architecture và tích hợp Firebase.
 
-## Getting Started
+## Kiến trúc
+- Clean Architecture
+- Firebase (Auth, Firestore, Storage)
+- State management: flutter_bloc
+- Dependency Injection: get_it, injectable
 
-This project is a starting point for a Flutter application.
+## Cấu trúc thư mục
+```
+lib/
+└── src/
+    ├── core/
+    │   ├── constants/
+    │   ├── network/
+    │   ├── errors/
+    │   ├── utils/
+    │   └── di/
+    └── features/
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Cài đặt
+```bash
+flutter pub get
+flutterfire configure # Để tạo firebase_options.dart
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Phát triển
+- Tuần 1: Setup project, core, Firebase, DI
+- Tuần 2+: Xây dựng các tính năng theo plan

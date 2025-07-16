@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1018575120402",
+    "project_id": "billora-invoice-maker",
+    "storage_bucket": "billora-invoice-maker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1018575120402:android:a0c31a6d5a51630fd190cb",
+        "android_client_info": {
+          "package_name": "com.Billora.invoice_maker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBceKMe6jFiD9TuuRogHv2EqMPXtPP3KE4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
