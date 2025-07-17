@@ -1,4 +1,1 @@
-import 'package:dartz/dartz.dart';
-import '../errors/failures.dart';
-
-typedef ResultFuture<T> = Future<Either<Failure, T>>; 
+// Removed unused imports for dartz and failures. 
