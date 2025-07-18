@@ -45,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
         listener: (context, state) {
           state.maybeWhen(
             authenticated: (user) {
+              Navigator.of(context).pushReplacementNamed('/customers');
             },
             orElse: () {},
           );

@@ -6,6 +6,12 @@ import 'src/features/auth/presentation/pages/login_page.dart';
 import 'src/features/auth/presentation/pages/register_page.dart';
 import 'src/features/auth/presentation/cubit/auth_cubit.dart';
 import 'src/core/di/injection_container.dart';
+import 'src/features/customer/presentation/pages/customer_list_page.dart';
+import 'src/features/customer/presentation/cubit/customer_cubit.dart';
+import 'src/features/customer/domain/usecases/get_customers_usecase.dart';
+import 'src/features/customer/domain/usecases/create_customer_usecase.dart';
+import 'src/features/customer/domain/usecases/update_customer_usecase.dart';
+import 'src/features/customer/domain/usecases/delete_customer_usecase.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +44,15 @@ class MyApp extends StatelessWidget {
         '/register': (context) => BlocProvider.value(
               value: sl<AuthCubit>(),
               child: const RegisterPage(),
+            ),
+        '/customers': (context) => BlocProvider(
+              create: (_) => CustomerCubit(
+                getCustomersUseCase: sl<GetCustomersUseCase>(),
+                createCustomerUseCase: sl<CreateCustomerUseCase>(),
+                updateCustomerUseCase: sl<UpdateCustomerUseCase>(),
+                deleteCustomerUseCase: sl<DeleteCustomerUseCase>(),
+              ),
+              child: const CustomerListPage(),
             ),
       },
     );
