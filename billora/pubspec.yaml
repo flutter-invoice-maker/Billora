@@ -33,4 +33,26 @@ dev_dependencies:
   json_serializable: ^6.9.5
   injectable_generator: ^2.7.0
   mockito: ^5.4.2
+  mocktail: ^0.3.0
+  flutter_flavorizr: ^2.2.1
+
+flutter_flavorizr:
+  app:
+    android:
+      flavorDimensions: [env]
+      flavors:
+        dev:
+          applicationId: "com.Billora.invoice_maker.dev"
+          name: "Billora Dev"
+        prod:
+          applicationId: "com.Billora.invoice_maker"
+          name: "Billora"
+    ios:
+      flavors:
+        dev:
+          bundleId: "com.Billora.invoiceMaker.dev"
+          name: "Billora Dev"
+        prod:
+          bundleId: "com.Billora.invoiceMaker"
+          name: "Billora"
   
