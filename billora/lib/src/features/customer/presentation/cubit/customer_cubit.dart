@@ -4,6 +4,7 @@ import 'package:billora/src/features/customer/domain/usecases/get_customers_usec
 import 'package:billora/src/features/customer/domain/usecases/create_customer_usecase.dart';
 import 'package:billora/src/features/customer/domain/usecases/update_customer_usecase.dart';
 import 'package:billora/src/features/customer/domain/usecases/delete_customer_usecase.dart';
+import 'package:billora/src/features/customer/domain/usecases/search_customers_usecase.dart';
 import 'customer_state.dart';
 
 class CustomerCubit extends Cubit<CustomerState> {
@@ -11,12 +12,14 @@ class CustomerCubit extends Cubit<CustomerState> {
   final CreateCustomerUseCase createCustomerUseCase;
   final UpdateCustomerUseCase updateCustomerUseCase;
   final DeleteCustomerUseCase deleteCustomerUseCase;
+  final SearchCustomersUseCase searchCustomersUseCase;
 
   CustomerCubit({
     required this.getCustomersUseCase,
     required this.createCustomerUseCase,
     required this.updateCustomerUseCase,
     required this.deleteCustomerUseCase,
+    required this.searchCustomersUseCase,
   }) : super(const CustomerState.initial());
 
   Future<void> fetchCustomers() async {
@@ -52,6 +55,15 @@ class CustomerCubit extends Cubit<CustomerState> {
     result.fold(
       (failure) => emit(CustomerState.error(failure.message)),
       (_) => fetchCustomers(),
+    );
+  }
+
+  Future<void> searchCustomers(String query) async {
+    emit(const CustomerState.loading());
+    final result = await searchCustomersUseCase(query);
+    result.fold(
+      (failure) => emit(CustomerState.error(failure.message)),
+      (customers) => emit(CustomerState.loaded(customers)),
     );
   }
 }

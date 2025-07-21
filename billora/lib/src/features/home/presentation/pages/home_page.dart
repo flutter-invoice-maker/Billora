@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:billora/src/widgets/language_switcher.dart';
+
+class HomePage extends StatelessWidget {
+  final void Function(Locale)? onLocaleChanged;
+  const HomePage({super.key, this.onLocaleChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final menu = [
+      _MenuItem(
+        icon: Icons.people_alt_rounded,
+        label: loc.homeTitle,
+        route: '/customers',
+        color: Colors.blueAccent,
+      ),
+      _MenuItem(
+        icon: Icons.inventory_2_rounded,
+        label: loc.productMenu,
+        route: '/products',
+        color: Colors.deepPurple,
+      ),
+    ];
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(loc.homeTitle),
+        actions: [
+          LanguageSwitcher(onLocaleChanged: onLocaleChanged),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+            tooltip: loc.logout,
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.1,
+          ),
+          itemCount: menu.length,
+          itemBuilder: (context, index) {
+            final item = menu[index];
+            return _AnimatedMenuCard(item: item);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuItem {
+  final IconData icon;
+  final String label;
+  final String route;
+  final Color color;
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+    required this.color,
+  });
+}
+
+class _AnimatedMenuCard extends StatefulWidget {
+  final _MenuItem item;
+  const _AnimatedMenuCard({required this.item});
+
+  @override
+  State<_AnimatedMenuCard> createState() => _AnimatedMenuCardState();
+}
+
+class _AnimatedMenuCardState extends State<_AnimatedMenuCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: () {
+        setState(() => _pressed = false);
+        Navigator.pushNamed(context, widget.item.route);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: widget.item.color.withAlpha(((_pressed ? 0.10 : 0.18) * 255).toInt()),
+              blurRadius: _pressed ? 4 : 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: widget.item.color.withAlpha(((_pressed ? 0.5 : 0.2) * 255).toInt()),
+            width: _pressed ? 2 : 1.2,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedScale(
+                scale: _pressed ? 0.93 : 1.0,
+                duration: const Duration(milliseconds: 120),
+                child: Icon(
+                  widget.item.icon,
+                  size: 48,
+                  color: widget.item.color,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                widget.item.label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: widget.item.color,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+} 

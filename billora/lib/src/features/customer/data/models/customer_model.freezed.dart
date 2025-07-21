@@ -26,6 +26,8 @@ mixin _$CustomerModel {
   String? get email => throw _privateConstructorUsedError;
   String? get phone => throw _privateConstructorUsedError;
   String? get address => throw _privateConstructorUsedError;
+  String get userId => throw _privateConstructorUsedError;
+  List<String> get searchKeywords => throw _privateConstructorUsedError;
 
   /// Serializes this CustomerModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -50,6 +52,8 @@ abstract class $CustomerModelCopyWith<$Res> {
     String? email,
     String? phone,
     String? address,
+    String userId,
+    List<String> searchKeywords,
   });
 }
 
@@ -73,6 +77,8 @@ class _$CustomerModelCopyWithImpl<$Res, $Val extends CustomerModel>
     Object? email = freezed,
     Object? phone = freezed,
     Object? address = freezed,
+    Object? userId = null,
+    Object? searchKeywords = null,
   }) {
     return _then(
       _value.copyWith(
@@ -101,6 +107,16 @@ class _$CustomerModelCopyWithImpl<$Res, $Val extends CustomerModel>
                     ? _value.address
                     : address // ignore: cast_nullable_to_non_nullable
                         as String?,
+            userId:
+                null == userId
+                    ? _value.userId
+                    : userId // ignore: cast_nullable_to_non_nullable
+                        as String,
+            searchKeywords:
+                null == searchKeywords
+                    ? _value.searchKeywords
+                    : searchKeywords // ignore: cast_nullable_to_non_nullable
+                        as List<String>,
           )
           as $Val,
     );
@@ -122,6 +138,8 @@ abstract class _$$CustomerModelImplCopyWith<$Res>
     String? email,
     String? phone,
     String? address,
+    String userId,
+    List<String> searchKeywords,
   });
 }
 
@@ -144,6 +162,8 @@ class __$$CustomerModelImplCopyWithImpl<$Res>
     Object? email = freezed,
     Object? phone = freezed,
     Object? address = freezed,
+    Object? userId = null,
+    Object? searchKeywords = null,
   }) {
     return _then(
       _$CustomerModelImpl(
@@ -172,6 +192,16 @@ class __$$CustomerModelImplCopyWithImpl<$Res>
                 ? _value.address
                 : address // ignore: cast_nullable_to_non_nullable
                     as String?,
+        userId:
+            null == userId
+                ? _value.userId
+                : userId // ignore: cast_nullable_to_non_nullable
+                    as String,
+        searchKeywords:
+            null == searchKeywords
+                ? _value._searchKeywords
+                : searchKeywords // ignore: cast_nullable_to_non_nullable
+                    as List<String>,
       ),
     );
   }
@@ -186,7 +216,9 @@ class _$CustomerModelImpl implements _CustomerModel {
     this.email,
     this.phone,
     this.address,
-  });
+    required this.userId,
+    final List<String> searchKeywords = const [],
+  }) : _searchKeywords = searchKeywords;
 
   factory _$CustomerModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$CustomerModelImplFromJson(json);
@@ -201,10 +233,20 @@ class _$CustomerModelImpl implements _CustomerModel {
   final String? phone;
   @override
   final String? address;
+  @override
+  final String userId;
+  final List<String> _searchKeywords;
+  @override
+  @JsonKey()
+  List<String> get searchKeywords {
+    if (_searchKeywords is EqualUnmodifiableListView) return _searchKeywords;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_searchKeywords);
+  }
 
   @override
   String toString() {
-    return 'CustomerModel(id: $id, name: $name, email: $email, phone: $phone, address: $address)';
+    return 'CustomerModel(id: $id, name: $name, email: $email, phone: $phone, address: $address, userId: $userId, searchKeywords: $searchKeywords)';
   }
 
   @override
@@ -216,12 +258,26 @@ class _$CustomerModelImpl implements _CustomerModel {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.email, email) || other.email == email) &&
             (identical(other.phone, phone) || other.phone == phone) &&
-            (identical(other.address, address) || other.address == address));
+            (identical(other.address, address) || other.address == address) &&
+            (identical(other.userId, userId) || other.userId == userId) &&
+            const DeepCollectionEquality().equals(
+              other._searchKeywords,
+              _searchKeywords,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, email, phone, address);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    name,
+    email,
+    phone,
+    address,
+    userId,
+    const DeepCollectionEquality().hash(_searchKeywords),
+  );
 
   /// Create a copy of CustomerModel
   /// with the given fields replaced by the non-null parameter values.
@@ -244,6 +300,8 @@ abstract class _CustomerModel implements CustomerModel {
     final String? email,
     final String? phone,
     final String? address,
+    required final String userId,
+    final List<String> searchKeywords,
   }) = _$CustomerModelImpl;
 
   factory _CustomerModel.fromJson(Map<String, dynamic> json) =
@@ -259,6 +317,10 @@ abstract class _CustomerModel implements CustomerModel {
   String? get phone;
   @override
   String? get address;
+  @override
+  String get userId;
+  @override
+  List<String> get searchKeywords;
 
   /// Create a copy of CustomerModel
   /// with the given fields replaced by the non-null parameter values.

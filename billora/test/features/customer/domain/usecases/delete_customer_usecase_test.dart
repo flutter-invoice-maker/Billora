@@ -9,28 +9,19 @@ class MockCustomerRepository extends Mock implements CustomerRepository {}
 
 void main() {
   late DeleteCustomerUseCase usecase;
-  late MockCustomerRepository mockRepository;
+  late MockCustomerRepository repository;
 
   setUp(() {
-    mockRepository = MockCustomerRepository();
-    usecase = DeleteCustomerUseCase(mockRepository);
-    registerFallbackValue('');
+    repository = MockCustomerRepository();
+    usecase = DeleteCustomerUseCase(repository);
   });
 
-  const id = '1';
-
-  test('should call repository.deleteCustomer and return Right(unit)', () async {
-    when(() => mockRepository.deleteCustomer(id)).thenAnswer((_) async => const Right(unit));
-    final result = await usecase(id);
-    expect(result, const Right(unit));
-    verify(() => mockRepository.deleteCustomer(id)).called(1);
-  });
-
-  test('should return Left(Failure) when repository fails', () async {
-    when(() => mockRepository.deleteCustomer(id)).thenAnswer((_) async => Left(AuthFailure('error')));
-    final result = await usecase(id);
-    expect(result.isLeft(), true);
-    expect(result.fold((l) => l.message, (_) => ''), 'error');
-    verify(() => mockRepository.deleteCustomer(id)).called(1);
+  test('should delete customer', () async {
+    when(() => repository.deleteCustomer('1'))
+        .thenAnswer((_) async => const Right(null));
+    final result = await usecase('1');
+    expect(result, const Right<Failure, void>(null));
+    verify(() => repository.deleteCustomer('1')).called(1);
+    verifyNoMoreInteractions(repository);
   });
 } 

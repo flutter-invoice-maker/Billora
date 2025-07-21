@@ -5,4 +5,8 @@ abstract class Failure {
 
 class AuthFailure extends Failure {
   const AuthFailure(super.message);
+}
+
+class ServerFailure extends Failure {
+  const ServerFailure(super.message);
 } 

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
-import 'package:billora/src/features/customer/presentation/cubit/customer_state.dart';
+import '../cubit/customer_cubit.dart';
+import '../cubit/customer_state.dart';
 import 'package:billora/src/features/customer/presentation/widgets/customer_card.dart';
 import 'package:billora/src/core/widgets/loading_widget.dart';
 import 'package:billora/src/core/widgets/error_widget.dart';
-import 'package:billora/src/features/customer/presentation/pages/customer_form_page.dart';
+import 'customer_form_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
@@ -15,7 +16,7 @@ class CustomerListPage extends StatefulWidget {
 }
 
 class _CustomerListPageState extends State<CustomerListPage> {
-  String _search = '';
+  String _searchTerm = '';
 
   @override
   void initState() {
@@ -25,23 +26,14 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Khách hàng'),
+        title: Text(loc.customerListTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Thêm khách hàng',
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: context.read<CustomerCubit>(),
-                    child: const CustomerFormPage(),
-                  ),
-                ),
-              );
-            },
+            onPressed: () => _openForm(),
           ),
         ],
       ),
@@ -50,42 +42,55 @@ class _CustomerListPageState extends State<CustomerListPage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Tìm kiếm khách hàng',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: loc.customerSearchHint,
+                prefixIcon: const Icon(Icons.search),
               ),
-              onChanged: (value) => setState(() => _search = value),
+              onChanged: (value) {
+                setState(() {
+                  _searchTerm = value;
+                });
+              },
             ),
           ),
           Expanded(
             child: BlocBuilder<CustomerCubit, CustomerState>(
               builder: (context, state) {
                 return state.when(
-                  initial: () => const SizedBox.shrink(),
+                  initial: () => const LoadingWidget(),
                   loading: () => const LoadingWidget(),
                   loaded: (customers) {
-                    final filtered = customers.where((c) =>
-                      (c.name).toLowerCase().contains(_search.toLowerCase()) ||
-                      ((c.email ?? '').toLowerCase().contains(_search.toLowerCase()))
-                    ).toList();
-                    if (filtered.isEmpty) {
-                      return const Center(child: Text('Không có khách hàng nào.'));
+                    var filteredCustomers = customers;
+                    if (_searchTerm.isNotEmpty) {
+                      final searchWords = _searchTerm
+                          .toLowerCase()
+                          .split(' ')
+                          .where((s) => s.isNotEmpty)
+                          .toList();
+
+                      filteredCustomers = customers.where((customer) {
+                        final customerText =
+                            '${customer.name.toLowerCase()} ${customer.email?.toLowerCase() ?? ''} ${customer.phone?.toLowerCase() ?? ''}';
+                        
+                        return searchWords.every((word) => customerText.contains(word));
+                      }).toList();
                     }
+
                     return ListView.builder(
-                      itemCount: filtered.length,
+                      itemCount: filteredCustomers.length,
                       itemBuilder: (context, index) {
-                        final customer = filtered[index];
+                        final customer = filteredCustomers[index];
                         return CustomerCard(
                           customer: customer,
                           onEdit: () async {
+                            final cubit = context.read<CustomerCubit>();
                             await Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => BlocProvider.value(
-                                  value: context.read<CustomerCubit>(),
-                                  child: CustomerFormPage(customer: customer),
-                                ),
+                                builder: (_) => CustomerFormPage(customer: customer),
                               ),
                             );
+                            if (!mounted) return;
+                            cubit.fetchCustomers();
                           },
                           onDelete: () {
                             context.read<CustomerCubit>().deleteCustomer(customer.id);
@@ -94,7 +99,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
                       },
                     );
                   },
-                  error: (message) => AppErrorWidget(message: message, onRetry: () => context.read<CustomerCubit>().fetchCustomers()),
+                  error: (msg) => AppErrorWidget(
+                      message: msg,
+                      onRetry: () =>
+                          context.read<CustomerCubit>().fetchCustomers()),
                 );
               },
             ),
@@ -102,5 +110,15 @@ class _CustomerListPageState extends State<CustomerListPage> {
         ],
       ),
     );
+  }
+
+  void _openForm([customer]) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CustomerFormPage(customer: customer),
+      ),
+    );
+    if (!mounted) return;
+    context.read<CustomerCubit>().fetchCustomers();
   }
 } 

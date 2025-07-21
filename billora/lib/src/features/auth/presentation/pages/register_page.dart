@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:billora/src/widgets/language_switcher.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  final void Function(Locale)? onLocaleChanged;
+  const RegisterPage({super.key, this.onLocaleChanged});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -12,19 +15,21 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _onRegister() {
+  void _onSignup() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthCubit>().register(
             _emailController.text.trim(),
@@ -35,18 +40,29 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Đăng ký'),
+        title: Text(loc.signupTitle),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        actions: [
+          LanguageSwitcher(onLocaleChanged: widget.onLocaleChanged),
+        ],
       ),
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           state.maybeWhen(
             authenticated: (user) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đăng ký thành công!')),
+              );
+              Future.delayed(const Duration(milliseconds: 500), () {
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).pushReplacementNamed('/login');
+              });
             },
             orElse: () {},
           );
@@ -64,18 +80,24 @@ class _RegisterPageState extends State<RegisterPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Tạo tài khoản mới',
+                      loc.signupTitle,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
+                      controller: _nameController,
+                      decoration: _inputDecoration(loc.signupName),
+                      validator: (v) => v == null || v.isEmpty ? "${loc.signupName} ${loc.signupError}" : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
                       controller: _emailController,
-                      decoration: _inputDecoration('Email'),
+                      decoration: _inputDecoration(loc.signupEmail),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Vui lòng nhập email';
-                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+').hasMatch(value)) return 'Email không hợp lệ';
+                        if (value == null || value.isEmpty) return "${loc.signupEmail} ${loc.signupError}";
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+').hasMatch(value)) return "${loc.signupEmail} ${loc.signupError}";
                         return null;
                       },
                       autofillHints: const [AutofillHints.email],
@@ -83,26 +105,24 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
-                      decoration: _inputDecoration('Mật khẩu'),
+                      decoration: _inputDecoration(loc.signupPassword),
                       obscureText: true,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu';
-                        if (value.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
+                        if (value == null || value.isEmpty) return "${loc.signupPassword} ${loc.signupError}";
+                        if (value.length < 6) return "${loc.signupPassword} ${loc.signupError}";
                         return null;
                       },
-                      autofillHints: const [AutofillHints.newPassword],
+                      autofillHints: const [AutofillHints.password],
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _confirmPasswordController,
-                      decoration: _inputDecoration('Nhập lại mật khẩu'),
+                      decoration: _inputDecoration(loc.signupConfirmPassword),
                       obscureText: true,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Vui lòng nhập lại mật khẩu';
-                        if (value != _passwordController.text) return 'Mật khẩu không khớp';
+                        if (value != _passwordController.text) return "${loc.signupConfirmPassword} ${loc.signupError}";
                         return null;
                       },
-                      autofillHints: const [AutofillHints.newPassword],
                     ),
                     const SizedBox(height: 24),
                     if (errorMessage != null)
@@ -117,7 +137,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     SizedBox(
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: isLoading ? null : _onRegister,
+                        onPressed: isLoading ? null : _onSignup,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           foregroundColor: Colors.white,
@@ -134,7 +154,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 height: 24,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
-                            : const Text('Đăng ký'),
+                            : Text(loc.signupButton),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -148,7 +168,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         foregroundColor: Colors.black87,
                         textStyle: const TextStyle(fontSize: 15),
                       ),
-                      child: const Text('Đã có tài khoản? Đăng nhập'),
+                      child: Text(loc.signupHaveAccount),
                     ),
                   ],
                 ),

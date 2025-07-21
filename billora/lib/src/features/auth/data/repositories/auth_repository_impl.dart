@@ -14,7 +14,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> login({required String email, required String password}) async {
     try {
       final user = await remoteDataSource.login(email: email, password: password);
-      return Right(user);
+      return Right(user.toEntity());
     } catch (e) {
       return Left(AuthFailure(e.toString()));
     }
@@ -24,7 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> register({required String email, required String password}) async {
     try {
       final user = await remoteDataSource.register(email: email, password: password);
-      return Right(user);
+      return Right(user.toEntity());
     } catch (e) {
       return Left(AuthFailure(e.toString()));
     }
@@ -33,5 +33,25 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> logout() async {
     await remoteDataSource.logout();
+  }
+
+  @override
+  Future<Either<Failure, User>> signInWithGoogle() async {
+    try {
+      final user = await remoteDataSource.signInWithGoogle();
+      return Right(user.toEntity());
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> signInWithApple() async {
+    try {
+      final user = await remoteDataSource.signInWithApple();
+      return Right(user.toEntity());
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
   }
 } 

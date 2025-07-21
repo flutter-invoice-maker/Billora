@@ -6,4 +6,5 @@ abstract class CustomerRepository {
   ResultFuture<List<Customer>> getCustomers();
   ResultFuture<void> updateCustomer(Customer customer);
   ResultFuture<void> deleteCustomer(String id);
+  ResultFuture<List<Customer>> searchCustomers(String query);
 } 

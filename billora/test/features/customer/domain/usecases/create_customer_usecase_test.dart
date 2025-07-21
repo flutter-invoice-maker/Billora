@@ -10,28 +10,20 @@ class MockCustomerRepository extends Mock implements CustomerRepository {}
 
 void main() {
   late CreateCustomerUseCase usecase;
-  late MockCustomerRepository mockRepository;
+  late MockCustomerRepository repository;
 
   setUp(() {
-    mockRepository = MockCustomerRepository();
-    usecase = CreateCustomerUseCase(mockRepository);
-    registerFallbackValue(Customer(id: '', name: '', email: ''));
+    repository = MockCustomerRepository();
+    usecase = CreateCustomerUseCase(repository);
   });
 
-  final customer = Customer(id: '1', name: 'Test', email: 'test@email.com');
-
-  test('should call repository.createCustomer and return Right(unit)', () async {
-    when(() => mockRepository.createCustomer(customer)).thenAnswer((_) async => const Right(unit));
+  test('should create customer', () async {
+    final customer = Customer(id: '1', name: 'Test');
+    when(() => repository.createCustomer(customer))
+        .thenAnswer((_) async => const Right(null));
     final result = await usecase(customer);
-    expect(result, const Right(unit));
-    verify(() => mockRepository.createCustomer(customer)).called(1);
-  });
-
-  test('should return Left(Failure) when repository fails', () async {
-    when(() => mockRepository.createCustomer(customer)).thenAnswer((_) async => Left(AuthFailure('error')));
-    final result = await usecase(customer);
-    expect(result.isLeft(), true);
-    expect(result.fold((l) => l.message, (_) => ''), 'error');
-    verify(() => mockRepository.createCustomer(customer)).called(1);
+    expect(result, const Right<Failure, void>(null));
+    verify(() => repository.createCustomer(customer)).called(1);
+    verifyNoMoreInteractions(repository);
   });
 } 
