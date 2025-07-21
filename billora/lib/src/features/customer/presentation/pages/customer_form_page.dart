@@ -5,6 +5,7 @@ import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.
 import 'package:billora/src/core/widgets/custom_text_field.dart';
 import 'package:billora/src/core/widgets/custom_button.dart';
 import 'dart:math';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CustomerFormPage extends StatefulWidget {
   final Customer? customer;
@@ -61,9 +62,10 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.customer == null ? 'Thêm khách hàng' : 'Sửa khách hàng'),
+        title: Text(widget.customer == null ? loc.customerAddTitle : loc.customerEditTitle),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -73,30 +75,30 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
             children: [
               CustomTextField(
                 controller: _nameController,
-                label: 'Tên khách hàng',
-                validator: (value) => value == null || value.isEmpty ? 'Vui lòng nhập tên' : null,
+                label: loc.customerName,
+                validator: (value) => value == null || value.isEmpty ? loc.customerNameRequired : null,
               ),
               const SizedBox(height: 12),
               CustomTextField(
                 controller: _emailController,
-                label: 'Email',
+                label: loc.customerEmail,
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) => value != null && value.isNotEmpty && !value.contains('@') ? 'Email không hợp lệ' : null,
+                validator: (value) => value != null && value.isNotEmpty && !value.contains('@') ? loc.customerEmailInvalid : null,
               ),
               const SizedBox(height: 12),
               CustomTextField(
                 controller: _phoneController,
-                label: 'Số điện thoại',
+                label: loc.customerPhone,
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 12),
               CustomTextField(
                 controller: _addressController,
-                label: 'Địa chỉ',
+                label: loc.customerAddress,
               ),
               const SizedBox(height: 24),
               CustomButton(
-                text: widget.customer == null ? 'Thêm mới' : 'Cập nhật',
+                text: widget.customer == null ? loc.customerAddButton : loc.customerUpdateButton,
                 onPressed: _submit,
               ),
             ],

@@ -13,6 +13,12 @@ _$CustomerModelImpl _$$CustomerModelImplFromJson(Map<String, dynamic> json) =>
       email: json['email'] as String?,
       phone: json['phone'] as String?,
       address: json['address'] as String?,
+      userId: json['userId'] as String,
+      searchKeywords:
+          (json['searchKeywords'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$CustomerModelImplToJson(_$CustomerModelImpl instance) =>
@@ -22,4 +28,6 @@ Map<String, dynamic> _$$CustomerModelImplToJson(_$CustomerModelImpl instance) =>
       'email': instance.email,
       'phone': instance.phone,
       'address': instance.address,
+      'userId': instance.userId,
+      'searchKeywords': instance.searchKeywords,
     };

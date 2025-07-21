@@ -88,4 +88,30 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.User>> signInWithGoogle() =>
+      (super.noSuchMethod(
+            Invocation.method(#signInWithGoogle, []),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.User>>.value(
+              _FakeEither_0<_i5.Failure, _i6.User>(
+                this,
+                Invocation.method(#signInWithGoogle, []),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i6.User>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.User>> signInWithApple() =>
+      (super.noSuchMethod(
+            Invocation.method(#signInWithApple, []),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.User>>.value(
+              _FakeEither_0<_i5.Failure, _i6.User>(
+                this,
+                Invocation.method(#signInWithApple, []),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i6.User>>);
 }

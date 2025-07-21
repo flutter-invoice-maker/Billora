@@ -22,10 +22,15 @@ import 'package:billora/src/features/auth/domain/usecases/logout_usecase.dart'
     as _i731;
 import 'package:billora/src/features/auth/domain/usecases/register_usecase.dart'
     as _i46;
+import 'package:billora/src/features/auth/domain/usecases/sign_in_with_apple_usecase.dart'
+    as _i579;
+import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_usecase.dart'
+    as _i1057;
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart'
     as _i232;
 import 'package:firebase_auth/firebase_auth.dart' as _i59;
 import 'package:get_it/get_it.dart' as _i174;
+import 'package:google_sign_in/google_sign_in.dart' as _i116;
 import 'package:injectable/injectable.dart' as _i526;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -37,8 +42,12 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final firebaseModule = _$FirebaseModule();
     gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
+    gh.lazySingleton<_i116.GoogleSignIn>(() => firebaseModule.googleSignIn);
     gh.lazySingleton<_i910.AuthRemoteDataSource>(
-      () => _i910.AuthRemoteDataSourceImpl(gh<_i59.FirebaseAuth>()),
+      () => _i910.AuthRemoteDataSourceImpl(
+        gh<_i59.FirebaseAuth>(),
+        gh<_i116.GoogleSignIn>(),
+      ),
     );
     gh.lazySingleton<_i253.AuthRepository>(
       () => _i1.AuthRepositoryImpl(gh<_i910.AuthRemoteDataSource>()),
@@ -57,6 +66,8 @@ extension GetItInjectableX on _i174.GetIt {
         loginUseCase: gh<_i361.LoginUseCase>(),
         registerUseCase: gh<_i46.RegisterUseCase>(),
         logoutUseCase: gh<_i731.LogoutUseCase>(),
+        signInWithGoogleUseCase: gh<_i1057.SignInWithGoogleUseCase>(),
+        signInWithAppleUseCase: gh<_i579.SignInWithAppleUseCase>(),
       ),
     );
     return this;

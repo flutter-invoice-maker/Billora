@@ -12,27 +12,28 @@ class CustomerModel with _$CustomerModel {
     String? email,
     String? phone,
     String? address,
+    required String userId,
+    @Default([]) List<String> searchKeywords,
   }) = _CustomerModel;
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) => _$CustomerModelFromJson(json);
 }
 
-extension CustomerModelMapper on CustomerModel {
+extension CustomerModelX on CustomerModel {
   Customer toEntity() => Customer(
-    id: id,
-    name: name,
-    email: email,
-    phone: phone,
-    address: address,
-  );
-}
+        id: id,
+        name: name,
+        email: email,
+        phone: phone,
+        address: address,
+      );
 
-extension CustomerEntityMapper on Customer {
-  CustomerModel toModel() => CustomerModel(
-    id: id,
-    name: name,
-    email: email,
-    phone: phone,
-    address: address,
-  );
+  static CustomerModel fromEntity(Customer customer, String userId) => CustomerModel(
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        address: customer.address,
+        userId: userId,
+      );
 }
