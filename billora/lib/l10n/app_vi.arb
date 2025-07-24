@@ -48,5 +48,16 @@
   "customerUpdateButton": "Cập nhật",
   "productNameRequired": "Vui lòng nhập tên sản phẩm",
   "productPriceRequired": "Vui lòng nhập giá hợp lệ",
-  "productCategoryRequired": "Vui lòng chọn một danh mục"
+  "productCategoryRequired": "Vui lòng chọn một danh mục",
+  "invoiceListTitle": "Danh sách hóa đơn",
+  "invoiceEmpty": "Chưa có hóa đơn nào.",
+  "invoiceStatus": "Trạng thái",
+  "invoiceTotal": "Tổng tiền",
+  "invoiceAddTitle": "Thêm hóa đơn",
+  "invoiceEditTitle": "Sửa hóa đơn",
+  "invoiceItems": "Các mục",
+  "invoiceAddItem": "Thêm mục",
+  "invoiceSubtotal": "Tạm tính",
+  "invoiceTax": "Thuế",
+  "invoiceNote": "Ghi chú"
 } 

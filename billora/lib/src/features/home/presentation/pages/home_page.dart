@@ -22,6 +22,12 @@ class HomePage extends StatelessWidget {
         route: '/products',
         color: Colors.deepPurple,
       ),
+      _MenuItem(
+        icon: Icons.receipt_long,
+        label: loc.invoiceListTitle,
+        route: '/invoices',
+        color: Colors.green,
+      ),
     ];
     return Scaffold(
       appBar: AppBar(

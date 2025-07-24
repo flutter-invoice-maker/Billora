@@ -18,6 +18,8 @@ import 'package:billora/src/features/product/domain/usecases/search_products_use
 import 'package:billora/src/features/product/domain/usecases/update_product_usecase.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/product/presentation/pages/product_catalog_page.dart';
+import 'src/features/invoice/presentation/pages/invoice_list_page.dart';
+import 'src/features/invoice/presentation/cubit/invoice_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,6 +90,14 @@ class _MyAppState extends State<MyApp> {
                 getCategoriesUseCase: sl<GetCategoriesUseCase>(),
               ),
               child: const ProductCatalogPage(),
+            ),
+        '/invoices': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()..fetchInvoices()),
+                BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
+                BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
+              ],
+              child: const InvoiceListPage(),
             ),
       },
     );
