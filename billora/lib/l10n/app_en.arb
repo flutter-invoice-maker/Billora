@@ -48,5 +48,16 @@
   "customerUpdateButton": "Update",
   "productNameRequired": "Please enter a product name",
   "productPriceRequired": "Please enter a valid price",
-  "productCategoryRequired": "Please select a category"
+  "productCategoryRequired": "Please select a category",
+  "invoiceListTitle": "Invoice List",
+  "invoiceEmpty": "No invoices yet.",
+  "invoiceStatus": "Status",
+  "invoiceTotal": "Total",
+  "invoiceAddTitle": "Add Invoice",
+  "invoiceEditTitle": "Edit Invoice",
+  "invoiceItems": "Items",
+  "invoiceAddItem": "Add Item",
+  "invoiceSubtotal": "Subtotal",
+  "invoiceTax": "Tax",
+  "invoiceNote": "Note"
 } 

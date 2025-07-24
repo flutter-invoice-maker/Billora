@@ -27,6 +27,17 @@ import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_apple_usecase.dart';
 
+import 'package:billora/src/features/invoice/data/datasources/invoice_remote_datasource.dart';
+import 'package:billora/src/features/invoice/data/repositories/invoice_repository_impl.dart';
+import 'package:billora/src/features/invoice/domain/repositories/invoice_repository.dart';
+import 'package:billora/src/features/invoice/domain/usecases/create_invoice_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/get_invoices_usecase.dart';
+import 'package:billora/src/features/invoice/presentation/cubit/invoice_cubit.dart';
+import 'package:billora/src/features/invoice/domain/usecases/delete_invoice_usecase.dart';
+
+import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
+import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
+
 final sl = GetIt.instance;
 
 @InjectableInit()
@@ -138,6 +149,59 @@ Future<void> configureDependencies() async {
     sl.registerLazySingleton<SignInWithAppleUseCase>(
       () => SignInWithAppleUseCase(sl()),
     );
+  }
+  if (!sl.isRegistered<InvoiceRemoteDatasource>()) {
+    sl.registerLazySingleton<InvoiceRemoteDatasource>(
+      () => InvoiceRemoteDatasourceImpl(sl()),
+    );
+  }
+  if (!sl.isRegistered<InvoiceRepository>()) {
+    sl.registerLazySingleton<InvoiceRepository>(
+      () => InvoiceRepositoryImpl(sl()),
+    );
+  }
+  if (!sl.isRegistered<GetInvoicesUseCase>()) {
+    sl.registerLazySingleton<GetInvoicesUseCase>(
+      () => GetInvoicesUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<CreateInvoiceUseCase>()) {
+    sl.registerLazySingleton<CreateInvoiceUseCase>(
+      () => CreateInvoiceUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<DeleteInvoiceUseCase>()) {
+    sl.registerLazySingleton<DeleteInvoiceUseCase>(
+      () => DeleteInvoiceUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<InvoiceCubit>()) {
+    sl.registerLazySingleton<InvoiceCubit>(
+      () => InvoiceCubit(
+        getInvoicesUseCase: sl(),
+        createInvoiceUseCase: sl(),
+        deleteInvoiceUseCase: sl(),
+      ),
+    );
+  }
+  if (!sl.isRegistered<CustomerCubit>()) {
+    sl.registerLazySingleton<CustomerCubit>(() => CustomerCubit(
+      getCustomersUseCase: sl(),
+      createCustomerUseCase: sl(),
+      updateCustomerUseCase: sl(),
+      deleteCustomerUseCase: sl(),
+      searchCustomersUseCase: sl(),
+    ));
+  }
+  if (!sl.isRegistered<ProductCubit>()) {
+    sl.registerLazySingleton<ProductCubit>(() => ProductCubit(
+      getProductsUseCase: sl(),
+      createProductUseCase: sl(),
+      updateProductUseCase: sl(),
+      deleteProductUseCase: sl(),
+      searchProductsUseCase: sl(),
+      getCategoriesUseCase: sl(),
+    ));
   }
 }
 

@@ -12,7 +12,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:dartz/dartz.dart';
 import 'package:billora/src/features/auth/domain/entities/user.dart';
-import 'package:billora/src/core/errors/failures.dart';
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
 class MockRegisterUseCase extends Mock implements RegisterUseCase {}

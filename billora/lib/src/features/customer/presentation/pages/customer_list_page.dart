@@ -82,15 +82,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
                         final customer = filteredCustomers[index];
                         return CustomerCard(
                           customer: customer,
-                          onEdit: () async {
-                            final cubit = context.read<CustomerCubit>();
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => CustomerFormPage(customer: customer),
-                              ),
-                            );
-                            if (!mounted) return;
-                            cubit.fetchCustomers();
+                          onEdit: () {
+                            _openForm(customer);
                           },
                           onDelete: () {
                             context.read<CustomerCubit>().deleteCustomer(customer.id);
@@ -112,13 +105,17 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
-  void _openForm([customer]) async {
-    await Navigator.of(context).push(
+  void _openForm([customer]) {
+    final cubit = BlocProvider.of<CustomerCubit>(context, listen: false);
+    Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CustomerFormPage(customer: customer),
+        builder: (_) => BlocProvider<CustomerCubit>.value(
+          value: cubit,
+          child: CustomerFormPage(customer: customer),
+        ),
       ),
     );
     if (!mounted) return;
-    context.read<CustomerCubit>().fetchCustomers();
+    cubit.fetchCustomers();
   }
 } 
