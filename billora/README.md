@@ -1,72 +1,162 @@
-# Billora
+# Billora - Flutter Invoice Maker
 
-Billora là ứng dụng Flutter quản lý hóa đơn, sử dụng Clean Architecture và tích hợp Firebase.
+A professional invoice management application built with Flutter, Firebase, and SendGrid.
 
-## Kiến trúc
-- Clean Architecture
-- Firebase (Auth, Firestore, Storage)
-- State management: flutter_bloc
-- Dependency Injection: get_it, injectable
+## 🚀 Features
 
-## Cấu trúc thư mục
+### Week 6 - Advanced Invoice Features ✅
+- **PDF Generation**: Generate professional PDF invoices with multiple templates
+- **Email Integration**: Send invoices via SendGrid API with beautiful HTML templates
+- **Cloud Storage**: Upload PDFs to Firebase Storage with shareable links
+- **Template System**: Multiple invoice templates (Template A, B, C)
+- **Real-time Notifications**: Loading indicators and success/error feedback
+
+### Core Features
+- **Authentication**: Firebase Auth with Google/Apple Sign-in
+- **Customer Management**: CRUD operations for customers
+- **Product Catalog**: Product and service management
+- **Invoice Management**: Create, edit, delete invoices
+- **Multi-language Support**: English and Vietnamese
+- **Clean Architecture**: Domain-driven design with BLoC pattern
+
+## 🛠️ Setup Instructions
+
+### 1. Prerequisites
+- Flutter SDK (^3.7.2)
+- Firebase project
+- SendGrid account
+
+### 2. Environment Configuration
+
+1. Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
 ```
-lib/
-└── src/
-    ├── core/
-    │   ├── constants/
-    │   ├── network/
-    │   ├── errors/
-    │   ├── utils/
-    │   └── di/
-    └── features/
+
+2. Update `.env` with your credentials:
+```env
+# SendGrid Configuration
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+SENDGRID_FROM_EMAIL=noreply@yourdomain.com
+SENDGRID_FROM_NAME=Your App Name
 ```
 
-## Cài đặt
+### 3. Firebase Setup
+1. Create a Firebase project
+2. Enable Authentication, Firestore, and Storage
+3. Download and add configuration files:
+   - `google-services.json` (Android)
+   - `GoogleService-Info.plist` (iOS)
+
+### 4. SendGrid Setup
+1. Create a SendGrid account
+2. Generate an API key
+3. Verify your sender email domain
+4. Update the `.env` file with your API key
+
+### 5. Install Dependencies
 ```bash
 flutter pub get
-flutterfire configure # Để tạo firebase_options.dart
 ```
 
-## Phát triển
-- Tuần 1: Setup project, core, Firebase, DI
-- Tuần 2+: Xây dựng các tính năng theo plan
-
-## Build iOS với flavor
-
-### 1. Generate flavor (chạy 1 lần)
-flutter pub run flutter_flavorizr
-
-### 2. Mở project bằng Xcode
-open ios/Runner.xcworkspace
-
-### 3. Chọn scheme (Dev/Prod) và build
-- Product > Scheme > Billora Dev hoặc Billora
-- Product > Run
-
-### 4. Đảm bảo file GoogleService-Info-Dev.plist và GoogleService-Info-Prod.plist đúng vị trí
-
-## Sử dụng CustomCupertinoButton
-
-```dart
-import 'package:billora/src/core/widgets/custom_cupertino_button.dart';
-
-CustomCupertinoButton(
-  text: 'Đăng nhập',
-  onPressed: () {},
-)
-```
-
-## Chạy test
-
+### 6. Run the Application
 ```bash
-flutter test
+flutter run
 ```
 
-## CI/CD
-- Đã cấu hình GitHub Actions tự động build/test khi push code.
+## 📁 Project Structure
 
-## Cloud Functions
-- Đã có thư mục functions, có thể deploy function mẫu lên Firebase.
+```
+lib/
+├── src/
+│   ├── core/
+│   │   ├── constants/
+│   │   ├── di/
+│   │   ├── services/
+│   │   │   ├── email_service.dart      # SendGrid integration
+│   │   │   ├── pdf_service.dart        # PDF generation
+│   │   │   └── storage_service.dart    # Firebase Storage
+│   │   └── widgets/
+│   ├── features/
+│   │   ├── auth/                       # Authentication
+│   │   ├── customer/                   # Customer management
+│   │   ├── invoice/                    # Invoice management
+│   │   │   ├── domain/
+│   │   │   │   ├── entities/
+│   │   │   │   ├── repositories/
+│   │   │   │   └── usecases/
+│   │   │   │       ├── generate_pdf_usecase.dart
+│   │   │   │       ├── send_invoice_email_usecase.dart
+│   │   │   │       └── upload_invoice_usecase.dart
+│   │   │   └── presentation/
+│   │   │       ├── cubit/
+│   │   │       ├── pages/
+│   │   │       └── widgets/
+│   │   └── product/                    # Product management
+│   └── widgets/
+└── main.dart
+```
 
-## Design System
-- Đã có theme, custom widgets, ưu tiên style iOS.
+## 🔧 Week 6 Implementation Details
+
+### PDF Generation
+- Uses `pdf` package for professional PDF creation
+- Multiple template support (Template A, B, C)
+- Includes invoice details, items, totals, and notes
+
+### Email Integration
+- SendGrid API integration with HTTP requests
+- Beautiful HTML email templates
+- PDF attachment support
+- Error handling and user feedback
+
+### Cloud Storage
+- Firebase Storage integration
+- Automatic file naming and organization
+- Shareable download links
+- Clipboard integration for easy sharing
+
+### UI/UX Improvements
+- Loading indicators for all async operations
+- Success/error notifications with icons
+- Professional color-coded feedback
+- Responsive design considerations
+
+## 🧪 Testing
+
+Run tests with coverage:
+```bash
+flutter test --coverage
+```
+
+## 📱 Supported Platforms
+
+- Android
+- iOS
+- Web
+- macOS
+- Linux
+- Windows
+
+## 🔒 Security
+
+- API keys stored in `.env` file (not committed to git)
+- Firebase security rules configured
+- Input validation and sanitization
+- Error handling for all external services
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📞 Support
+
+For support and questions, please open an issue on GitHub.

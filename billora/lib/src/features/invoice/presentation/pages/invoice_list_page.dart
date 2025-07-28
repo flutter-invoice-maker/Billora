@@ -8,6 +8,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/invoice_preview_widget.dart';
+import 'package:printing/printing.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class InvoiceListPage extends StatefulWidget {
   const InvoiceListPage({super.key});
@@ -23,7 +26,12 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
   @override
   void initState() {
     super.initState();
-    context.read<InvoiceCubit>().fetchInvoices();
+    // Delay to avoid calling after widget disposal
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<InvoiceCubit>().fetchInvoices();
+      }
+    });
   }
 
   void _openForm([Invoice? invoice]) {
@@ -92,6 +100,263 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     }
   }
 
+  void _showShareOptions(BuildContext context, Invoice invoice, InvoiceCubit cubit) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Share Invoice PDF',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            
+            // Option 1: Generate & Download
+            ListTile(
+              leading: const Icon(Icons.download_outlined, color: Colors.blue),
+              title: const Text('Download PDF'),
+              subtitle: const Text('Save to your device'),
+              onTap: () async {
+                Navigator.pop(context);
+                final scaffold = ScaffoldMessenger.of(context);
+                scaffold.showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        ),
+                        SizedBox(width: 16),
+                        Text('Generating PDF...'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+                
+                try {
+                  final pdfData = await cubit.generatePdf(invoice);
+                  await Printing.layoutPdf(onLayout: (format) async => pdfData);
+                  
+                  if (!mounted) return;
+                  scaffold.showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('PDF ready for download!'),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  scaffold.showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text('Failed to generate PDF: ${e.toString()}')),
+                        ],
+                      ),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              },
+            ),
+            
+            // Option 2: Upload & Share Link (Mobile only)
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.link_outlined, color: Colors.green),
+                title: const Text('Create Shareable Link'),
+                subtitle: const Text('Upload and get a link to share'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final scaffold = ScaffoldMessenger.of(context);
+                  scaffold.showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          ),
+                          SizedBox(width: 16),
+                          Text('Creating shareable link...'),
+                        ],
+                      ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  
+                  try {
+                    final pdfData = await cubit.generatePdf(invoice);
+                    final userId = invoice.customerId;
+                    final url = await cubit.uploadPdf(
+                      userId: userId,
+                      invoiceId: invoice.id,
+                      pdfData: pdfData,
+                    );
+                    if (!mounted) return;
+                    await Clipboard.setData(ClipboardData(text: url));
+                    scaffold.showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.white),
+                            const SizedBox(width: 8),
+                            const Expanded(child: Text('Shareable link created! Link copied to clipboard.')),
+                          ],
+                        ),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    scaffold.showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.error, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text('Failed to create link: ${e.toString()}')),
+                          ],
+                        ),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                },
+              ),
+            
+            // Option 3: Send via Email (Mobile only due to CORS)
+            ListTile(
+              leading: Icon(Icons.email_outlined, color: kIsWeb ? Colors.grey : Colors.orange),
+              title: Text('Send via Email'),
+              subtitle: Text(kIsWeb ? 'Not available on web due to CORS restrictions' : 'Email with PDF attachment'),
+              enabled: !kIsWeb,
+                              onTap: kIsWeb ? null : () async {
+                  Navigator.pop(context);
+                  
+                  // Store ScaffoldMessenger before async operations
+                  final scaffold = ScaffoldMessenger.of(context);
+                  
+                  final email = await _promptEmail(context);
+                  if (email == null || email.isEmpty) return;
+                
+                scaffold.showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        ),
+                        SizedBox(width: 16),
+                        Text('Sending email...'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                
+                try {
+                  final pdfData = await cubit.generatePdf(invoice);
+                  await cubit.sendEmail(
+                    toEmail: email,
+                    subject: 'Invoice #${invoice.id} - Billora',
+                    body: 'Dear Customer,\n\nPlease find attached your invoice #${invoice.id}.\n\nThank you for your business!\n\nBest regards,\nBillora Team',
+                    pdfData: pdfData,
+                    fileName: 'invoice_${invoice.id}.pdf',
+                  );
+                  
+                  if (!mounted) return;
+                  scaffold.showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text('Email sent successfully to $email')),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  scaffold.showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text('Failed to send email: ${e.toString()}')),
+                        ],
+                      ),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              },
+            ),
+            
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _promptEmail(BuildContext context) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Send Invoice'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Email Address',
+            hintText: 'Enter recipient email',
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -107,42 +372,55 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
+          // Search and Filter Section
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search by customer or invoice ID',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      isDense: true,
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchTerm = value;
-                      });
-                    },
+                // Search Bar
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search by customer or invoice ID',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchTerm = value;
+                    });
+                  },
                 ),
-                const SizedBox(width: 12),
-                DropdownButton<InvoiceStatus?>(
-                  value: _filterStatus,
-                  hint: const Text('Status'),
-                  items: [
-                    const DropdownMenuItem<InvoiceStatus?>(value: null, child: Text('All')),
-                    ...InvoiceStatus.values.map((s) => DropdownMenuItem(
-                      value: s,
-                      child: Text(s.name),
-                    )),
-                  ],
-                  onChanged: (status) => setState(() => _filterStatus = status),
-                  underline: Container(),
+                const SizedBox(height: 12),
+                // Filter Dropdown
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<InvoiceStatus?>(
+                      value: _filterStatus,
+                      hint: const Text('Filter by Status'),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem<InvoiceStatus?>(value: null, child: Text('All Status')),
+                        ...InvoiceStatus.values.map((s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(s.name.toUpperCase()),
+                        )),
+                      ],
+                      onChanged: (status) => setState(() => _filterStatus = status),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+          
+          // Invoice List
           Expanded(
             child: BlocBuilder<InvoiceCubit, InvoiceState>(
               builder: (context, state) {
@@ -150,76 +428,180 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   initial: () => const Center(child: CircularProgressIndicator()),
                   loading: () => const Center(child: CircularProgressIndicator()),
                   loaded: (invoices) {
-                    var filtered = invoices;
-                    if (_filterStatus != null) {
-                      filtered = filtered.where((i) => i.status == _filterStatus).toList();
+                    // Filter invoices based on search term and status
+                    final filteredInvoices = invoices.where((invoice) {
+                      final matchesSearch = _searchTerm.isEmpty ||
+                          invoice.id.toLowerCase().contains(_searchTerm.toLowerCase()) ||
+                          invoice.customerName.toLowerCase().contains(_searchTerm.toLowerCase());
+                      
+                      final matchesStatus = _filterStatus == null || invoice.status == _filterStatus;
+                      
+                      return matchesSearch && matchesStatus;
+                    }).toList();
+
+                    if (filteredInvoices.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No invoices found',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      );
                     }
-                    if (_searchTerm.isNotEmpty) {
-                      final term = _searchTerm.toLowerCase();
-                      filtered = filtered.where((i) =>
-                        i.customerName.toLowerCase().contains(term) ||
-                        i.id.toLowerCase().contains(term)
-                      ).toList();
-                    }
-                    if (filtered.isEmpty) {
-                      return Center(child: Text(loc.invoiceEmpty));
-                    }
-                    return ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(),
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: filteredInvoices.length,
                       itemBuilder: (context, index) {
-                        final invoice = filtered[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 2,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            title: Row(
-                              children: [
-                                Text('#${invoice.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: _statusColor(invoice.status),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(invoice.status.name, style: const TextStyle(fontSize: 12, color: Colors.white)),
+                        final invoice = filteredInvoices[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Header
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                                 ),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(invoice.customerName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                                Text('Total: ${invoice.total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.deepPurple)),
-                                if (invoice.dueDate != null)
-                                  Text('Due: ${invoice.dueDate!.toLocal().toString().split(' ')[0]}', style: const TextStyle(color: Colors.grey)),
-                                Text('Template: ${_getTemplateName(invoice.templateId)}', style: const TextStyle(color: Colors.blueGrey)),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.remove_red_eye_outlined),
-                                  tooltip: 'Preview',
-                                  onPressed: () => _previewInvoice(invoice),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'ID: ${invoice.id.substring(0, 8)}...',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            invoice.customerName,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(invoice.status),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        invoice.status.name.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  tooltip: 'Edit',
-                                  onPressed: () => _openForm(invoice),
+                              ),
+                              
+                              // Content
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Total: \$${invoice.total.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                                                                      Text(
+                                              'Due: ${_formatDate(invoice.dueDate!)}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Template: ${_getTemplateName(invoice.templateId)}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  tooltip: 'Delete',
-                                  onPressed: () => _deleteInvoice(context, invoice),
+                              ),
+                              
+                              // Action Buttons
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
                                 ),
-                              ],
-                            ),
-                            onTap: () => _openForm(invoice),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    // Preview Button
+                                    IconButton(
+                                      icon: const Icon(Icons.visibility_outlined),
+                                      tooltip: 'Preview',
+                                      onPressed: () => _previewInvoice(invoice),
+                                    ),
+                                    
+                                    // Share PDF Button
+                                    IconButton(
+                                      icon: const Icon(Icons.share_outlined),
+                                      tooltip: 'Share PDF',
+                                      onPressed: () => _showShareOptions(context, invoice, context.read<InvoiceCubit>()),
+                                    ),
+                                    
+                                    // Edit Button
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      tooltip: 'Edit',
+                                      onPressed: () => _openForm(invoice),
+                                    ),
+                                    
+                                    // Delete Button
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline),
+                                      tooltip: 'Delete',
+                                      onPressed: () => _deleteInvoice(context, invoice),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -235,7 +617,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     );
   }
 
-  Color _statusColor(InvoiceStatus status) {
+  Color _getStatusColor(InvoiceStatus status) {
     switch (status) {
       case InvoiceStatus.draft:
         return Colors.grey;
@@ -249,4 +631,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
         return Colors.black45;
     }
   }
-} 
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+}

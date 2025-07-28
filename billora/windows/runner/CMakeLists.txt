@@ -38,3 +38,8 @@ target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
+
+# Add Firebase-specific compiler flags
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  target_compile_options(${BINARY_NAME} PRIVATE /wd4996)
+endif()
