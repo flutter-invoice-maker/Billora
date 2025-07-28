@@ -34,6 +34,16 @@ import 'package:billora/src/features/invoice/domain/usecases/create_invoice_usec
 import 'package:billora/src/features/invoice/domain/usecases/get_invoices_usecase.dart';
 import 'package:billora/src/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:billora/src/features/invoice/domain/usecases/delete_invoice_usecase.dart';
+import 'package:billora/src/core/services/pdf_service.dart';
+import 'package:billora/src/core/services/email_service.dart';
+import 'package:billora/src/core/services/firebase_email_service.dart';
+import 'package:billora/src/core/services/storage_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/send_invoice_email_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/send_firebase_email_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/upload_invoice_usecase.dart';
 
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
@@ -181,6 +191,10 @@ Future<void> configureDependencies() async {
         getInvoicesUseCase: sl(),
         createInvoiceUseCase: sl(),
         deleteInvoiceUseCase: sl(),
+        generatePdfUseCase: sl(),
+        sendInvoiceEmailUseCase: sl(),
+        sendFirebaseEmailUseCase: sl(),
+        uploadInvoiceUseCase: sl(),
       ),
     );
   }
@@ -202,6 +216,36 @@ Future<void> configureDependencies() async {
       searchProductsUseCase: sl(),
       getCategoriesUseCase: sl(),
     ));
+  }
+  if (!sl.isRegistered<PdfService>()) {
+    sl.registerLazySingleton<PdfService>(() => PdfService());
+  }
+  if (!sl.isRegistered<EmailService>()) {
+    sl.registerLazySingleton<EmailService>(() => EmailService());
+  }
+  if (!sl.isRegistered<FirebaseEmailService>()) {
+    sl.registerLazySingleton<FirebaseEmailService>(() => FirebaseEmailService(sl<FirebaseFunctions>(), sl<FirebaseAuth>()));
+  }
+  if (!sl.isRegistered<FirebaseStorage>()) {
+    sl.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+  }
+  if (!sl.isRegistered<FirebaseFunctions>()) {
+    sl.registerLazySingleton<FirebaseFunctions>(() => FirebaseFunctions.instance);
+  }
+  if (!sl.isRegistered<StorageService>()) {
+    sl.registerLazySingleton<StorageService>(() => StorageService(sl<FirebaseStorage>(), sl<FirebaseAuth>()));
+  }
+  if (!sl.isRegistered<GeneratePdfUseCase>()) {
+    sl.registerLazySingleton<GeneratePdfUseCase>(() => GeneratePdfUseCase(sl()));
+  }
+  if (!sl.isRegistered<SendInvoiceEmailUseCase>()) {
+    sl.registerLazySingleton<SendInvoiceEmailUseCase>(() => SendInvoiceEmailUseCase(sl()));
+  }
+  if (!sl.isRegistered<SendFirebaseEmailUseCase>()) {
+    sl.registerLazySingleton<SendFirebaseEmailUseCase>(() => SendFirebaseEmailUseCase(sl()));
+  }
+  if (!sl.isRegistered<UploadInvoiceUseCase>()) {
+    sl.registerLazySingleton<UploadInvoiceUseCase>(() => UploadInvoiceUseCase(sl()));
   }
 }
 

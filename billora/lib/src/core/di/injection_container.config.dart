@@ -10,6 +10,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:billora/src/core/di/injection_container.dart' as _i107;
+import 'package:billora/src/core/services/email_service.dart' as _i971;
+import 'package:billora/src/core/services/firebase_email_service.dart' as _i365;
+import 'package:billora/src/core/services/pdf_service.dart' as _i5;
+import 'package:billora/src/core/services/storage_service.dart' as _i537;
 import 'package:billora/src/features/auth/data/datasources/auth_remote_datasource.dart'
     as _i910;
 import 'package:billora/src/features/auth/data/repositories/auth_repository_impl.dart'
@@ -28,6 +32,14 @@ import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_us
     as _i1057;
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart'
     as _i232;
+import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart'
+    as _i936;
+import 'package:billora/src/features/invoice/domain/usecases/send_firebase_email_usecase.dart'
+    as _i1012;
+import 'package:billora/src/features/invoice/domain/usecases/send_invoice_email_usecase.dart'
+    as _i888;
+import 'package:billora/src/features/invoice/domain/usecases/upload_invoice_usecase.dart'
+    as _i1014;
 import 'package:firebase_auth/firebase_auth.dart' as _i59;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:google_sign_in/google_sign_in.dart' as _i116;
@@ -43,11 +55,23 @@ extension GetItInjectableX on _i174.GetIt {
     final firebaseModule = _$FirebaseModule();
     gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
     gh.lazySingleton<_i116.GoogleSignIn>(() => firebaseModule.googleSignIn);
+    gh.factory<_i1014.UploadInvoiceUseCase>(
+      () => _i1014.UploadInvoiceUseCase(gh<_i537.StorageService>()),
+    );
+    gh.factory<_i936.GeneratePdfUseCase>(
+      () => _i936.GeneratePdfUseCase(gh<_i5.PdfService>()),
+    );
+    gh.factory<_i1012.SendFirebaseEmailUseCase>(
+      () => _i1012.SendFirebaseEmailUseCase(gh<_i365.FirebaseEmailService>()),
+    );
     gh.lazySingleton<_i910.AuthRemoteDataSource>(
       () => _i910.AuthRemoteDataSourceImpl(
         gh<_i59.FirebaseAuth>(),
         gh<_i116.GoogleSignIn>(),
       ),
+    );
+    gh.factory<_i888.SendInvoiceEmailUseCase>(
+      () => _i888.SendInvoiceEmailUseCase(gh<_i971.EmailService>()),
     );
     gh.lazySingleton<_i253.AuthRepository>(
       () => _i1.AuthRepositoryImpl(gh<_i910.AuthRemoteDataSource>()),
