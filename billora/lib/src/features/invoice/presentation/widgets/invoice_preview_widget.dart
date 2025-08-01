@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/invoice.dart';
+import 'package:billora/src/features/invoice/domain/entities/invoice.dart';
+import 'package:billora/src/core/utils/localization_helper.dart';
 
 class InvoicePreviewWidget extends StatelessWidget {
   final Invoice invoice;
@@ -80,21 +81,21 @@ class _InvoiceLayout extends StatelessWidget {
               dense: true,
               contentPadding: EdgeInsets.zero,
               title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('${item.quantity.toStringAsFixed(0)} x ${item.unitPrice.toStringAsFixed(2)}'),
+              subtitle: Text('${item.quantity.toStringAsFixed(0)} x ${LocalizationHelper.formatCurrency(item.unitPrice, context)}'),
               trailing: Text((item.total).toStringAsFixed(2)),
             )),
         const Divider(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Subtotal:'),
+            Text(LocalizationHelper.getLocalizedString(context, 'invoiceSubtotal')),
             Text(invoice.subtotal.toStringAsFixed(2)),
           ],
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Tax:'),
+            Text(LocalizationHelper.getLocalizedString(context, 'invoiceTax')),
             Text(invoice.tax.toStringAsFixed(2)),
           ],
         ),
@@ -119,7 +120,7 @@ class _InvoiceLayout extends StatelessWidget {
               backgroundColor: color,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Close'),
+            child: Text(LocalizationHelper.getLocalizedString(context, 'close')),
           ),
         ),
       ],

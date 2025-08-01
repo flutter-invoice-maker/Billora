@@ -33,6 +33,25 @@ dependencies:
   printing: ^5.14.2
   http: ^1.2.1
   flutter_dotenv: ^5.1.0
+  
+  # Bill Scanner Dependencies
+  google_mlkit_text_recognition: ^0.13.0
+  camera: ^0.11.0
+  image: ^4.1.7
+  image_picker: ^1.0.7
+  path_provider: ^2.1.2
+  permission_handler: ^11.3.0
+  lottie: ^3.1.0
+  shimmer: ^3.0.0
+  file_picker: ^6.1.1
+
+  # Week 7 - Smart Suggestions & Tags System
+  equatable: ^2.0.5
+  sqflite: ^2.3.3+1
+  shared_preferences: ^2.3.2
+  uuid: ^4.5.1
+  flutter_typeahead: ^5.2.0
+  flutter_tags_x: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -48,9 +67,13 @@ dev_dependencies:
 
 flutter:
   generate: true
+  uses-material-design: true
   assets:
     - assets/icons/google.png
     - .env
+
+flutter_gen:
+  synthetic-package: false
 
 flutter_flavorizr:
   app:

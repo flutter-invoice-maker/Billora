@@ -4,12 +4,26 @@ A professional invoice management application built with Flutter, Firebase, and 
 
 ## 🚀 Features
 
+### Week 7 - Smart Suggestions & Tags System ✅
+- **Smart Product Suggestions**: AI-powered product recommendations based on usage history
+- **Intelligent Scoring Algorithm**: Weighted scoring using frequency, recency, relevance, and similarity
+- **Fuzzy Search**: Find products even with typos using Levenshtein distance
+- **Tags Management**: Create, manage, and organize invoices with colorful tags
+- **Usage Analytics**: Track product and customer usage patterns
+- **TypeAhead Autocomplete**: Real-time suggestions with flutter_typeahead
+- **Colorful Tag System**: Custom colors for better visual organization
+- **Offline Support**: Local caching with SQLite for better performance
+
 ### Week 6 - Advanced Invoice Features ✅
 - **PDF Generation**: Generate professional PDF invoices with multiple templates
 - **Email Integration**: Send invoices via SendGrid API with beautiful HTML templates
 - **Cloud Storage**: Upload PDFs to Firebase Storage with shareable links
 - **Template System**: Multiple invoice templates (Template A, B, C)
 - **Real-time Notifications**: Loading indicators and success/error feedback
+- **Bill Scanner**: Professional OCR scanning with ML Kit and free APIs
+- **Smart Data Extraction**: Vietnamese currency, date, phone number recognition
+- **Camera Integration**: Real-time document detection and capture
+- **Image Processing**: Automatic optimization for better OCR results
 
 ### Core Features
 - **Authentication**: Firebase Auth with Google/Apple Sign-in
@@ -25,6 +39,7 @@ A professional invoice management application built with Flutter, Firebase, and 
 - Flutter SDK (^3.7.2)
 - Firebase project
 - SendGrid account
+- Camera permissions (for bill scanning)
 
 ### 2. Environment Configuration
 
@@ -64,6 +79,18 @@ flutter pub get
 flutter run
 ```
 
+### 7. Test Smart Suggestions & Tags
+Navigate to the demo page to test the new features:
+```bash
+# In the app, navigate to:
+/suggestions-demo
+```
+
+Or add this route to your navigation:
+```dart
+Navigator.pushNamed(context, '/suggestions-demo');
+```
+
 ## 📁 Project Structure
 
 ```
@@ -79,6 +106,21 @@ lib/
 │   │   └── widgets/
 │   ├── features/
 │   │   ├── auth/                       # Authentication
+│   │   ├── bill_scanner/               # Bill scanning & OCR
+│   │   │   ├── domain/
+│   │   │   │   ├── entities/
+│   │   │   │   ├── repositories/
+│   │   │   │   └── usecases/
+│   │   │   ├── data/
+│   │   │   │   ├── datasources/
+│   │   │   │   │   ├── ocr_datasource.dart
+│   │   │   │   │   ├── free_ocr_api_datasource.dart
+│   │   │   │   │   └── image_processing_datasource.dart
+│   │   │   │   └── repositories/
+│   │   │   └── presentation/
+│   │   │       ├── cubit/
+│   │   │       ├── pages/
+│   │   │       └── widgets/
 │   │   ├── customer/                   # Customer management
 │   │   ├── invoice/                    # Invoice management
 │   │   │   ├── domain/
@@ -116,11 +158,20 @@ lib/
 - Shareable download links
 - Clipboard integration for easy sharing
 
+### Bill Scanner & OCR
+- **ML Kit Integration**: On-device text recognition with Google ML Kit
+- **Free OCR APIs**: Fallback to OCR.Space API (500 requests/month free)
+- **Smart Data Extraction**: Vietnamese currency, date, phone patterns
+- **Image Processing**: Automatic optimization for better OCR results
+- **Camera Integration**: Real-time document detection and capture
+- **Confidence Scoring**: Quality assessment for extracted data
+
 ### UI/UX Improvements
 - Loading indicators for all async operations
 - Success/error notifications with icons
 - Professional color-coded feedback
 - Responsive design considerations
+- Animated camera overlay with scanning guide
 
 ## 🧪 Testing
 

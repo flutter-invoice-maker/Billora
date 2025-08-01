@@ -26,8 +26,10 @@ class ProductCubit extends Cubit<ProductState> {
   }) : super(const ProductState.initial());
 
   Future<void> fetchProducts() async {
+    if (isClosed) return;
     emit(const ProductState.loading());
     final result = await getProductsUseCase();
+    if (isClosed) return;
     result.fold(
       (failure) => emit(ProductState.error(failure.message)),
       (products) => emit(ProductState.loaded(products)),
@@ -35,8 +37,10 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> addProduct(Product product) async {
+    if (isClosed) return;
     emit(const ProductState.loading());
     final result = await createProductUseCase(product);
+    if (isClosed) return;
     result.fold(
       (failure) => emit(ProductState.error(failure.message)),
       (_) => fetchProducts(),
@@ -44,8 +48,10 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> updateProduct(Product product) async {
+    if (isClosed) return;
     emit(const ProductState.loading());
     final result = await updateProductUseCase(product);
+    if (isClosed) return;
     result.fold(
       (failure) => emit(ProductState.error(failure.message)),
       (_) => fetchProducts(),
@@ -53,8 +59,10 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> deleteProduct(String id) async {
+    if (isClosed) return;
     emit(const ProductState.loading());
     final result = await deleteProductUseCase(id);
+    if (isClosed) return;
     result.fold(
       (failure) => emit(ProductState.error(failure.message)),
       (_) => fetchProducts(),
@@ -62,8 +70,10 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> searchProducts(String query) async {
+    if (isClosed) return;
     emit(const ProductState.loading());
     final result = await searchProductsUseCase(query);
+    if (isClosed) return;
     result.fold(
       (failure) => emit(ProductState.error(failure.message)),
       (products) => emit(ProductState.loaded(products)),

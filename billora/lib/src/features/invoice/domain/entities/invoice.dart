@@ -16,6 +16,8 @@ class Invoice {
   final DateTime? paidAt;
   final String? note;
   final String? templateId;
+  final List<String> tags;
+  final List<String> searchKeywords;
 
   Invoice({
     required this.id,
@@ -31,6 +33,8 @@ class Invoice {
     this.paidAt,
     this.note,
     this.templateId,
+    this.tags = const [],
+    this.searchKeywords = const [],
   });
 
   Invoice copyWith({
@@ -47,6 +51,8 @@ class Invoice {
     DateTime? paidAt,
     String? note,
     String? templateId,
+    List<String>? tags,
+    List<String>? searchKeywords,
   }) {
     return Invoice(
       id: id ?? this.id,
@@ -62,6 +68,8 @@ class Invoice {
       paidAt: paidAt ?? this.paidAt,
       note: note ?? this.note,
       templateId: templateId ?? this.templateId,
+      tags: tags ?? this.tags,
+      searchKeywords: searchKeywords ?? this.searchKeywords,
     );
   }
 } 

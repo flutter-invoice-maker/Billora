@@ -48,6 +48,35 @@ import 'package:billora/src/features/invoice/domain/usecases/upload_invoice_usec
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 
+// Bill Scanner imports
+import 'package:billora/src/features/bill_scanner/domain/repositories/bill_scanner_repository.dart';
+import 'package:billora/src/features/bill_scanner/data/repositories/bill_scanner_repository_impl.dart';
+import 'package:billora/src/features/bill_scanner/data/datasources/ocr_datasource.dart';
+import 'package:billora/src/features/bill_scanner/data/datasources/free_ocr_api_datasource.dart';
+import 'package:billora/src/features/bill_scanner/data/datasources/image_processing_datasource.dart';
+import 'package:billora/src/features/bill_scanner/domain/usecases/scan_bill_usecase.dart';
+import 'package:billora/src/features/bill_scanner/domain/usecases/extract_bill_data_usecase.dart';
+import 'package:billora/src/features/bill_scanner/domain/usecases/validate_bill_data_usecase.dart';
+import 'package:billora/src/features/bill_scanner/domain/usecases/process_with_regex_usecase.dart';
+import 'package:billora/src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
+
+// Week 7 - Suggestions & Tags imports
+import 'package:uuid/uuid.dart';
+import 'package:billora/src/features/suggestions/domain/repositories/suggestions_repository.dart';
+import 'package:billora/src/features/suggestions/data/repositories/suggestions_repository_impl.dart';
+import 'package:billora/src/features/suggestions/data/datasources/suggestions_remote_datasource.dart';
+import 'package:billora/src/features/suggestions/domain/usecases/get_product_suggestions_usecase.dart';
+import 'package:billora/src/features/suggestions/domain/usecases/record_product_usage_usecase.dart';
+import 'package:billora/src/features/suggestions/domain/usecases/calculate_suggestion_score_usecase.dart';
+import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
+
+import 'package:billora/src/features/tags/domain/repositories/tags_repository.dart';
+import 'package:billora/src/features/tags/data/repositories/tags_repository_impl.dart';
+import 'package:billora/src/features/tags/data/datasources/tags_remote_datasource.dart';
+import 'package:billora/src/features/tags/domain/usecases/get_all_tags_usecase.dart';
+import 'package:billora/src/features/tags/domain/usecases/create_tag_usecase.dart';
+import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
+
 final sl = GetIt.instance;
 
 @InjectableInit()
@@ -139,6 +168,16 @@ Future<void> configureDependencies() async {
       () => AuthRemoteDataSourceImpl(sl<FirebaseAuth>(), sl<GoogleSignIn>()),
     );
   }
+  if (!sl.isRegistered<SignInWithGoogleUseCase>()) {
+    sl.registerLazySingleton<SignInWithGoogleUseCase>(
+      () => SignInWithGoogleUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<SignInWithAppleUseCase>()) {
+    sl.registerLazySingleton<SignInWithAppleUseCase>(
+      () => SignInWithAppleUseCase(sl()),
+    );
+  }
   if (!sl.isRegistered<AuthCubit>()) {
     sl.registerLazySingleton<AuthCubit>(
       () => AuthCubit(
@@ -148,16 +187,6 @@ Future<void> configureDependencies() async {
         signInWithGoogleUseCase: sl(),
         signInWithAppleUseCase: sl(),
       ),
-    );
-  }
-  if (!sl.isRegistered<SignInWithGoogleUseCase>()) {
-    sl.registerLazySingleton<SignInWithGoogleUseCase>(
-      () => SignInWithGoogleUseCase(sl()),
-    );
-  }
-  if (!sl.isRegistered<SignInWithAppleUseCase>()) {
-    sl.registerLazySingleton<SignInWithAppleUseCase>(
-      () => SignInWithAppleUseCase(sl()),
     );
   }
   if (!sl.isRegistered<InvoiceRemoteDatasource>()) {
@@ -247,6 +276,118 @@ Future<void> configureDependencies() async {
   if (!sl.isRegistered<UploadInvoiceUseCase>()) {
     sl.registerLazySingleton<UploadInvoiceUseCase>(() => UploadInvoiceUseCase(sl()));
   }
+
+  // Bill Scanner Dependencies
+  if (!sl.isRegistered<OCRDataSource>()) {
+    sl.registerLazySingleton<OCRDataSource>(() => MLKitOCRDataSource());
+  }
+  if (!sl.isRegistered<FreeOCRApiDataSource>()) {
+    sl.registerLazySingleton<FreeOCRApiDataSource>(() => FreeOCRApiDataSource());
+  }
+  if (!sl.isRegistered<ImageProcessingDataSource>()) {
+    sl.registerLazySingleton<ImageProcessingDataSource>(() => ImageProcessingDataSource());
+  }
+  if (!sl.isRegistered<BillScannerRepository>()) {
+    sl.registerLazySingleton<BillScannerRepository>(
+      () => BillScannerRepositoryImpl(
+            mlKitDataSource: sl(),
+            apiDataSource: sl(),
+            imageProcessingDataSource: sl(),
+          ),
+    );
+  }
+  if (!sl.isRegistered<ScanBillUseCase>()) {
+    sl.registerLazySingleton<ScanBillUseCase>(() => ScanBillUseCase(sl()));
+  }
+  if (!sl.isRegistered<ExtractBillDataUseCase>()) {
+    sl.registerLazySingleton<ExtractBillDataUseCase>(() => ExtractBillDataUseCase(sl()));
+  }
+  if (!sl.isRegistered<ValidateBillDataUseCase>()) {
+    sl.registerLazySingleton<ValidateBillDataUseCase>(() => ValidateBillDataUseCase(sl()));
+  }
+  if (!sl.isRegistered<ProcessWithRegexUseCase>()) {
+    sl.registerLazySingleton<ProcessWithRegexUseCase>(() => ProcessWithRegexUseCase(sl()));
+  }
+  if (!sl.isRegistered<BillScannerCubit>()) {
+    sl.registerLazySingleton<BillScannerCubit>(
+      () => BillScannerCubit(
+        scanBillUseCase: sl(),
+        extractBillDataUseCase: sl(),
+        validateBillDataUseCase: sl(),
+      ),
+    );
+  }
+
+  // Week 7 - Suggestions & Tags Dependencies
+  if (!sl.isRegistered<Uuid>()) {
+    sl.registerLazySingleton<Uuid>(() => const Uuid());
+  }
+  
+  // Suggestions Dependencies
+  if (!sl.isRegistered<SuggestionsRemoteDataSource>()) {
+    sl.registerLazySingleton<SuggestionsRemoteDataSource>(
+      () => SuggestionsRemoteDataSourceImpl(sl(), sl()),
+    );
+  }
+  if (!sl.isRegistered<SuggestionsRepository>()) {
+    sl.registerLazySingleton<SuggestionsRepository>(
+      () => SuggestionsRepositoryImpl(sl()),
+    );
+  }
+  if (!sl.isRegistered<GetProductSuggestionsUseCase>()) {
+    sl.registerLazySingleton<GetProductSuggestionsUseCase>(
+      () => GetProductSuggestionsUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<RecordProductUsageUseCase>()) {
+    sl.registerLazySingleton<RecordProductUsageUseCase>(
+      () => RecordProductUsageUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<CalculateSuggestionScoreUseCase>()) {
+    sl.registerLazySingleton<CalculateSuggestionScoreUseCase>(
+      () => CalculateSuggestionScoreUseCase(),
+    );
+  }
+  if (!sl.isRegistered<SuggestionsCubit>()) {
+    sl.registerLazySingleton<SuggestionsCubit>(
+      () => SuggestionsCubit(
+        getProductSuggestionsUseCase: sl(),
+        recordProductUsageUseCase: sl(),
+        calculateSuggestionScoreUseCase: sl(),
+      ),
+    );
+  }
+
+  // Tags Dependencies
+  if (!sl.isRegistered<TagsRemoteDataSource>()) {
+    sl.registerLazySingleton<TagsRemoteDataSource>(
+      () => TagsRemoteDataSourceImpl(sl(), sl(), sl()),
+    );
+  }
+  if (!sl.isRegistered<TagsRepository>()) {
+    sl.registerLazySingleton<TagsRepository>(
+      () => TagsRepositoryImpl(sl()),
+    );
+  }
+  if (!sl.isRegistered<GetAllTagsUseCase>()) {
+    sl.registerLazySingleton<GetAllTagsUseCase>(
+      () => GetAllTagsUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<CreateTagUseCase>()) {
+    sl.registerLazySingleton<CreateTagUseCase>(
+      () => CreateTagUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<TagsCubit>()) {
+    sl.registerLazySingleton<TagsCubit>(
+      () => TagsCubit(
+        getAllTagsUseCase: sl(),
+        createTagUseCase: sl(),
+      ),
+    );
+  }
 }
 
 @module
@@ -256,4 +397,16 @@ abstract class FirebaseModule {
 
   @lazySingleton
   GoogleSignIn get googleSignIn => GoogleSignIn();
+  
+  @lazySingleton
+  FirebaseFirestore get firebaseFirestore => FirebaseFirestore.instance;
+  
+  @lazySingleton
+  FirebaseStorage get firebaseStorage => FirebaseStorage.instance;
+  
+  @lazySingleton
+  FirebaseFunctions get firebaseFunctions => FirebaseFunctions.instance;
+  
+  @lazySingleton
+  Uuid get uuid => const Uuid();
 } 

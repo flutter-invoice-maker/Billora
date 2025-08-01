@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'package:injectable/injectable.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+@injectable
 class EmailService {
   static const String _sendGridUrl = 'https://api.sendgrid.com/v3/mail/send';
   

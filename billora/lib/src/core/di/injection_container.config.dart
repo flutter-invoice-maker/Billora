@@ -32,6 +32,8 @@ import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_us
     as _i1057;
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart'
     as _i232;
+import 'package:billora/src/features/invoice/domain/repositories/invoice_repository.dart'
+    as _i364;
 import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart'
     as _i936;
 import 'package:billora/src/features/invoice/domain/usecases/send_firebase_email_usecase.dart'
@@ -40,10 +42,42 @@ import 'package:billora/src/features/invoice/domain/usecases/send_invoice_email_
     as _i888;
 import 'package:billora/src/features/invoice/domain/usecases/upload_invoice_usecase.dart'
     as _i1014;
+import 'package:billora/src/features/suggestions/data/datasources/suggestions_remote_datasource.dart'
+    as _i921;
+import 'package:billora/src/features/suggestions/data/repositories/suggestions_repository_impl.dart'
+    as _i771;
+import 'package:billora/src/features/suggestions/domain/repositories/suggestions_repository.dart'
+    as _i456;
+import 'package:billora/src/features/suggestions/domain/usecases/calculate_suggestion_score_usecase.dart'
+    as _i577;
+import 'package:billora/src/features/suggestions/domain/usecases/get_last_invoice_quantity_usecase.dart'
+    as _i103;
+import 'package:billora/src/features/suggestions/domain/usecases/get_product_suggestions_usecase.dart'
+    as _i671;
+import 'package:billora/src/features/suggestions/domain/usecases/record_product_usage_usecase.dart'
+    as _i227;
+import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart'
+    as _i694;
+import 'package:billora/src/features/tags/data/datasources/tags_remote_datasource.dart'
+    as _i897;
+import 'package:billora/src/features/tags/data/repositories/tags_repository_impl.dart'
+    as _i625;
+import 'package:billora/src/features/tags/domain/repositories/tags_repository.dart'
+    as _i18;
+import 'package:billora/src/features/tags/domain/usecases/create_tag_usecase.dart'
+    as _i281;
+import 'package:billora/src/features/tags/domain/usecases/get_all_tags_usecase.dart'
+    as _i53;
+import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart'
+    as _i989;
+import 'package:cloud_firestore/cloud_firestore.dart' as _i974;
+import 'package:cloud_functions/cloud_functions.dart' as _i809;
 import 'package:firebase_auth/firebase_auth.dart' as _i59;
+import 'package:firebase_storage/firebase_storage.dart' as _i457;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:google_sign_in/google_sign_in.dart' as _i116;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:uuid/uuid.dart' as _i706;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -53,16 +87,38 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final firebaseModule = _$FirebaseModule();
+    gh.factory<_i971.EmailService>(() => _i971.EmailService());
+    gh.factory<_i5.PdfService>(() => _i5.PdfService());
+    gh.factory<_i577.CalculateSuggestionScoreUseCase>(
+      () => _i577.CalculateSuggestionScoreUseCase(),
+    );
     gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
     gh.lazySingleton<_i116.GoogleSignIn>(() => firebaseModule.googleSignIn);
-    gh.factory<_i1014.UploadInvoiceUseCase>(
-      () => _i1014.UploadInvoiceUseCase(gh<_i537.StorageService>()),
+    gh.lazySingleton<_i974.FirebaseFirestore>(
+      () => firebaseModule.firebaseFirestore,
     );
+    gh.lazySingleton<_i457.FirebaseStorage>(
+      () => firebaseModule.firebaseStorage,
+    );
+    gh.lazySingleton<_i809.FirebaseFunctions>(
+      () => firebaseModule.firebaseFunctions,
+    );
+    gh.lazySingleton<_i706.Uuid>(() => firebaseModule.uuid);
     gh.factory<_i936.GeneratePdfUseCase>(
       () => _i936.GeneratePdfUseCase(gh<_i5.PdfService>()),
     );
-    gh.factory<_i1012.SendFirebaseEmailUseCase>(
-      () => _i1012.SendFirebaseEmailUseCase(gh<_i365.FirebaseEmailService>()),
+    gh.factory<_i897.TagsRemoteDataSource>(
+      () => _i897.TagsRemoteDataSourceImpl(
+        gh<_i974.FirebaseFirestore>(),
+        gh<_i59.FirebaseAuth>(),
+        gh<_i706.Uuid>(),
+      ),
+    );
+    gh.factory<_i18.TagsRepository>(
+      () => _i625.TagsRepositoryImpl(gh<_i897.TagsRemoteDataSource>()),
+    );
+    gh.factory<_i103.GetLastInvoiceQuantityUseCase>(
+      () => _i103.GetLastInvoiceQuantityUseCase(gh<_i364.InvoiceRepository>()),
     );
     gh.lazySingleton<_i910.AuthRemoteDataSource>(
       () => _i910.AuthRemoteDataSourceImpl(
@@ -70,11 +126,47 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i116.GoogleSignIn>(),
       ),
     );
+    gh.factory<_i537.StorageService>(
+      () => _i537.StorageService(
+        gh<_i457.FirebaseStorage>(),
+        gh<_i59.FirebaseAuth>(),
+      ),
+    );
     gh.factory<_i888.SendInvoiceEmailUseCase>(
       () => _i888.SendInvoiceEmailUseCase(gh<_i971.EmailService>()),
     );
+    gh.factory<_i365.FirebaseEmailService>(
+      () => _i365.FirebaseEmailService(
+        gh<_i809.FirebaseFunctions>(),
+        gh<_i59.FirebaseAuth>(),
+      ),
+    );
+    gh.factory<_i456.SuggestionsRepository>(
+      () => _i771.SuggestionsRepositoryImpl(
+        gh<_i921.SuggestionsRemoteDataSource>(),
+      ),
+    );
+    gh.factory<_i1014.UploadInvoiceUseCase>(
+      () => _i1014.UploadInvoiceUseCase(gh<_i537.StorageService>()),
+    );
     gh.lazySingleton<_i253.AuthRepository>(
       () => _i1.AuthRepositoryImpl(gh<_i910.AuthRemoteDataSource>()),
+    );
+    gh.factory<_i281.CreateTagUseCase>(
+      () => _i281.CreateTagUseCase(gh<_i18.TagsRepository>()),
+    );
+    gh.factory<_i53.GetAllTagsUseCase>(
+      () => _i53.GetAllTagsUseCase(gh<_i18.TagsRepository>()),
+    );
+    gh.factory<_i1012.SendFirebaseEmailUseCase>(
+      () => _i1012.SendFirebaseEmailUseCase(gh<_i365.FirebaseEmailService>()),
+    );
+    gh.factory<_i671.GetProductSuggestionsUseCase>(
+      () =>
+          _i671.GetProductSuggestionsUseCase(gh<_i456.SuggestionsRepository>()),
+    );
+    gh.factory<_i227.RecordProductUsageUseCase>(
+      () => _i227.RecordProductUsageUseCase(gh<_i456.SuggestionsRepository>()),
     );
     gh.factory<_i361.LoginUseCase>(
       () => _i361.LoginUseCase(gh<_i253.AuthRepository>()),
@@ -84,6 +176,26 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i46.RegisterUseCase>(
       () => _i46.RegisterUseCase(gh<_i253.AuthRepository>()),
+    );
+    gh.factory<_i579.SignInWithAppleUseCase>(
+      () => _i579.SignInWithAppleUseCase(gh<_i253.AuthRepository>()),
+    );
+    gh.factory<_i1057.SignInWithGoogleUseCase>(
+      () => _i1057.SignInWithGoogleUseCase(gh<_i253.AuthRepository>()),
+    );
+    gh.factory<_i694.SuggestionsCubit>(
+      () => _i694.SuggestionsCubit(
+        getProductSuggestionsUseCase: gh<_i671.GetProductSuggestionsUseCase>(),
+        recordProductUsageUseCase: gh<_i227.RecordProductUsageUseCase>(),
+        calculateSuggestionScoreUseCase:
+            gh<_i577.CalculateSuggestionScoreUseCase>(),
+      ),
+    );
+    gh.factory<_i989.TagsCubit>(
+      () => _i989.TagsCubit(
+        getAllTagsUseCase: gh<_i53.GetAllTagsUseCase>(),
+        createTagUseCase: gh<_i281.CreateTagUseCase>(),
+      ),
     );
     gh.factory<_i232.AuthCubit>(
       () => _i232.AuthCubit(

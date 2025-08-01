@@ -21,6 +21,11 @@ import 'package:billora/src/features/product/presentation/cubit/product_cubit.da
 import 'package:billora/src/features/product/presentation/pages/product_catalog_page.dart';
 import 'src/features/invoice/presentation/pages/invoice_list_page.dart';
 import 'src/features/invoice/presentation/cubit/invoice_cubit.dart';
+import 'src/features/bill_scanner/presentation/pages/bill_scanner_hub_page.dart';
+import 'src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
+import 'src/features/suggestions/presentation/pages/suggestions_demo_page.dart';
+import 'src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
+import 'src/features/tags/presentation/cubit/tags_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +60,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Billora',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
@@ -101,8 +107,21 @@ class _MyAppState extends State<MyApp> {
                 BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()..fetchInvoices()),
                 BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
                 BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
+                BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
+                BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
               ],
               child: const InvoiceListPage(),
+            ),
+        '/bill-scanner': (context) => BlocProvider(
+              create: (context) => sl<BillScannerCubit>(),
+              child: const BillScannerHubPage(),
+            ),
+        '/suggestions-demo': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
+                BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+              ],
+              child: const SuggestionsDemoPage(),
             ),
       },
     );
