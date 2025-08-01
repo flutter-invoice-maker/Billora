@@ -11,6 +11,9 @@ import 'package:billora/src/features/invoice/presentation/widgets/invoice_previe
 import 'package:printing/printing.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
+import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
+import 'package:billora/src/core/utils/localization_helper.dart';
 
 class InvoiceListPage extends StatefulWidget {
   const InvoiceListPage({super.key});
@@ -22,6 +25,8 @@ class InvoiceListPage extends StatefulWidget {
 class _InvoiceListPageState extends State<InvoiceListPage> {
   String _searchTerm = '';
   InvoiceStatus? _filterStatus;
+  String? _selectedTag; // Add tag filter
+  List<String> _availableTags = []; // Available tags for filtering
 
   @override
   void initState() {
@@ -30,6 +35,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<InvoiceCubit>().fetchInvoices();
+        context.read<TagsCubit>().getAllTags(); // Load tags
       }
     });
   }
@@ -42,6 +48,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             BlocProvider.value(value: context.read<InvoiceCubit>()),
             BlocProvider.value(value: context.read<CustomerCubit>()),
             BlocProvider.value(value: context.read<ProductCubit>()),
+            BlocProvider.value(value: context.read<SuggestionsCubit>()),
+            BlocProvider.value(value: context.read<TagsCubit>()),
           ],
           child: InvoiceFormPage(invoice: invoice),
         ),
@@ -55,19 +63,19 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     showDialog(
       context: parentContext,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Invoice'),
-        content: const Text('Are you sure you want to delete this invoice?'),
+        title: Text(LocalizationHelper.getLocalizedString(context, 'deleteInvoice')),
+        content: Text(LocalizationHelper.getLocalizedString(context, 'deleteInvoiceConfirm')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(LocalizationHelper.getLocalizedString(context, 'invoiceCancel')),
           ),
           TextButton(
             onPressed: () {
               parentContext.read<InvoiceCubit>().deleteInvoice(invoice.id);
               Navigator.of(dialogContext).pop();
             },
-            child: const Text('Delete'),
+            child: Text(LocalizationHelper.getLocalizedString(context, 'delete')),
           ),
         ],
       ),
@@ -85,19 +93,6 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
         ),
       ),
     );
-  }
-
-  String _getTemplateName(String? templateId) {
-    switch (templateId) {
-      case 'template_a':
-        return 'Template A';
-      case 'template_b':
-        return 'Template B';
-      case 'template_c':
-        return 'Template C';
-      default:
-        return 'Default';
-    }
   }
 
   void _showShareOptions(BuildContext context, Invoice invoice, InvoiceCubit cubit) {
@@ -120,25 +115,28 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             // Option 1: Generate & Download
             ListTile(
               leading: const Icon(Icons.download_outlined, color: Colors.blue),
-              title: const Text('Download PDF'),
-              subtitle: const Text('Save to your device'),
+              title: Text(LocalizationHelper.getLocalizedString(context, 'downloadPdf')),
+              subtitle: Text(LocalizationHelper.getLocalizedString(context, 'saveToDevice')),
               onTap: () async {
                 Navigator.pop(context);
                 final scaffold = ScaffoldMessenger.of(context);
+                final pdfReadyText = LocalizationHelper.getLocalizedString(context, 'pdfReady');
+                final failedToGenerateText = LocalizationHelper.getLocalizedString(context, 'failedToGeneratePdf');
+                
                 scaffold.showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Row(
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                        SizedBox(width: 16),
-                        Text('Generating PDF...'),
+                        const SizedBox(width: 16),
+                        Text(LocalizationHelper.getLocalizedString(context, 'generatingPdf')),
                       ],
                     ),
-                    duration: Duration(seconds: 1),
+                    duration: const Duration(seconds: 1),
                   ),
                 );
                 
@@ -148,16 +146,16 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   
                   if (!mounted) return;
                   scaffold.showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text('PDF ready for download!'),
+                          const Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Text(pdfReadyText),
                         ],
                       ),
                       backgroundColor: Colors.green,
-                      duration: Duration(seconds: 2),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                 } catch (e) {
@@ -168,7 +166,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                         children: [
                           const Icon(Icons.error, color: Colors.white),
                           const SizedBox(width: 8),
-                          Expanded(child: Text('Failed to generate PDF: ${e.toString()}')),
+                          Expanded(child: Text('$failedToGenerateText: ${e.toString()}')),
                         ],
                       ),
                       backgroundColor: Colors.red,
@@ -183,25 +181,29 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             if (!kIsWeb)
               ListTile(
                 leading: const Icon(Icons.link_outlined, color: Colors.green),
-                title: const Text('Create Shareable Link'),
-                subtitle: const Text('Upload and get a link to share'),
+                title: Text(LocalizationHelper.getLocalizedString(context, 'createShareableLink')),
+                subtitle: Text(LocalizationHelper.getLocalizedString(context, 'uploadAndGetLink')),
                 onTap: () async {
                   Navigator.pop(context);
                   final scaffold = ScaffoldMessenger.of(context);
+                  final creatingLinkText = LocalizationHelper.getLocalizedString(context, 'creatingLink');
+                  final linkCreatedText = LocalizationHelper.getLocalizedString(context, 'linkCreated');
+                  final failedToCreateText = LocalizationHelper.getLocalizedString(context, 'failedToCreateLink');
+                  
                   scaffold.showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Row(
                         children: [
-                          SizedBox(
+                          const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           ),
-                          SizedBox(width: 16),
-                          Text('Creating shareable link...'),
+                          const SizedBox(width: 16),
+                          Text(creatingLinkText),
                         ],
                       ),
-                      duration: Duration(seconds: 2),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                   
@@ -221,7 +223,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                           children: [
                             const Icon(Icons.check_circle, color: Colors.white),
                             const SizedBox(width: 8),
-                            const Expanded(child: Text('Shareable link created! Link copied to clipboard.')),
+                            Expanded(child: Text(linkCreatedText)),
                           ],
                         ),
                         backgroundColor: Colors.green,
@@ -236,7 +238,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                           children: [
                             const Icon(Icons.error, color: Colors.white),
                             const SizedBox(width: 8),
-                            Expanded(child: Text('Failed to create link: ${e.toString()}')),
+                            Expanded(child: Text('$failedToCreateText: ${e.toString()}')),
                           ],
                         ),
                         backgroundColor: Colors.red,
@@ -250,76 +252,107 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             // Option 3: Send via Email (Mobile only due to CORS)
             ListTile(
               leading: Icon(Icons.email_outlined, color: kIsWeb ? Colors.grey : Colors.orange),
-              title: Text('Send via Email'),
+              title: Text(LocalizationHelper.getLocalizedString(context, 'sendViaEmail')),
               subtitle: Text(kIsWeb ? 'Not available on web due to CORS restrictions' : 'Email with PDF attachment'),
               enabled: !kIsWeb,
                               onTap: kIsWeb ? null : () async {
-                  Navigator.pop(context);
-                  
-                  // Store ScaffoldMessenger before async operations
+                  // Lưu tất cả localized strings và scaffold trước async operations
                   final scaffold = ScaffoldMessenger.of(context);
+                  final sendInvoiceText = LocalizationHelper.getLocalizedString(context, 'sendInvoice');
+                  final emailText = LocalizationHelper.getLocalizedString(context, 'email');
+                  final cancelText = LocalizationHelper.getLocalizedString(context, 'invoiceCancel');
+                  final sendText = LocalizationHelper.getLocalizedString(context, 'send');
+                  final sendingEmailText = LocalizationHelper.getLocalizedString(context, 'sendingEmail');
+                  final emailSentText = LocalizationHelper.getLocalizedString(context, 'emailSentSuccessfully');
+                  final failedToSendText = LocalizationHelper.getLocalizedString(context, 'failedToSendEmail');
                   
-                  final email = await _promptEmail(context);
-                  if (email == null || email.isEmpty) return;
-                
-                scaffold.showSnackBar(
-                  const SnackBar(
-                    content: Row(
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  // Tạo dialog với localized strings đã lưu
+                  final controller = TextEditingController();
+                  final email = await showDialog<String>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(sendInvoiceText),
+                      content: TextField(
+                        controller: controller,
+                        decoration: InputDecoration(
+                          labelText: emailText,
+                          hintText: 'Enter recipient email',
                         ),
-                        SizedBox(width: 16),
-                        Text('Sending email...'),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(cancelText),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(controller.text),
+                          child: Text(sendText),
+                        ),
                       ],
                     ),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-                
-                try {
-                  final pdfData = await cubit.generatePdf(invoice);
-                  await cubit.sendEmail(
-                    toEmail: email,
-                    subject: 'Invoice #${invoice.id} - Billora',
-                    body: 'Dear Customer,\n\nPlease find attached your invoice #${invoice.id}.\n\nThank you for your business!\n\nBest regards,\nBillora Team',
-                    pdfData: pdfData,
-                    fileName: 'invoice_${invoice.id}.pdf',
                   );
                   
-                  if (!mounted) return;
+                  if (email == null || email.isEmpty) return;
+                  
                   scaffold.showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
-                          const Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('Email sent successfully to $email')),
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(sendingEmailText),
                         ],
                       ),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 4),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
-                } catch (e) {
-                  if (!mounted) return;
-                  scaffold.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.error, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('Failed to send email: ${e.toString()}')),
-                        ],
+                  
+                  try {
+                    final pdfData = await cubit.generatePdf(invoice);
+                    await cubit.sendEmail(
+                      toEmail: email,
+                      subject: 'Invoice #${invoice.id} - Billora',
+                      body: 'Dear Customer,\n\nPlease find attached your invoice #${invoice.id}.\n\nThank you for your business!\n\nBest regards,\nBillora Team',
+                      pdfData: pdfData,
+                      fileName: 'invoice_${invoice.id}.pdf',
+                    );
+                    
+                    if (!mounted) return;
+                    scaffold.showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text('$emailSentText $email')),
+                          ],
+                        ),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 4),
                       ),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 4),
-                    ),
-                  );
-                }
-              },
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    scaffold.showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.error, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text('$failedToSendText: ${e.toString()}')),
+                          ],
+                        ),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                },
             ),
             
 
@@ -329,37 +362,15 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     );
   }
 
-  Future<String?> _promptEmail(BuildContext context) async {
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Send Invoice'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Email Address',
-            hintText: 'Enter recipient email',
-          ),
-          keyboardType: TextInputType.emailAddress,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Send'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      return const Scaffold(
+        body: Center(child: Text('Localization not available')),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(loc.invoiceListTitle),
@@ -380,10 +391,11 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                 // Search Bar
                 TextField(
                   decoration: InputDecoration(
-                    hintText: 'Search by customer or invoice ID',
+                    hintText: LocalizationHelper.getLocalizedString(context, 'searchInvoices'),
                     prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -403,10 +415,10 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<InvoiceStatus?>(
                       value: _filterStatus,
-                      hint: const Text('Filter by Status'),
+                      hint: Text(LocalizationHelper.getLocalizedString(context, 'filterByStatus')),
                       isExpanded: true,
                       items: [
-                        const DropdownMenuItem<InvoiceStatus?>(value: null, child: Text('All Status')),
+                        DropdownMenuItem<InvoiceStatus?>(value: null, child: Text(LocalizationHelper.getLocalizedString(context, 'allStatus'))),
                         ...InvoiceStatus.values.map((s) => DropdownMenuItem(
                           value: s,
                           child: Text(s.name.toUpperCase()),
@@ -415,6 +427,39 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                       onChanged: (status) => setState(() => _filterStatus = status),
                     ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                // Tag Filter
+                BlocBuilder<TagsCubit, TagsState>(
+                  builder: (context, tagsState) {
+                    if (tagsState is TagsLoaded) {
+                      _availableTags = tagsState.tags.map((tag) => tag.name).toList();
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String?>(
+                            value: _selectedTag,
+                            hint: Text(LocalizationHelper.getLocalizedString(context, 'filterByTag')),
+                            isExpanded: true,
+                            items: [
+                              DropdownMenuItem<String?>(value: null, child: Text(LocalizationHelper.getLocalizedString(context, 'allTags'))),
+                              ..._availableTags.map((tag) => DropdownMenuItem(
+                                value: tag,
+                                child: Text(tag),
+                              )),
+                            ],
+                            onChanged: (tag) => setState(() => _selectedTag = tag),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
               ],
             ),
@@ -428,22 +473,35 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   initial: () => const Center(child: CircularProgressIndicator()),
                   loading: () => const Center(child: CircularProgressIndicator()),
                   loaded: (invoices) {
-                    // Filter invoices based on search term and status
+                    // Filter invoices based on search term, status, and tag
                     final filteredInvoices = invoices.where((invoice) {
+                      final searchLower = _searchTerm.toLowerCase();
+                      
                       final matchesSearch = _searchTerm.isEmpty ||
-                          invoice.id.toLowerCase().contains(_searchTerm.toLowerCase()) ||
-                          invoice.customerName.toLowerCase().contains(_searchTerm.toLowerCase());
+                          invoice.id.toLowerCase().contains(searchLower) ||
+                          invoice.customerName.toLowerCase().contains(searchLower) ||
+                          invoice.tags.any((tag) => tag.toLowerCase().contains(searchLower)) ||
+                          invoice.searchKeywords.any((keyword) => keyword.contains(searchLower));
                       
                       final matchesStatus = _filterStatus == null || invoice.status == _filterStatus;
                       
-                      return matchesSearch && matchesStatus;
+                      final matchesTag = _selectedTag == null || invoice.tags.contains(_selectedTag);
+                      
+                      // Debug tags
+                      if (_selectedTag != null) {
+                        debugPrint('🔍 Invoice ${invoice.id} tags: ${invoice.tags}');
+                        debugPrint('🔍 Selected tag: $_selectedTag');
+                        debugPrint('🔍 Matches tag: $matchesTag');
+                      }
+                      
+                      return matchesSearch && matchesStatus && matchesTag;
                     }).toList();
 
                     if (filteredInvoices.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
-                          'No invoices found',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                          LocalizationHelper.getLocalizedString(context, 'noInvoicesYet'),
+                          style: const TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       );
                     }
@@ -509,7 +567,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
-                                        invoice.status.name.toUpperCase(),
+                                        _getStatusText(invoice.status),
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 10,
@@ -531,7 +589,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Total: \$${invoice.total.toStringAsFixed(2)}',
+                                            '${LocalizationHelper.getLocalizedString(context, 'invoiceTotal')}: ${LocalizationHelper.formatCurrency(invoice.total, context)}',
                                             style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
@@ -539,21 +597,47 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                             ),
                                           ),
                                           const SizedBox(height: 4),
-                                                                                      Text(
-                                              'Due: ${_formatDate(invoice.dueDate!)}',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          const SizedBox(height: 4),
                                           Text(
-                                            'Template: ${_getTemplateName(invoice.templateId)}',
+                                            '${LocalizationHelper.getLocalizedString(context, 'due')}: ${invoice.dueDate != null ? _formatDate(invoice.dueDate!) : LocalizationHelper.getLocalizedString(context, 'noDueDate')}',
                                             style: const TextStyle(
-                                              fontSize: 12,
+                                              fontSize: 14,
                                               color: Colors.grey,
                                             ),
                                           ),
+                                          
+                                          // Tags
+                                          if (invoice.tags.isNotEmpty) ...[
+                                            const SizedBox(height: 8),
+                                            Wrap(
+                                              spacing: 4,
+                                              runSpacing: 4,
+                                              children: invoice.tags.take(3).map((tag) {
+                                                return Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: _getTagColor(tag),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    tag,
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                            if (invoice.tags.length > 3)
+                                              Text(
+                                                '+${invoice.tags.length - 3} ${LocalizationHelper.getLocalizedString(context, 'more')}',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                              ),
+                                          ],
                                         ],
                                       ),
                                     ),
@@ -574,28 +658,28 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                     // Preview Button
                                     IconButton(
                                       icon: const Icon(Icons.visibility_outlined),
-                                      tooltip: 'Preview',
+                                      tooltip: LocalizationHelper.getLocalizedString(context, 'preview'),
                                       onPressed: () => _previewInvoice(invoice),
                                     ),
                                     
                                     // Share PDF Button
                                     IconButton(
                                       icon: const Icon(Icons.share_outlined),
-                                      tooltip: 'Share PDF',
+                                      tooltip: LocalizationHelper.getLocalizedString(context, 'sharePdf'),
                                       onPressed: () => _showShareOptions(context, invoice, context.read<InvoiceCubit>()),
                                     ),
                                     
                                     // Edit Button
                                     IconButton(
                                       icon: const Icon(Icons.edit),
-                                      tooltip: 'Edit',
+                                      tooltip: LocalizationHelper.getLocalizedString(context, 'edit'),
                                       onPressed: () => _openForm(invoice),
                                     ),
                                     
                                     // Delete Button
                                     IconButton(
                                       icon: const Icon(Icons.delete_outline),
-                                      tooltip: 'Delete',
+                                      tooltip: LocalizationHelper.getLocalizedString(context, 'delete'),
                                       onPressed: () => _deleteInvoice(context, invoice),
                                     ),
                                   ],
@@ -632,7 +716,39 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     }
   }
 
+  Color _getTagColor(String tag) {
+    // Generate consistent color based on tag name
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.red,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+    ];
+    
+    final index = tag.hashCode % colors.length;
+    return colors[index];
+  }
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  String _getStatusText(InvoiceStatus status) {
+    switch (status) {
+      case InvoiceStatus.draft:
+        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusDraft');
+      case InvoiceStatus.sent:
+        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusSent');
+      case InvoiceStatus.paid:
+        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusPaid');
+      case InvoiceStatus.overdue:
+        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusOverdue');
+      case InvoiceStatus.cancelled:
+        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusCancelled');
+    }
   }
 }

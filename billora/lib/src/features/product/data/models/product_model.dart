@@ -1,4 +1,5 @@
 import '../../domain/entities/product.dart';
+import 'dart:math';
 
 class ProductModel {
   final String id;
@@ -25,8 +26,15 @@ class ProductModel {
     this.searchKeywords = const [],
   });
 
-  factory ProductModel.fromJson(Map<String, dynamic> json) => ProductModel(
-        id: json['id'] ?? '',
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    String generateUniqueId() {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final random = Random().nextInt(9999);
+      return '${timestamp}_$random';
+    }
+    
+    return ProductModel(
+        id: json['id']?.toString().isNotEmpty == true ? json['id'].toString() : generateUniqueId(),
         name: json['name'] ?? '',
         description: json['description'],
         price: (json['price'] ?? 0).toDouble(),
@@ -37,6 +45,7 @@ class ProductModel {
         userId: json['userId'] ?? '',
         searchKeywords: List<String>.from(json['searchKeywords'] ?? []),
       );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,

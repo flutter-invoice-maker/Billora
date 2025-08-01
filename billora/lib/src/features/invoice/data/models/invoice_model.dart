@@ -15,6 +15,8 @@ class InvoiceModel {
   final DateTime? paidAt;
   final String? note;
   final String? templateId;
+  final List<String> tags;
+  final List<String> searchKeywords;
 
   InvoiceModel({
     required this.id,
@@ -30,6 +32,8 @@ class InvoiceModel {
     this.paidAt,
     this.note,
     this.templateId,
+    this.tags = const [],
+    this.searchKeywords = const [],
   });
 
   factory InvoiceModel.fromJson(Map<String, dynamic> json) => InvoiceModel(
@@ -48,6 +52,8 @@ class InvoiceModel {
         paidAt: json['paidAt'] != null ? DateTime.tryParse(json['paidAt']) : null,
         note: json['note'],
         templateId: json['templateId'],
+        tags: List<String>.from(json['tags'] ?? []),
+        searchKeywords: List<String>.from(json['searchKeywords'] ?? []),
       );
 
   Map<String, dynamic> toJson() => {
@@ -64,6 +70,8 @@ class InvoiceModel {
         'paidAt': paidAt?.toIso8601String(),
         'note': note,
         'templateId': templateId,
+        'tags': tags,
+        'searchKeywords': searchKeywords,
       };
 
   Invoice toEntity() => Invoice(
@@ -83,6 +91,8 @@ class InvoiceModel {
         paidAt: paidAt,
         note: note,
         templateId: templateId,
+        tags: tags,
+        searchKeywords: searchKeywords,
       );
 
   factory InvoiceModel.fromEntity(Invoice invoice) => InvoiceModel(
@@ -99,6 +109,8 @@ class InvoiceModel {
         paidAt: invoice.paidAt,
         note: invoice.note,
         templateId: invoice.templateId,
+        tags: invoice.tags,
+        searchKeywords: invoice.searchKeywords,
       );
 }
 

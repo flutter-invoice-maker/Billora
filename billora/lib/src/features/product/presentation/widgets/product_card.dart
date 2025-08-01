@@ -1,7 +1,8 @@
-import 'package:billora/src/features/product/domain/entities/product.dart';
-import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:billora/src/features/product/domain/entities/product.dart';
+import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
+import 'package:billora/src/core/utils/localization_helper.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -36,24 +37,19 @@ class ProductCard extends StatelessWidget {
                   context: context,
                   builder: (BuildContext dialogContext) {
                     return AlertDialog(
-                      title: const Text('Confirm Deletion'),
-                      content: Text(
-                          'Are you sure you want to delete "${product.name}"?'),
-                      actions: <Widget>[
+                      title: Text(LocalizationHelper.getLocalizedString(context, 'confirmDeletion')),
+                      content: Text('Are you sure you want to delete ${product.name}?'),
+                      actions: [
                         TextButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(dialogContext).pop();
-                          },
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(LocalizationHelper.getLocalizedString(context, 'invoiceCancel')),
                         ),
                         TextButton(
-                          child: const Text('Delete'),
                           onPressed: () {
-                            context
-                                .read<ProductCubit>()
-                                .deleteProduct(product.id);
-                            Navigator.of(dialogContext).pop();
+                            context.read<ProductCubit>().deleteProduct(product.id);
+                            Navigator.of(context).pop();
                           },
+                          child: Text(LocalizationHelper.getLocalizedString(context, 'delete')),
                         ),
                       ],
                     );

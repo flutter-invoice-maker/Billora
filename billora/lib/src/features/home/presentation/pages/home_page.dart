@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/widgets/language_switcher.dart';
+import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
+import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
+import 'package:billora/src/core/di/injection_container.dart';
+import 'package:billora/src/core/utils/localization_helper.dart';
 
 class HomePage extends StatelessWidget {
   final void Function(Locale)? onLocaleChanged;
@@ -8,36 +12,46 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     final menu = [
       _MenuItem(
         icon: Icons.people_alt_rounded,
-        label: loc.homeTitle,
+        label: LocalizationHelper.getLocalizedString(context, 'homeTitle'),
         route: '/customers',
         color: Colors.blueAccent,
       ),
       _MenuItem(
         icon: Icons.inventory_2_rounded,
-        label: loc.productMenu,
+        label: LocalizationHelper.getLocalizedString(context, 'productMenu'),
         route: '/products',
         color: Colors.deepPurple,
       ),
       _MenuItem(
         icon: Icons.receipt_long,
-        label: loc.invoiceListTitle,
+        label: LocalizationHelper.getLocalizedString(context, 'invoiceListTitle'),
         route: '/invoices',
         color: Colors.green,
       ),
+      _MenuItem(
+        icon: Icons.document_scanner,
+        label: LocalizationHelper.getLocalizedString(context, 'billScanner'),
+        route: '/bill-scanner',
+        color: Colors.orange,
+      ),
     ];
-    return Scaffold(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
+        BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+      ],
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(loc.homeTitle),
+        title: Text(LocalizationHelper.getLocalizedString(context, 'homeTitle')),
         actions: [
           LanguageSwitcher(onLocaleChanged: onLocaleChanged),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-            tooltip: loc.logout,
+            tooltip: LocalizationHelper.getLocalizedString(context, 'logout'),
           ),
         ],
       ),
@@ -55,6 +69,7 @@ class HomePage extends StatelessWidget {
             final item = menu[index];
             return _AnimatedMenuCard(item: item);
           },
+        ),
         ),
       ),
     );

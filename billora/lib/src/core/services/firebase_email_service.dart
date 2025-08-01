@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'package:injectable/injectable.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+@injectable
 class FirebaseEmailService {
   final FirebaseFunctions _functions;
   final FirebaseAuth _auth;

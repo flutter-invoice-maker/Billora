@@ -1,10 +1,12 @@
 import 'dart:typed_data';
+import 'package:injectable/injectable.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' show TableHelper;
 import '../../features/invoice/domain/entities/invoice.dart';
 import '../../features/invoice/domain/entities/invoice_item.dart';
 
+@injectable
 class PdfService {
   Future<Uint8List> generateInvoicePdf(Invoice invoice) async {
     final pdf = pw.Document();

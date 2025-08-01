@@ -1,7 +1,9 @@
+import 'package:injectable/injectable.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+@injectable
 class StorageService {
   final FirebaseStorage storage;
   final FirebaseAuth auth;
