@@ -1,4 +1,4 @@
-import '../entities/product.dart';
+import '../../domain/entities/product.dart';
 import 'package:billora/src/core/utils/typedef.dart';
 
 abstract class ProductRepository {
@@ -8,4 +8,5 @@ abstract class ProductRepository {
   ResultFuture<void> deleteProduct(String id);
   ResultFuture<List<Product>> searchProducts(String query);
   ResultFuture<List<String>> getCategories();
+  ResultFuture<void> updateProductInventory(String productId, int quantity);
 } 

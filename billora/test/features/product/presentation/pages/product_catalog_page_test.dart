@@ -9,6 +9,7 @@ import 'package:billora/src/features/product/domain/usecases/update_product_usec
 import 'package:billora/src/features/product/domain/usecases/delete_product_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/search_products_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/get_categories_usecase.dart';
+import 'package:billora/src/features/product/domain/usecases/update_product_inventory_usecase.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:dartz/dartz.dart';
@@ -20,6 +21,7 @@ class MockUpdateProductUseCase extends Mock implements UpdateProductUseCase {}
 class MockDeleteProductUseCase extends Mock implements DeleteProductUseCase {}
 class MockSearchProductsUseCase extends Mock implements SearchProductsUseCase {}
 class MockGetCategoriesUseCase extends Mock implements GetCategoriesUseCase {}
+class MockUpdateProductInventoryUseCase extends Mock implements UpdateProductInventoryUseCase {}
 
 class FakeProduct extends Fake implements Product {}
 
@@ -34,6 +36,7 @@ void main() {
   late MockDeleteProductUseCase deleteProductUseCase;
   late MockSearchProductsUseCase searchProductsUseCase;
   late MockGetCategoriesUseCase getCategoriesUseCase;
+  late MockUpdateProductInventoryUseCase updateProductInventoryUseCase;
 
   setUp(() {
     getProductsUseCase = MockGetProductsUseCase();
@@ -42,6 +45,7 @@ void main() {
     deleteProductUseCase = MockDeleteProductUseCase();
     searchProductsUseCase = MockSearchProductsUseCase();
     getCategoriesUseCase = MockGetCategoriesUseCase();
+    updateProductInventoryUseCase = MockUpdateProductInventoryUseCase();
     cubit = ProductCubit(
       getProductsUseCase: getProductsUseCase,
       createProductUseCase: createProductUseCase,
@@ -49,6 +53,7 @@ void main() {
       deleteProductUseCase: deleteProductUseCase,
       searchProductsUseCase: searchProductsUseCase,
       getCategoriesUseCase: getCategoriesUseCase,
+      updateProductInventoryUseCase: updateProductInventoryUseCase,
     );
     when(() => getProductsUseCase.call()).thenAnswer((_) async => Right(<Product>[]));
     when(() => createProductUseCase.call(any())).thenAnswer((_) async => const Right(null));

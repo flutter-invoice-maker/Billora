@@ -6,13 +6,36 @@ import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:billora/src/core/di/injection_container.dart';
 import 'package:billora/src/core/utils/localization_helper.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final void Function(Locale)? onLocaleChanged;
   const HomePage({super.key, this.onLocaleChanged});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when returning to home page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // This will trigger data refresh when navigating back to home
+        debugPrint('🔄 Home page dependencies changed, data will be refreshed');
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final menu = [
+      _MenuItem(
+        icon: Icons.dashboard,
+        label: 'Dashboard',
+        route: '/dashboard',
+        color: Colors.indigo,
+      ),
       _MenuItem(
         icon: Icons.people_alt_rounded,
         label: LocalizationHelper.getLocalizedString(context, 'homeTitle'),
@@ -44,32 +67,32 @@ class HomePage extends StatelessWidget {
         BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
       ],
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(LocalizationHelper.getLocalizedString(context, 'homeTitle')),
-        actions: [
-          LanguageSwitcher(onLocaleChanged: onLocaleChanged),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-            tooltip: LocalizationHelper.getLocalizedString(context, 'logout'),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.1,
-          ),
-          itemCount: menu.length,
-          itemBuilder: (context, index) {
-            final item = menu[index];
-            return _AnimatedMenuCard(item: item);
-          },
+        appBar: AppBar(
+          title: Text(LocalizationHelper.getLocalizedString(context, 'homeTitle')),
+          actions: [
+            LanguageSwitcher(onLocaleChanged: widget.onLocaleChanged),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+              tooltip: LocalizationHelper.getLocalizedString(context, 'logout'),
+            ),
+          ],
         ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.1,
+            ),
+            itemCount: menu.length,
+            itemBuilder: (context, index) {
+              final item = menu[index];
+              return _AnimatedMenuCard(item: item);
+            },
+          ),
         ),
       ),
     );

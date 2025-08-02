@@ -521,6 +521,18 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
                             debugPrint('❌ Product ID is empty for product: ${product.name}');
                             return;
                           }
+                          
+                          // Check inventory for non-service products
+                          if (!product.isService && product.inventory <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.name} hiện không có trong kho'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
+                          
                           widget.onProductSelected(product);
                         }
                       },
@@ -634,6 +646,29 @@ class _ProductCard extends StatelessWidget {
                   color: Colors.green.shade700,
                 ),
               ),
+              
+              const SizedBox(height: 4),
+              
+              // Inventory (only for non-service products)
+              if (!product.isService)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.inventory_2,
+                      size: 12,
+                      color: product.inventory > 0 ? Colors.blue.shade600 : Colors.red.shade600,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${product.inventory}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: product.inventory > 0 ? Colors.blue.shade700 : Colors.red.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               
               const SizedBox(height: 4),
               

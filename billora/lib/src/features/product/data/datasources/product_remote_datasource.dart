@@ -9,6 +9,7 @@ abstract class ProductRemoteDatasource {
   Future<void> deleteProduct(String id);
   Future<List<ProductModel>> searchProducts(String query);
   Future<List<String>> getCategories();
+  Future<void> updateProductInventory(String productId, int quantity);
 }
 
 class ProductRemoteDatasourceImpl implements ProductRemoteDatasource {
@@ -52,6 +53,13 @@ class ProductRemoteDatasourceImpl implements ProductRemoteDatasource {
   @override
   Future<void> deleteProduct(String id) async {
     await firestore.collection('products').doc(id).delete();
+  }
+
+  @override
+  Future<void> updateProductInventory(String productId, int quantity) async {
+    await firestore.collection('products').doc(productId).update({
+      'inventory': quantity,
+    });
   }
 
   @override

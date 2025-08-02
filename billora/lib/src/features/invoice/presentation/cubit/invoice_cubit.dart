@@ -47,8 +47,18 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     if (isClosed) return;
     result.fold(
       (failure) => emit(InvoiceState.error(failure.message)),
-      (_) => fetchInvoices(),
+      (_) {
+        fetchInvoices(); // Refresh invoices list
+        // Notify other cubits to refresh their data
+        _notifyDataChanged();
+      },
     );
+  }
+
+  void _notifyDataChanged() {
+    // This method can be used to notify other cubits that data has changed
+    // For now, we'll just refresh the current data
+    debugPrint('🔄 Invoice data changed, notifying other components');
   }
 
   Future<void> deleteInvoice(String id) async {

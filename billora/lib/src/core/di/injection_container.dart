@@ -20,6 +20,7 @@ import 'package:billora/src/features/product/domain/usecases/update_product_usec
 import 'package:billora/src/features/product/domain/usecases/delete_product_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/search_products_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/get_categories_usecase.dart';
+import 'package:billora/src/features/product/domain/usecases/update_product_inventory_usecase.dart';
 
 import 'package:billora/src/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -76,6 +77,14 @@ import 'package:billora/src/features/tags/data/datasources/tags_remote_datasourc
 import 'package:billora/src/features/tags/domain/usecases/get_all_tags_usecase.dart';
 import 'package:billora/src/features/tags/domain/usecases/create_tag_usecase.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
+
+// Week 8 - Dashboard Dependencies
+import 'package:billora/src/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:billora/src/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:billora/src/features/dashboard/data/datasources/dashboard_remote_datasource.dart';
+import 'package:billora/src/features/dashboard/domain/usecases/get_invoice_stats_usecase.dart';
+import 'package:billora/src/features/dashboard/domain/usecases/export_invoice_report_usecase.dart';
+import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -163,6 +172,11 @@ Future<void> configureDependencies() async {
       () => GetCategoriesUseCase(sl()),
     );
   }
+  if (!sl.isRegistered<UpdateProductInventoryUseCase>()) {
+    sl.registerLazySingleton<UpdateProductInventoryUseCase>(
+      () => UpdateProductInventoryUseCase(sl()),
+    );
+  }
   if (!sl.isRegistered<AuthRemoteDataSource>()) {
     sl.registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImpl(sl<FirebaseAuth>(), sl<GoogleSignIn>()),
@@ -244,6 +258,7 @@ Future<void> configureDependencies() async {
       deleteProductUseCase: sl(),
       searchProductsUseCase: sl(),
       getCategoriesUseCase: sl(),
+      updateProductInventoryUseCase: sl(),
     ));
   }
   if (!sl.isRegistered<PdfService>()) {
@@ -385,6 +400,36 @@ Future<void> configureDependencies() async {
       () => TagsCubit(
         getAllTagsUseCase: sl(),
         createTagUseCase: sl(),
+      ),
+    );
+  }
+
+  // Week 8 - Dashboard Dependencies
+  if (!sl.isRegistered<DashboardRemoteDataSource>()) {
+    sl.registerLazySingleton<DashboardRemoteDataSource>(
+      () => DashboardRemoteDataSourceImpl(sl(), sl()),
+    );
+  }
+  if (!sl.isRegistered<DashboardRepository>()) {
+    sl.registerLazySingleton<DashboardRepository>(
+      () => DashboardRepositoryImpl(sl()),
+    );
+  }
+  if (!sl.isRegistered<GetInvoiceStatsUseCase>()) {
+    sl.registerLazySingleton<GetInvoiceStatsUseCase>(
+      () => GetInvoiceStatsUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<ExportInvoiceReportUseCase>()) {
+    sl.registerLazySingleton<ExportInvoiceReportUseCase>(
+      () => ExportInvoiceReportUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<DashboardCubit>()) {
+    sl.registerLazySingleton<DashboardCubit>(
+      () => DashboardCubit(
+        getInvoiceStatsUseCase: sl(),
+        exportInvoiceReportUseCase: sl(),
       ),
     );
   }

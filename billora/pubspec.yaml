@@ -53,6 +53,14 @@ dependencies:
   flutter_typeahead: ^5.2.0
   flutter_tags_x: ^1.1.0
 
+  # Week 8 - Dashboard & Excel Reporting
+  syncfusion_flutter_charts: ^30.1.42
+  excel: ^2.1.0
+  dio_cache_interceptor: ^4.0.0
+  sentry_flutter: ^9.0.0
+  chips_choice: ^3.0.1
+  fl_chart: ^0.68.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

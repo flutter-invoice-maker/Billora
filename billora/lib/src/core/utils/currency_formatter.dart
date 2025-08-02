@@ -1,4 +1,8 @@
 class CurrencyFormatter {
+  static String format(double amount) {
+    return formatVND(amount, null);
+  }
+  
   static String formatVND(double amount, dynamic loc) {
     if (amount >= 1000000000) {
       return '${(amount / 1000000000).toStringAsFixed(1)}B ₫';
