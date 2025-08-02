@@ -17,6 +17,7 @@ import 'package:billora/src/features/product/domain/usecases/get_categories_usec
 import 'package:billora/src/features/product/domain/usecases/get_products_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/search_products_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/update_product_usecase.dart';
+import 'package:billora/src/features/product/domain/usecases/update_product_inventory_usecase.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/product/presentation/pages/product_catalog_page.dart';
 import 'src/features/invoice/presentation/pages/invoice_list_page.dart';
@@ -26,6 +27,8 @@ import 'src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
 import 'src/features/suggestions/presentation/pages/suggestions_demo_page.dart';
 import 'src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'src/features/tags/presentation/cubit/tags_cubit.dart';
+import 'src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'src/features/dashboard/presentation/pages/dashboard_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,6 +102,7 @@ class _MyAppState extends State<MyApp> {
                 deleteProductUseCase: sl<DeleteProductUseCase>(),
                 searchProductsUseCase: sl<SearchProductsUseCase>(),
                 getCategoriesUseCase: sl<GetCategoriesUseCase>(),
+                updateProductInventoryUseCase: sl<UpdateProductInventoryUseCase>(),
               ),
               child: const ProductCatalogPage(),
             ),
@@ -122,6 +126,16 @@ class _MyAppState extends State<MyApp> {
                 BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
               ],
               child: const SuggestionsDemoPage(),
+            ),
+        '/dashboard': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider<DashboardCubit>(create: (_) => sl<DashboardCubit>()),
+                BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+                BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()..fetchInvoices()),
+                BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
+                BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
+              ],
+              child: const DashboardPage(),
             ),
       },
     );

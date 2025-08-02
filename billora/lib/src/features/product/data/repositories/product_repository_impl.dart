@@ -57,6 +57,16 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  ResultFuture<void> updateProductInventory(String productId, int quantity) async {
+    try {
+      await remoteDatasource.updateProductInventory(productId, quantity);
+      return const Right(null);
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
   ResultFuture<List<Product>> searchProducts(String query) async {
     try {
       final models = await remoteDatasource.searchProducts(query);

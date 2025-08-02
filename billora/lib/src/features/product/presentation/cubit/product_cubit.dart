@@ -6,6 +6,7 @@ import '../../domain/usecases/update_product_usecase.dart';
 import '../../domain/usecases/delete_product_usecase.dart';
 import '../../domain/usecases/search_products_usecase.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
+import '../../domain/usecases/update_product_inventory_usecase.dart';
 import 'product_state.dart';
 
 class ProductCubit extends Cubit<ProductState> {
@@ -15,6 +16,7 @@ class ProductCubit extends Cubit<ProductState> {
   final DeleteProductUseCase deleteProductUseCase;
   final SearchProductsUseCase searchProductsUseCase;
   final GetCategoriesUseCase getCategoriesUseCase;
+  final UpdateProductInventoryUseCase updateProductInventoryUseCase;
 
   ProductCubit({
     required this.getProductsUseCase,
@@ -23,6 +25,7 @@ class ProductCubit extends Cubit<ProductState> {
     required this.deleteProductUseCase,
     required this.searchProductsUseCase,
     required this.getCategoriesUseCase,
+    required this.updateProductInventoryUseCase,
   }) : super(const ProductState.initial());
 
   Future<void> fetchProducts() async {
@@ -77,6 +80,16 @@ class ProductCubit extends Cubit<ProductState> {
     result.fold(
       (failure) => emit(ProductState.error(failure.message)),
       (products) => emit(ProductState.loaded(products)),
+    );
+  }
+
+  Future<void> updateProductInventory(String productId, int quantity) async {
+    if (isClosed) return;
+    final result = await updateProductInventoryUseCase(productId, quantity);
+    if (isClosed) return;
+    result.fold(
+      (failure) => emit(ProductState.error(failure.message)),
+      (_) => fetchProducts(), // Refresh products after inventory update
     );
   }
 

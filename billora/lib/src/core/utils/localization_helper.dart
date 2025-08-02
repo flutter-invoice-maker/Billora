@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
 class LocalizationHelper {
+  static LocalizationHelper of(BuildContext context) {
+    return LocalizationHelper();
+  }
+  
+  String get dashboard => 'Dashboard';
+  
   static String getLocalizedString(BuildContext context, String key) {
     // Get current locale
     final locale = Localizations.localeOf(context);

@@ -16,23 +16,24 @@ class ProductCatalogPage extends StatefulWidget {
 
 class _ProductCatalogPageState extends State<ProductCatalogPage> {
   String? _selectedCategory;
-  List<String> _categories = [];
+  final List<String> _categories = [];
   String _searchTerm = '';
 
   @override
   void initState() {
     super.initState();
     context.read<ProductCubit>().fetchProducts();
-    _loadCategories();
   }
 
-  Future<void> _loadCategories() async {
-    final categories = await context.read<ProductCubit>().getCategories();
-    if (mounted) {
-    setState(() {
-      _categories = categories;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when returning to this page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ProductCubit>().fetchProducts();
+      }
     });
-    }
   }
 
   void _onCategoryChanged(String? value) {

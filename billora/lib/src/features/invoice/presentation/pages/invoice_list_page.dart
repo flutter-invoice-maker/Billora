@@ -31,11 +31,16 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
   @override
   void initState() {
     super.initState();
-    // Delay to avoid calling after widget disposal
+    context.read<InvoiceCubit>().fetchInvoices();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when returning to this page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<InvoiceCubit>().fetchInvoices();
-        context.read<TagsCubit>().getAllTags(); // Load tags
       }
     });
   }

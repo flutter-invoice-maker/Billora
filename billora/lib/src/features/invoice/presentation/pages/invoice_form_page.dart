@@ -199,6 +199,36 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
     try {
       context.read<InvoiceCubit>().addInvoice(invoice);
       
+      // Update product inventory for each item in the invoice
+      for (final item in _items) {
+        try {
+          // Get current product to check inventory
+          final productState = context.read<ProductCubit>().state;
+          productState.when(
+            loaded: (products) {
+              final product = products.firstWhere((p) => p.id == item.productId);
+              if (!product.isService) {
+                final newInventory = product.inventory - item.quantity.toInt();
+                if (newInventory >= 0) {
+                  context.read<ProductCubit>().updateProductInventory(
+                    item.productId, 
+                    newInventory,
+                  );
+                  debugPrint('📦 Updated inventory for ${product.name}: ${product.inventory} -> $newInventory');
+                } else {
+                  debugPrint('⚠️ Warning: Insufficient inventory for ${product.name}');
+                }
+              }
+            },
+            initial: () => debugPrint('Products not loaded yet'),
+            loading: () => debugPrint('Products are loading'),
+            error: (message) => debugPrint('Error loading products: $message'),
+          );
+        } catch (e) {
+          debugPrint('Error updating inventory for ${item.name}: $e');
+        }
+      }
+      
       // Record product usage for smart suggestions after successful save
       for (final item in _items) {
         try {
