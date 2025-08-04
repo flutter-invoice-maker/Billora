@@ -10,7 +10,8 @@ import 'src/core/di/injection_container.dart';
 import 'src/features/customer/presentation/pages/customer_list_page.dart';
 import 'src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'src/features/home/presentation/pages/home_page.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'src/features/onboarding/presentation/pages/onboarding_page.dart';
+
 import 'package:billora/src/features/product/domain/usecases/create_product_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/delete_product_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/get_categories_usecase.dart';
@@ -51,13 +52,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale _locale = const Locale('en');
-
-  void setLocale(Locale locale) {
-    setState(() {
-      _locale = locale;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,23 +61,19 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      locale: _locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: BlocProvider(
-        create: (_) => sl<AuthCubit>(),
-        child: LoginPage(onLocaleChanged: setLocale),
-      ),
+
+      home: const OnboardingPage(),
       routes: {
+        '/onboarding': (context) => const OnboardingPage(),
         '/login': (context) => BlocProvider.value(
               value: sl<AuthCubit>(),
-              child: LoginPage(onLocaleChanged: setLocale),
+              child: LoginPage(),
             ),
         '/register': (context) => BlocProvider.value(
               value: sl<AuthCubit>(),
-              child: RegisterPage(onLocaleChanged: setLocale),
+              child: RegisterPage(),
             ),
-        '/home': (context) => HomePage(onLocaleChanged: setLocale),
+        '/home': (context) => HomePage(),
         '/customers': (context) => BlocProvider(
               create: (context) => CustomerCubit(
                 getCustomersUseCase: sl(),

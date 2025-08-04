@@ -215,7 +215,6 @@ class _BillPreviewPageState extends State<BillPreviewPage> {
   }
   
   void _confirmAndSave() {
-    // TODO: Chuyển dữ liệu đến trang tạo hóa đơn
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(

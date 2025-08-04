@@ -9,7 +9,7 @@ import 'package:billora/src/features/customer/domain/usecases/update_customer_us
 import 'package:billora/src/features/customer/domain/usecases/delete_customer_usecase.dart';
 import 'package:billora/src/features/customer/domain/usecases/search_customers_usecase.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'package:dartz/dartz.dart';
 import 'package:billora/src/features/customer/domain/entities/customer.dart';
 
@@ -55,8 +55,8 @@ void main() {
   testWidgets('CustomerListPage renders search box and add button', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+        
+        
         home: BlocProvider<CustomerCubit>.value(
           value: cubit,
           child: const CustomerListPage(),

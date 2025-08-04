@@ -5,7 +5,7 @@ import '../cubit/product_state.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_card.dart';
 import 'product_form_page.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class ProductCatalogPage extends StatefulWidget {
   const ProductCatalogPage({super.key});
@@ -55,10 +55,10 @@ class _ProductCatalogPageState extends State<ProductCatalogPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.productListTitle),
+        title: Text(AppStrings.productListTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -75,7 +75,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage> {
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
-                      hintText: loc.productSearchHint,
+                      hintText: AppStrings.productSearchHint,
                       prefixIcon: const Icon(Icons.search),
                     ),
                     onChanged: (value) {
@@ -88,7 +88,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage> {
                 const SizedBox(width: 8),
                 DropdownButton<String>(
                   value: _selectedCategory,
-                  hint: Text(loc.productCategory),
+                  hint: Text(AppStrings.productCategory),
                   items: _categories
                       .map((cat) => DropdownMenuItem(
                             value: cat,

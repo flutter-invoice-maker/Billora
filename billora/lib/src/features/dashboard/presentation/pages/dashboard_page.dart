@@ -11,7 +11,7 @@ import 'package:billora/src/features/dashboard/presentation/widgets/filter_panel
 import 'package:billora/src/features/dashboard/presentation/widgets/revenue_chart.dart';
 import 'package:billora/src/features/dashboard/presentation/widgets/tags_pie_chart.dart';
 import 'package:billora/src/core/utils/currency_formatter.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:billora/src/core/di/injection_container.dart';
 import 'package:billora/src/features/invoice/presentation/cubit/invoice_cubit.dart';
@@ -228,7 +228,7 @@ class _DashboardPageState extends State<DashboardPage>
           ),
           const SizedBox(width: 12),
           Text(
-            LocalizationHelper.of(context).dashboard,
+            AppStrings.dashboard,
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 22,
@@ -340,7 +340,7 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Đang tải dữ liệu...',
+                  'Loading data...',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -384,7 +384,7 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Không có dữ liệu',
+                  'No data available',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -478,7 +478,7 @@ class _DashboardPageState extends State<DashboardPage>
               ),
               const SizedBox(height: 20),
               Text(
-                'Đang tạo báo cáo Excel...',
+                'Generating Excel report...',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -487,7 +487,7 @@ class _DashboardPageState extends State<DashboardPage>
               ),
               const SizedBox(height: 8),
               Text(
-                'Vui lòng đợi trong giây lát',
+                'Please wait a moment',
                 style: TextStyle(
                   fontSize: 14,
                   color: isDarkMode ? Colors.white60 : const Color(0xFF718096),
@@ -566,7 +566,7 @@ class _DashboardPageState extends State<DashboardPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Khoảng thời gian',
+                  'Date Range',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -609,28 +609,28 @@ class _DashboardPageState extends State<DashboardPage>
         
         final statsData = [
           {
-            'title': 'Tổng hóa đơn',
+            'title': 'Total Invoices',
             'value': stats.totalInvoices.toString(),
             'icon': Icons.receipt_long_rounded,
             'gradient': [const Color(0xFF667EEA), const Color(0xFF764BA2)],
             'shadowColor': const Color(0xFF667EEA),
           },
           {
-            'title': 'Tổng doanh thu',
+            'title': 'Total Revenue',
             'value': CurrencyFormatter.format(stats.totalRevenue),
             'icon': Icons.trending_up_rounded,
             'gradient': [const Color(0xFF48BB78), const Color(0xFF38A169)],
             'shadowColor': const Color(0xFF48BB78),
           },
           {
-            'title': 'Giá trị TB',
+            'title': 'Average Value',
             'value': CurrencyFormatter.format(stats.averageValue),
             'icon': Icons.analytics_rounded,
             'gradient': [const Color(0xFFED8936), const Color(0xFFDD6B20)],
             'shadowColor': const Color(0xFFED8936),
           },
           {
-            'title': 'Khách hàng mới',
+            'title': 'New Customers',
             'value': stats.newCustomers.toString(),
             'icon': Icons.person_add_alt_1_rounded,
             'gradient': [const Color(0xFF9F7AEA), const Color(0xFF805AD5)],
@@ -769,7 +769,7 @@ class _DashboardPageState extends State<DashboardPage>
         return Column(
           children: [
             _buildChartCard(
-              title: 'Biểu đồ doanh thu',
+              title: 'Revenue Chart',
               icon: Icons.trending_up_rounded,
               gradient: [const Color(0xFF48BB78), const Color(0xFF38A169)],
               height: revenueChartHeight,
@@ -780,10 +780,10 @@ class _DashboardPageState extends State<DashboardPage>
             const SizedBox(height: 20),
             
             _buildChartCard(
-              title: 'Phân bố theo tag',
+              title: 'Tag Distribution',
               icon: Icons.pie_chart_rounded,
               gradient: [const Color(0xFF667EEA), const Color(0xFF764BA2)],
-              height: null, // Cho phép pie chart tự động điều chỉnh chiều cao
+              height: null, // Allow pie chart to auto-adjust height
               isDarkMode: isDarkMode,
               child: TagsPieChart(topTags: stats.topTags),
             ),
@@ -917,7 +917,7 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Xuất báo cáo Excel',
+                  'Export Excel Report',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -968,7 +968,7 @@ class _DashboardPageState extends State<DashboardPage>
             ),
             const SizedBox(height: 24),
             Text(
-              'Có lỗi xảy ra',
+              'An error occurred',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -1012,7 +1012,7 @@ class _DashboardPageState extends State<DashboardPage>
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                     child: Text(
-                      'Thử lại',
+                      'Try Again',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -1086,7 +1086,7 @@ class _DashboardPageState extends State<DashboardPage>
             ),
             const SizedBox(width: 12),
             Text(
-              'Thành công!',
+              'Success!',
               style: TextStyle(
                 color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
                 fontWeight: FontWeight.w700,
@@ -1095,7 +1095,7 @@ class _DashboardPageState extends State<DashboardPage>
           ],
         ),
         content: Text(
-          'File $fileName đã được tạo thành công.',
+          'File $fileName has been created successfully.',
           style: TextStyle(
             color: isDarkMode ? Colors.white70 : const Color(0xFF4A5568),
           ),
@@ -1160,7 +1160,7 @@ class _DashboardPageState extends State<DashboardPage>
             ),
             const SizedBox(width: 12),
             Text(
-              'Lỗi xuất báo cáo',
+              'Export Report Error',
               style: TextStyle(
                 color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
                 fontWeight: FontWeight.w700,
@@ -1252,7 +1252,7 @@ class _DashboardPageState extends State<DashboardPage>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'File $fileName đã được tạo thành công!',
+                'File $fileName has been created successfully!',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                 ),

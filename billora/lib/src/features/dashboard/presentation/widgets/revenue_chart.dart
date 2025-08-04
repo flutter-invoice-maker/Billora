@@ -146,7 +146,7 @@ class _RevenueChartState extends State<RevenueChart>
                       letterSpacing: 0.3,
                     ),
                     title: AxisTitle(
-                      text: 'Thời gian',
+                      text: 'Time',
                       textStyle: TextStyle(
                         color: isDark ? Colors.white60 : const Color(0xFF475569),
                         fontSize: titleFontSize,
@@ -158,7 +158,7 @@ class _RevenueChartState extends State<RevenueChart>
 
                   // Enhanced Primary Y Axis
                   primaryYAxis: NumericAxis(
-                    labelFormat: '{value}₫',
+                    labelFormat: '{value}\$',
                     numberFormat: _getCurrencyFormat(),
                     majorGridLines: MajorGridLines(
                       width: 0.8,
@@ -186,7 +186,7 @@ class _RevenueChartState extends State<RevenueChart>
                       letterSpacing: 0.3,
                     ),
                     title: AxisTitle(
-                      text: 'Doanh thu (₫)',
+                      text: 'Revenue (\$)',
                       textStyle: TextStyle(
                         color: isDark ? Colors.white60 : const Color(0xFF475569),
                         fontSize: titleFontSize,
@@ -205,7 +205,7 @@ class _RevenueChartState extends State<RevenueChart>
                     animationDuration: 400,
                     canShowMarker: true,
                     header: '',
-                    format: 'point.x: point.y₫',
+                    format: 'point.x: point.y\$',
                     shadowColor: Colors.black38,
                     elevation: 12,
                     borderWidth: 1,
@@ -291,7 +291,7 @@ class _RevenueChartState extends State<RevenueChart>
         dataSource: widget.chartData,
         xValueMapper: (ChartDataPoint data, _) => data.date,
         yValueMapper: (ChartDataPoint data, _) => data.value,
-        name: 'Vùng doanh thu',
+        name: 'Revenue Area',
         gradient: primaryGradient,
         borderWidth: 0,
         animationDuration: 800,
@@ -304,7 +304,7 @@ class _RevenueChartState extends State<RevenueChart>
         dataSource: widget.chartData,
         xValueMapper: (ChartDataPoint data, _) => data.date,
         yValueMapper: (ChartDataPoint data, _) => data.value,
-        name: 'Doanh thu',
+        name: 'Revenue',
         color: const Color(0xFF667EEA),
         width: isTablet ? 4.0 : 3.0,
         animationDuration: 1000,
@@ -339,7 +339,7 @@ class _RevenueChartState extends State<RevenueChart>
         dataSource: widget.chartData,
         xValueMapper: (ChartDataPoint data, _) => data.date,
         yValueMapper: (ChartDataPoint data, _) => data.value,
-        name: 'Xu hướng',
+        name: 'Trend',
         color: const Color(0xFF10B981).withValues(alpha: 0.6),
         width: isTablet ? 2.0 : 1.5,
         animationDuration: 1200,
@@ -402,7 +402,7 @@ class _RevenueChartState extends State<RevenueChart>
             ),
             SizedBox(height: isTablet ? 24 : 20),
             Text(
-              'Không có dữ liệu biểu đồ',
+              'No chart data available',
               style: TextStyle(
                 fontSize: isTablet ? 18 : 16,
                 fontWeight: FontWeight.w700,
@@ -412,7 +412,7 @@ class _RevenueChartState extends State<RevenueChart>
             ),
             SizedBox(height: isTablet ? 12 : 8),
             Text(
-              'Dữ liệu sẽ hiển thị khi có giao dịch trong khoảng thời gian được chọn',
+              'Data will appear when there are transactions in the selected time range',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: isTablet ? 14 : 12,
@@ -463,9 +463,9 @@ class _RevenueChartState extends State<RevenueChart>
 
   NumberFormat _getCurrencyFormat() {
     return NumberFormat.currency(
-      locale: 'vi_VN',
+      locale: 'en_US',
       symbol: '',
-      decimalDigits: 0,
+      decimalDigits: 2,
     );
   }
 }

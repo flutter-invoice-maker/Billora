@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class BillScannerHubPage extends StatefulWidget {
   const BillScannerHubPage({super.key});
@@ -38,7 +38,7 @@ class _BillScannerHubPageState extends State<BillScannerHubPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(LocalizationHelper.getLocalizedString(context, 'scanInvoice')),
+        title: Text(AppStrings.scanInvoice),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -49,7 +49,7 @@ class _BillScannerHubPageState extends State<BillScannerHubPage>
             Icon(Icons.info, size: 64, color: Colors.blue.shade600),
             const SizedBox(height: 16),
             Text(
-              LocalizationHelper.getLocalizedString(context, 'scanFeatureTitle'),
+              AppStrings.scanFeatureTitle,
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -58,7 +58,7 @@ class _BillScannerHubPageState extends State<BillScannerHubPage>
             ),
             const SizedBox(height: 8),
             Text(
-              '${LocalizationHelper.getLocalizedString(context, 'scanFeatureMobileOnly')}\n${LocalizationHelper.getLocalizedString(context, 'scanFeatureUseMobile')}',
+              '${AppStrings.scanFeatureMobileOnly}\n${AppStrings.scanFeatureUseMobile}',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
@@ -109,19 +109,19 @@ class _BillScannerHubPageState extends State<BillScannerHubPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(LocalizationHelper.getLocalizedString(context, 'cameraPermission')),
-        content: Text(LocalizationHelper.getLocalizedString(context, 'cameraPermissionMessage')),
+        title: Text(AppStrings.cameraPermission),
+        content: Text(AppStrings.cameraPermissionMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(LocalizationHelper.getLocalizedString(context, 'cancel')),
+            child: Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               openAppSettings();
             },
-            child: Text(LocalizationHelper.getLocalizedString(context, 'settings')),
+            child: Text(AppStrings.settings),
           ),
         ],
       ),

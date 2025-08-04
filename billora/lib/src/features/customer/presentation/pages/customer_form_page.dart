@@ -5,7 +5,7 @@ import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.
 import 'package:billora/src/core/widgets/custom_text_field.dart';
 import 'package:billora/src/core/widgets/custom_button.dart';
 import 'dart:math';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class CustomerFormPage extends StatefulWidget {
   final Customer? customer;
@@ -62,10 +62,9 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.customer == null ? loc.customerAddTitle : loc.customerEditTitle),
+        title: Text(widget.customer == null ? AppStrings.customerAddTitle : AppStrings.customerEditTitle),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -75,30 +74,30 @@ class _CustomerFormPageState extends State<CustomerFormPage> {
             children: [
               CustomTextField(
                 controller: _nameController,
-                label: loc.customerName,
-                validator: (value) => value == null || value.isEmpty ? loc.customerNameRequired : null,
+                label: AppStrings.customerName,
+                validator: (value) => value == null || value.isEmpty ? AppStrings.customerNameRequired : null,
               ),
               const SizedBox(height: 12),
               CustomTextField(
                 controller: _emailController,
-                label: loc.customerEmail,
+                label: AppStrings.customerEmail,
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) => value != null && value.isNotEmpty && !value.contains('@') ? loc.customerEmailInvalid : null,
+                validator: (value) => value != null && value.isNotEmpty && !value.contains('@') ? AppStrings.customerEmailInvalid : null,
               ),
               const SizedBox(height: 12),
               CustomTextField(
                 controller: _phoneController,
-                label: loc.customerPhone,
+                label: AppStrings.customerPhone,
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 12),
               CustomTextField(
                 controller: _addressController,
-                label: loc.customerAddress,
+                label: AppStrings.customerAddress,
               ),
               const SizedBox(height: 24),
               CustomButton(
-                text: widget.customer == null ? loc.customerAddButton : loc.customerUpdateButton,
+                text: widget.customer == null ? AppStrings.customerAddButton : AppStrings.customerUpdateButton,
                 onPressed: _submit,
               ),
             ],

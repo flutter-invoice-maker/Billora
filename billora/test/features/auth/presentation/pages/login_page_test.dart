@@ -9,7 +9,7 @@ import 'package:billora/src/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_apple_usecase.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'package:dartz/dartz.dart';
 import 'package:billora/src/features/auth/domain/entities/user.dart';
 
@@ -52,8 +52,8 @@ void main() {
   testWidgets('LoginPage renders form and login button', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+        
+        
         home: BlocProvider<AuthCubit>.value(
           value: cubit,
           child: const LoginPage(),

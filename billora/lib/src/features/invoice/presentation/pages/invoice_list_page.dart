@@ -4,7 +4,7 @@ import '../cubit/invoice_cubit.dart';
 import '../cubit/invoice_state.dart';
 import '../../domain/entities/invoice.dart';
 import 'invoice_form_page.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/invoice_preview_widget.dart';
@@ -13,7 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+
 
 class InvoiceListPage extends StatefulWidget {
   const InvoiceListPage({super.key});
@@ -68,19 +68,19 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     showDialog(
       context: parentContext,
       builder: (dialogContext) => AlertDialog(
-        title: Text(LocalizationHelper.getLocalizedString(context, 'deleteInvoice')),
-        content: Text(LocalizationHelper.getLocalizedString(context, 'deleteInvoiceConfirm')),
+        title: Text(AppStrings.deleteInvoice),
+        content: Text(AppStrings.deleteInvoiceConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(LocalizationHelper.getLocalizedString(context, 'invoiceCancel')),
+            child: Text(AppStrings.invoiceCancel),
           ),
           TextButton(
             onPressed: () {
               parentContext.read<InvoiceCubit>().deleteInvoice(invoice.id);
               Navigator.of(dialogContext).pop();
             },
-            child: Text(LocalizationHelper.getLocalizedString(context, 'delete')),
+            child: Text(AppStrings.remove),
           ),
         ],
       ),
@@ -120,13 +120,13 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             // Option 1: Generate & Download
             ListTile(
               leading: const Icon(Icons.download_outlined, color: Colors.blue),
-              title: Text(LocalizationHelper.getLocalizedString(context, 'downloadPdf')),
-              subtitle: Text(LocalizationHelper.getLocalizedString(context, 'saveToDevice')),
+              title: Text(AppStrings.downloadPdf),
+              subtitle: Text(AppStrings.saveToDevice),
               onTap: () async {
                 Navigator.pop(context);
                 final scaffold = ScaffoldMessenger.of(context);
-                final pdfReadyText = LocalizationHelper.getLocalizedString(context, 'pdfReady');
-                final failedToGenerateText = LocalizationHelper.getLocalizedString(context, 'failedToGeneratePdf');
+                final pdfReadyText = AppStrings.pdfReady;
+                final failedToGenerateText = AppStrings.failedToGeneratePdf;
                 
                 scaffold.showSnackBar(
                   SnackBar(
@@ -138,7 +138,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         const SizedBox(width: 16),
-                        Text(LocalizationHelper.getLocalizedString(context, 'generatingPdf')),
+                        Text(AppStrings.generatingPdf),
                       ],
                     ),
                     duration: const Duration(seconds: 1),
@@ -186,14 +186,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             if (!kIsWeb)
               ListTile(
                 leading: const Icon(Icons.link_outlined, color: Colors.green),
-                title: Text(LocalizationHelper.getLocalizedString(context, 'createShareableLink')),
-                subtitle: Text(LocalizationHelper.getLocalizedString(context, 'uploadAndGetLink')),
+                title: Text(AppStrings.createShareableLink),
+                subtitle: Text(AppStrings.uploadAndGetLink),
                 onTap: () async {
                   Navigator.pop(context);
                   final scaffold = ScaffoldMessenger.of(context);
-                  final creatingLinkText = LocalizationHelper.getLocalizedString(context, 'creatingLink');
-                  final linkCreatedText = LocalizationHelper.getLocalizedString(context, 'linkCreated');
-                  final failedToCreateText = LocalizationHelper.getLocalizedString(context, 'failedToCreateLink');
+                  final creatingLinkText = AppStrings.creatingLink;
+                  final linkCreatedText = AppStrings.linkCreated;
+                  final failedToCreateText = AppStrings.failedToCreateLink;
                   
                   scaffold.showSnackBar(
                     SnackBar(
@@ -257,19 +257,19 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
             // Option 3: Send via Email (Mobile only due to CORS)
             ListTile(
               leading: Icon(Icons.email_outlined, color: kIsWeb ? Colors.grey : Colors.orange),
-              title: Text(LocalizationHelper.getLocalizedString(context, 'sendViaEmail')),
+              title: Text(AppStrings.sendViaEmail),
               subtitle: Text(kIsWeb ? 'Not available on web due to CORS restrictions' : 'Email with PDF attachment'),
               enabled: !kIsWeb,
                               onTap: kIsWeb ? null : () async {
                   // Lưu tất cả localized strings và scaffold trước async operations
                   final scaffold = ScaffoldMessenger.of(context);
-                  final sendInvoiceText = LocalizationHelper.getLocalizedString(context, 'sendInvoice');
-                  final emailText = LocalizationHelper.getLocalizedString(context, 'email');
-                  final cancelText = LocalizationHelper.getLocalizedString(context, 'invoiceCancel');
-                  final sendText = LocalizationHelper.getLocalizedString(context, 'send');
-                  final sendingEmailText = LocalizationHelper.getLocalizedString(context, 'sendingEmail');
-                  final emailSentText = LocalizationHelper.getLocalizedString(context, 'emailSentSuccessfully');
-                  final failedToSendText = LocalizationHelper.getLocalizedString(context, 'failedToSendEmail');
+                  final sendInvoiceText = AppStrings.sendInvoice;
+                  final emailText = AppStrings.email;
+                  final cancelText = AppStrings.invoiceCancel;
+                  final sendText = AppStrings.send;
+                  final sendingEmailText = AppStrings.sendingEmail;
+                  final emailSentText = AppStrings.emailSentSuccessfully;
+                  final failedToSendText = AppStrings.failedToSendEmail;
                   
                   // Tạo dialog với localized strings đã lưu
                   final controller = TextEditingController();
@@ -369,16 +369,10 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      return const Scaffold(
-        body: Center(child: Text('Localization not available')),
-      );
-    }
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.invoiceListTitle),
+        title: Text(AppStrings.invoiceListTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -396,7 +390,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                 // Search Bar
                 TextField(
                   decoration: InputDecoration(
-                    hintText: LocalizationHelper.getLocalizedString(context, 'searchInvoices'),
+                    hintText: AppStrings.searchInvoices,
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -420,10 +414,10 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<InvoiceStatus?>(
                       value: _filterStatus,
-                      hint: Text(LocalizationHelper.getLocalizedString(context, 'filterByStatus')),
+                      hint: Text(AppStrings.filterByStatus),
                       isExpanded: true,
                       items: [
-                        DropdownMenuItem<InvoiceStatus?>(value: null, child: Text(LocalizationHelper.getLocalizedString(context, 'allStatus'))),
+                        DropdownMenuItem<InvoiceStatus?>(value: null, child: Text(AppStrings.allStatus)),
                         ...InvoiceStatus.values.map((s) => DropdownMenuItem(
                           value: s,
                           child: Text(s.name.toUpperCase()),
@@ -449,10 +443,10 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String?>(
                             value: _selectedTag,
-                            hint: Text(LocalizationHelper.getLocalizedString(context, 'filterByTag')),
+                            hint: Text(AppStrings.filterByTag),
                             isExpanded: true,
                             items: [
-                              DropdownMenuItem<String?>(value: null, child: Text(LocalizationHelper.getLocalizedString(context, 'allTags'))),
+                              DropdownMenuItem<String?>(value: null, child: Text(AppStrings.allTags)),
                               ..._availableTags.map((tag) => DropdownMenuItem(
                                 value: tag,
                                 child: Text(tag),
@@ -505,7 +499,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                     if (filteredInvoices.isEmpty) {
                       return Center(
                         child: Text(
-                          LocalizationHelper.getLocalizedString(context, 'noInvoicesYet'),
+                          AppStrings.noInvoicesYet,
                           style: const TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       );
@@ -594,7 +588,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '${LocalizationHelper.getLocalizedString(context, 'invoiceTotal')}: ${LocalizationHelper.formatCurrency(invoice.total, context)}',
+                                            '${AppStrings.invoiceTotal}: ${invoice.total.toString()}',
                                             style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
@@ -603,7 +597,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            '${LocalizationHelper.getLocalizedString(context, 'due')}: ${invoice.dueDate != null ? _formatDate(invoice.dueDate!) : LocalizationHelper.getLocalizedString(context, 'noDueDate')}',
+                                            '${AppStrings.due}: ${invoice.dueDate != null ? _formatDate(invoice.dueDate!) : AppStrings.noDueDate}',
                                             style: const TextStyle(
                                               fontSize: 14,
                                               color: Colors.grey,
@@ -636,7 +630,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                             ),
                                             if (invoice.tags.length > 3)
                                               Text(
-                                                '+${invoice.tags.length - 3} ${LocalizationHelper.getLocalizedString(context, 'more')}',
+                                                '+${invoice.tags.length - 3} ${AppStrings.more}',
                                                 style: TextStyle(
                                                   fontSize: 10,
                                                   color: Colors.grey.shade600,
@@ -663,28 +657,28 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
                                     // Preview Button
                                     IconButton(
                                       icon: const Icon(Icons.visibility_outlined),
-                                      tooltip: LocalizationHelper.getLocalizedString(context, 'preview'),
+                                      tooltip: AppStrings.preview,
                                       onPressed: () => _previewInvoice(invoice),
                                     ),
                                     
                                     // Share PDF Button
                                     IconButton(
                                       icon: const Icon(Icons.share_outlined),
-                                      tooltip: LocalizationHelper.getLocalizedString(context, 'sharePdf'),
+                                      tooltip: AppStrings.sharePdf,
                                       onPressed: () => _showShareOptions(context, invoice, context.read<InvoiceCubit>()),
                                     ),
                                     
                                     // Edit Button
                                     IconButton(
                                       icon: const Icon(Icons.edit),
-                                      tooltip: LocalizationHelper.getLocalizedString(context, 'edit'),
+                                      tooltip: AppStrings.edit,
                                       onPressed: () => _openForm(invoice),
                                     ),
                                     
                                     // Delete Button
                                     IconButton(
                                       icon: const Icon(Icons.delete_outline),
-                                      tooltip: LocalizationHelper.getLocalizedString(context, 'delete'),
+                                      tooltip: AppStrings.remove,
                                       onPressed: () => _deleteInvoice(context, invoice),
                                     ),
                                   ],
@@ -745,15 +739,15 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
   String _getStatusText(InvoiceStatus status) {
     switch (status) {
       case InvoiceStatus.draft:
-        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusDraft');
+        return AppStrings.invoiceStatusDraft;
       case InvoiceStatus.sent:
-        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusSent');
+        return AppStrings.invoiceStatusSent;
       case InvoiceStatus.paid:
-        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusPaid');
+        return AppStrings.invoiceStatusPaid;
       case InvoiceStatus.overdue:
-        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusOverdue');
+        return AppStrings.invoiceStatusOverdue;
       case InvoiceStatus.cancelled:
-        return LocalizationHelper.getLocalizedString(context, 'invoiceStatusCancelled');
+        return AppStrings.invoiceStatusCancelled;
     }
   }
 }

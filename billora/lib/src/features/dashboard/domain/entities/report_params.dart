@@ -16,8 +16,8 @@ class ReportParams extends Equatable {
     this.customerFilter,
     this.statusFilter,
     this.includeDetails = true,
-    this.currency = 'VND',
-    this.locale = 'vi_VN',
+    this.currency = 'USD',
+    this.locale = 'en_US',
   });
 
   @override
@@ -70,8 +70,8 @@ class ReportParams extends Equatable {
       customerFilter: json['customerFilter'],
       statusFilter: json['statusFilter'],
       includeDetails: json['includeDetails'] ?? true,
-      currency: json['currency'] ?? 'VND',
-      locale: json['locale'] ?? 'vi_VN',
+      currency: json['currency'] ?? 'USD',
+      locale: json['locale'] ?? 'en_US',
     );
   }
 } 

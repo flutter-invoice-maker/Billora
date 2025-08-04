@@ -1,39 +1,39 @@
 class CurrencyFormatter {
   static String format(double amount) {
-    return formatVND(amount, null);
+    return formatUSD(amount, null);
   }
   
-  static String formatVND(double amount, dynamic loc) {
+  static String formatUSD(double amount, dynamic loc) {
     if (amount >= 1000000000) {
-      return '${(amount / 1000000000).toStringAsFixed(1)}B ₫';
+      return '\$${(amount / 1000000000).toStringAsFixed(1)}B';
     } else if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M ₫';
+      return '\$${(amount / 1000000).toStringAsFixed(1)}M';
     } else {
-      return '${amount.toStringAsFixed(0)} ₫';
+      return '\$${amount.toStringAsFixed(2)}';
     }
   }
 
-  static String formatVNDCompact(double amount, dynamic loc) {
+  static String formatUSDCompact(double amount, dynamic loc) {
     if (amount >= 1000000000) {
-      return '${(amount / 1000000000).toStringAsFixed(1)}B ₫';
+      return '\$${(amount / 1000000000).toStringAsFixed(1)}B';
     } else if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M ₫';
+      return '\$${(amount / 1000000).toStringAsFixed(1)}M';
     } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K ₫';
+      return '\$${(amount / 1000).toStringAsFixed(1)}K';
     } else {
-      return '${amount.toStringAsFixed(0)} ₫';
+      return '\$${amount.toStringAsFixed(2)}';
     }
   }
 
-  static String formatVNDWithCommas(double amount, dynamic loc) {
-    final parts = amount.toStringAsFixed(0).split('.');
+  static String formatUSDWithCommas(double amount, dynamic loc) {
+    final parts = amount.toStringAsFixed(2).split('.');
     final integerPart = parts[0];
-    final decimalPart = parts.length > 1 ? parts[1] : '';
+    final decimalPart = parts.length > 1 ? parts[1] : '00';
     
     final formattedInteger = _addCommas(integerPart);
-    final result = decimalPart.isNotEmpty ? '$formattedInteger.$decimalPart' : formattedInteger;
+    final result = '$formattedInteger.$decimalPart';
     
-    return '$result ₫';
+    return '\$$result';
   }
 
   static String _addCommas(String number) {

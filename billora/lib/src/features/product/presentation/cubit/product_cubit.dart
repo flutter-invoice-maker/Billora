@@ -8,6 +8,7 @@ import '../../domain/usecases/search_products_usecase.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
 import '../../domain/usecases/update_product_inventory_usecase.dart';
 import 'product_state.dart';
+import 'package:flutter/foundation.dart';
 
 class ProductCubit extends Cubit<ProductState> {
   final GetProductsUseCase getProductsUseCase;
@@ -29,24 +30,38 @@ class ProductCubit extends Cubit<ProductState> {
   }) : super(const ProductState.initial());
 
   Future<void> fetchProducts() async {
+    debugPrint('🔄 ProductCubit: Starting fetchProducts');
     if (isClosed) return;
     emit(const ProductState.loading());
     final result = await getProductsUseCase();
     if (isClosed) return;
     result.fold(
-      (failure) => emit(ProductState.error(failure.message)),
-      (products) => emit(ProductState.loaded(products)),
+      (failure) {
+        debugPrint('❌ ProductCubit: fetchProducts failed: ${failure.message}');
+        emit(ProductState.error(failure.message));
+      },
+      (products) {
+        debugPrint('✅ ProductCubit: fetchProducts successful, loaded ${products.length} products');
+        emit(ProductState.loaded(products));
+      },
     );
   }
 
   Future<void> addProduct(Product product) async {
+    debugPrint('🔄 ProductCubit: Starting addProduct with ID: ${product.id}');
     if (isClosed) return;
     emit(const ProductState.loading());
     final result = await createProductUseCase(product);
     if (isClosed) return;
     result.fold(
-      (failure) => emit(ProductState.error(failure.message)),
-      (_) => fetchProducts(),
+      (failure) {
+        debugPrint('❌ ProductCubit: addProduct failed: ${failure.message}');
+        emit(ProductState.error(failure.message));
+      },
+      (_) {
+        debugPrint('✅ ProductCubit: addProduct successful, refreshing products');
+        fetchProducts();
+      },
     );
   }
 
@@ -84,12 +99,19 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> updateProductInventory(String productId, int quantity) async {
+    debugPrint('🔄 ProductCubit: Starting inventory update for product $productId to $quantity');
     if (isClosed) return;
     final result = await updateProductInventoryUseCase(productId, quantity);
     if (isClosed) return;
     result.fold(
-      (failure) => emit(ProductState.error(failure.message)),
-      (_) => fetchProducts(), // Refresh products after inventory update
+      (failure) {
+        debugPrint('❌ ProductCubit: Inventory update failed for product $productId: ${failure.message}');
+        emit(ProductState.error(failure.message));
+      },
+      (_) {
+        debugPrint('✅ ProductCubit: Inventory update successful for product $productId, refreshing products');
+        fetchProducts(); // Refresh products after inventory update
+      },
     );
   }
 

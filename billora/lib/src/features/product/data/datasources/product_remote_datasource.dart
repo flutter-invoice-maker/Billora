@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class ProductRemoteDatasource {
   Future<void> createProduct(ProductModel product);
@@ -23,10 +24,14 @@ class ProductRemoteDatasourceImpl implements ProductRemoteDatasource {
     final data = product.toJson()
       ..['userId'] = userId
       ..['searchKeywords'] = keywords;
-    if (product.id.isEmpty) {
-      await firestore.collection('products').add(data);
-    } else {
+    
+    // Always use product.id as document ID for consistency
+    if (product.id.isNotEmpty) {
+      debugPrint('🔄 ProductRemoteDatasource: Creating product with ID: ${product.id}');
       await firestore.collection('products').doc(product.id).set(data);
+      debugPrint('✅ ProductRemoteDatasource: Successfully created product with ID: ${product.id}');
+    } else {
+      throw Exception('Product ID cannot be empty');
     }
   }
 
@@ -37,7 +42,12 @@ class ProductRemoteDatasourceImpl implements ProductRemoteDatasource {
         .collection('products')
         .where('userId', isEqualTo: userId)
         .get();
-    return snapshot.docs.map((doc) => ProductModel.fromJson(doc.data())).toList();
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      // Ensure the id field matches the document ID
+      data['id'] = doc.id;
+      return ProductModel.fromJson(data);
+    }).toList();
   }
 
   @override
@@ -57,9 +67,19 @@ class ProductRemoteDatasourceImpl implements ProductRemoteDatasource {
 
   @override
   Future<void> updateProductInventory(String productId, int quantity) async {
-    await firestore.collection('products').doc(productId).update({
-      'inventory': quantity,
-    });
+    debugPrint('🔄 ProductRemoteDatasource: Updating inventory for product $productId to $quantity');
+    try {
+      // Since we now use product.id as document ID, we can update directly
+      debugPrint('🔍 ProductRemoteDatasource: Updating product with document ID: $productId');
+      
+      await firestore.collection('products').doc(productId).update({
+        'inventory': quantity,
+      });
+      debugPrint('✅ ProductRemoteDatasource: Successfully updated inventory for product $productId to $quantity');
+    } catch (e) {
+      debugPrint('❌ ProductRemoteDatasource: Error updating inventory for product $productId: $e');
+      rethrow;
+    }
   }
 
   @override

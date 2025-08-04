@@ -151,9 +151,9 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
   }
 
   ExtractionResultModel _extractBillDataFromText(String text) {
-    // Patterns cho tiền Việt Nam
-    final vietnamCurrencyPattern = RegExp(
-      r'(\d{1,3}(?:[,.]?\d{3})*)\s*(?:đ|vnd|VND|₫)',
+    // Patterns cho tiền USD
+    final usdCurrencyPattern = RegExp(
+      r'(\d{1,3}(?:[,.]?\d{3})*(?:\.\d{2})?)\s*(?:usd|USD|\$)',
       caseSensitive: false,
     );
     
@@ -170,11 +170,11 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
     // final result = <String, dynamic>{};
     
     // Trích xuất tổng tiền
-    final totalMatches = vietnamCurrencyPattern.allMatches(text);
+    final totalMatches = usdCurrencyPattern.allMatches(text);
     double totalAmount = 0.0;
     if (totalMatches.isNotEmpty) {
       final amounts = totalMatches.map((m) => 
-        _parseVietnameseCurrency(m.group(1)!)
+        _parseUSDCurrency(m.group(1)!)
       ).toList()..sort();
       totalAmount = amounts.last; // Số lớn nhất thường là tổng
     }
@@ -213,7 +213,7 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
     );
   }
 
-  double _parseVietnameseCurrency(String amount) {
+  double _parseUSDCurrency(String amount) {
     return double.parse(amount.replaceAll(RegExp(r'[,.]'), ''));
   }
   
@@ -231,17 +231,17 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
   List<Map<String, dynamic>> _extractLineItems(String text) {
     final items = <Map<String, dynamic>>[];
     final lines = text.split('\n');
-    final vietnamCurrencyPattern = RegExp(
-      r'(\d{1,3}(?:[,.]?\d{3})*)\s*(?:đ|vnd|VND|₫)',
+    final usdCurrencyPattern = RegExp(
+      r'(\d{1,3}(?:[,.]?\d{3})*(?:\.\d{2})?)\s*(?:usd|USD|\$)',
       caseSensitive: false,
     );
     
     for (final line in lines) {
-      final currencyMatches = vietnamCurrencyPattern.allMatches(line);
+      final currencyMatches = usdCurrencyPattern.allMatches(line);
       if (currencyMatches.length >= 2) {
         // Có ít nhất 2 số tiền: giá đơn vị và thành tiền
         final amounts = currencyMatches.map((m) => 
-          _parseVietnameseCurrency(m.group(1)!)
+          _parseUSDCurrency(m.group(1)!)
         ).toList();
         
         items.add({
