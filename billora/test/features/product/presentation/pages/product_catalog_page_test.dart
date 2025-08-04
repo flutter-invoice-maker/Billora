@@ -11,7 +11,7 @@ import 'package:billora/src/features/product/domain/usecases/search_products_use
 import 'package:billora/src/features/product/domain/usecases/get_categories_usecase.dart';
 import 'package:billora/src/features/product/domain/usecases/update_product_inventory_usecase.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'package:dartz/dartz.dart';
 import 'package:billora/src/features/product/domain/entities/product.dart';
 
@@ -66,8 +66,8 @@ void main() {
   testWidgets('ProductCatalogPage renders search box, category dropdown, and add button', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+        
+        
         home: BlocProvider<ProductCubit>.value(
           value: cubit,
           child: const ProductCatalogPage(),

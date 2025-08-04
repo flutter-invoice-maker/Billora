@@ -12,8 +12,8 @@ class AppConstants {
   // Dashboard Constants
   static const int defaultChartDataPoints = 30;
   static const int maxTopTags = 5;
-  static const String defaultCurrency = 'VND';
-  static const String defaultCurrencySymbol = '₫';
+  static const String defaultCurrency = 'USD';
+  static const String defaultCurrencySymbol = '\$';
   
   // Date Range Presets
   static const String today = 'today';

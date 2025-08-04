@@ -209,7 +209,6 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
   }
 
   void _saveAndContinue() {
-    // TODO: Lưu dữ liệu đã sửa và chuyển đến trang tạo hóa đơn
     final correctedBill = widget.scannedBill.copyWith(
       storeName: _storeNameController.text,
       totalAmount: double.tryParse(_totalAmountController.text) ?? 0.0,

@@ -323,8 +323,8 @@ class ExcelService {
 
   static String _formatCurrency(double amount, String currency) {
     final formatter = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: currency == 'VND' ? '₫' : currency,
+      locale: 'en_US',
+      symbol: currency == 'USD' ? '\$' : currency,
     );
     return formatter.format(amount);
   }

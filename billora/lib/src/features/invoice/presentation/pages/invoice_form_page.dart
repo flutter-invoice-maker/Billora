@@ -11,7 +11,7 @@ import 'package:billora/src/features/customer/presentation/cubit/customer_state.
 import 'package:billora/src/features/product/domain/entities/product.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/tags/presentation/widgets/tag_input_widget.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 import 'dart:math';
 
 class InvoiceFormPage extends StatefulWidget {
@@ -68,6 +68,8 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
     // Load suggestions and tags
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        // Ensure products are loaded for inventory updates
+        context.read<ProductCubit>().fetchProducts();
         context.read<SuggestionsCubit>().getProductSuggestions(
           customerId: _customerId,
           searchQuery: '',
@@ -82,6 +84,94 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
     _subtotal = _items.fold(0, (sum, item) => sum + (item.unitPrice * item.quantity));
     _tax = _items.fold(0, (sum, item) => sum + item.tax);
     _total = _subtotal + _tax;
+  }
+
+  void _updateInventoryForItems(List<InvoiceItem> items) {
+    debugPrint('🔄 Starting inventory update for ${items.length} items');
+    for (final item in items) {
+      try {
+        debugPrint('🔄 Processing item: ${item.name} (ID: ${item.productId}) with quantity: ${item.quantity}');
+        // Get current product to check inventory
+        final productState = context.read<ProductCubit>().state;
+        productState.when(
+          loaded: (products) {
+            debugPrint('🔄 Products loaded: ${products.length} products available');
+            try {
+              final product = products.firstWhere((p) => p.id == item.productId);
+              debugPrint('🔄 Found product: ${product.name} with current inventory: ${product.inventory}');
+              if (!product.isService) {
+                final newInventory = product.inventory - item.quantity.toInt();
+                debugPrint('🔄 Calculating new inventory: ${product.inventory} - ${item.quantity.toInt()} = $newInventory');
+                if (newInventory >= 0) {
+                  debugPrint('🔄 Updating inventory for ${product.name}: ${product.inventory} -> $newInventory');
+                  context.read<ProductCubit>().updateProductInventory(
+                    item.productId, 
+                    newInventory,
+                  );
+                  debugPrint('📦 Updated inventory for ${product.name}: ${product.inventory} -> $newInventory');
+                } else {
+                  debugPrint('⚠️ Warning: Insufficient inventory for ${product.name}');
+                }
+              } else {
+                debugPrint('🔄 Product ${product.name} is a service, skipping inventory update');
+              }
+            } catch (e) {
+              debugPrint('❌ Product ${item.name} (ID: ${item.productId}) not found after creation: $e');
+            }
+          },
+          initial: () => debugPrint('❌ Products not loaded yet'),
+          loading: () => debugPrint('⏳ Products are loading'),
+          error: (message) => debugPrint('❌ Error loading products: $message'),
+        );
+      } catch (e) {
+        debugPrint('❌ Error updating inventory for ${item.name}: $e');
+      }
+    }
+    debugPrint('✅ Finished inventory update process');
+  }
+
+  void _ensureProductsExistAndUpdateInventory(List<InvoiceItem> items) {
+    debugPrint('🔄 Starting inventory update for ${items.length} items (existing products)');
+    for (final item in items) {
+      try {
+        debugPrint('🔄 Processing item: ${item.name} (ID: ${item.productId}) with quantity: ${item.quantity}');
+        final productState = context.read<ProductCubit>().state;
+        productState.when(
+          loaded: (products) {
+            debugPrint('🔄 Products loaded: ${products.length} products available');
+            try {
+              final product = products.firstWhere((p) => p.id == item.productId);
+              debugPrint('🔄 Found product: ${product.name} with current inventory: ${product.inventory}');
+              if (!product.isService) {
+                final newInventory = product.inventory - item.quantity.toInt();
+                debugPrint('🔄 Calculating new inventory: ${product.inventory} - ${item.quantity.toInt()} = $newInventory');
+                if (newInventory >= 0) {
+                  debugPrint('🔄 Updating inventory for ${product.name}: ${product.inventory} -> $newInventory');
+                  context.read<ProductCubit>().updateProductInventory(
+                    item.productId, 
+                    newInventory,
+                  );
+                  debugPrint('📦 Updated inventory for ${product.name}: ${product.inventory} -> $newInventory');
+                } else {
+                  debugPrint('⚠️ Warning: Insufficient inventory for ${product.name}');
+                }
+              } else {
+                debugPrint('🔄 Product ${product.name} is a service, skipping inventory update');
+              }
+            } catch (e) {
+              debugPrint('❌ Product ${item.name} (ID: ${item.productId}) not found in products collection');
+              debugPrint('⚠️ Skipping inventory update for ${item.name} - product not in products collection');
+            }
+          },
+          initial: () => debugPrint('❌ Products not loaded yet'),
+          loading: () => debugPrint('⏳ Products are loading'),
+          error: (message) => debugPrint('❌ Error loading products: $message'),
+        );
+      } catch (e) {
+        debugPrint('❌ Error updating inventory for ${item.name}: $e');
+      }
+    }
+    debugPrint('✅ Finished inventory update process for existing products');
   }
 
   void _onProductSelected(Product product, {double? quantity}) {
@@ -193,40 +283,93 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
       searchKeywords: keywords,
     );
     
+    // Debug logging for invoice creation
+    debugPrint('📝 Creating invoice with ID: ${invoice.id}');
+    debugPrint('📝 Customer ID: ${invoice.customerId}');
+    debugPrint('📝 Customer Name: ${invoice.customerName}');
+    debugPrint('📝 Items count: ${invoice.items.length}');
+    debugPrint('📝 Subtotal: ${invoice.subtotal}');
+    debugPrint('📝 Tax: ${invoice.tax}');
+    debugPrint('📝 Total: ${invoice.total}');
+    debugPrint('📝 Status: ${invoice.status.name}');
+    debugPrint('📝 Created At: ${invoice.createdAt}');
+    debugPrint('📝 Due Date: ${invoice.dueDate}');
+    debugPrint('📝 Paid At: ${invoice.paidAt}');
+    debugPrint('📝 Note: ${invoice.note}');
+    debugPrint('📝 Template ID: ${invoice.templateId}');
+    debugPrint('📝 Tags: ${invoice.tags}');
+    debugPrint('📝 Search Keywords: ${invoice.searchKeywords}');
+    
     debugPrint('📝 Saving invoice with tags: $_tags');
     debugPrint('📝 Invoice tags count: ${_tags.length}');
     
     try {
       context.read<InvoiceCubit>().addInvoice(invoice);
       
-      // Update product inventory for each item in the invoice
-      for (final item in _items) {
-        try {
-          // Get current product to check inventory
-          final productState = context.read<ProductCubit>().state;
-          productState.when(
-            loaded: (products) {
-              final product = products.firstWhere((p) => p.id == item.productId);
-              if (!product.isService) {
-                final newInventory = product.inventory - item.quantity.toInt();
-                if (newInventory >= 0) {
-                  context.read<ProductCubit>().updateProductInventory(
-                    item.productId, 
-                    newInventory,
-                  );
-                  debugPrint('📦 Updated inventory for ${product.name}: ${product.inventory} -> $newInventory');
-                } else {
-                  debugPrint('⚠️ Warning: Insufficient inventory for ${product.name}');
-                }
+      // Only update inventory for new invoices, not when editing
+      if (!_isEdit) {
+        // Update product inventory for each item in the invoice
+        debugPrint('🔄 Starting inventory update for ${_items.length} items');
+        
+        // First, ensure all products exist in the products collection
+        final productsToCreate = <Product>[];
+        final productState = context.read<ProductCubit>().state;
+        productState.when(
+          loaded: (products) {
+            debugPrint('🔄 Products loaded: ${products.length} products available');
+            
+            for (final item in _items) {
+              try {
+                products.firstWhere((p) => p.id == item.productId);
+                debugPrint('🔄 Product ${item.name} (ID: ${item.productId}) already exists in products collection');
+              } catch (e) {
+                debugPrint('🔄 Product ${item.name} (ID: ${item.productId}) not found in products collection, will create it...');
+                // Create new product in products collection
+                final newProduct = Product(
+                  id: item.productId,
+                  name: item.name,
+                  description: item.description ?? '',
+                  price: item.unitPrice,
+                  category: 'General',
+                  tax: item.tax,
+                  inventory: 100, // Default inventory
+                  isService: false,
+                );
+                productsToCreate.add(newProduct);
               }
-            },
-            initial: () => debugPrint('Products not loaded yet'),
-            loading: () => debugPrint('Products are loading'),
-            error: (message) => debugPrint('Error loading products: $message'),
-          );
-        } catch (e) {
-          debugPrint('Error updating inventory for ${item.name}: $e');
-        }
+            }
+            
+            // Create products first (synchronously)
+            for (final product in productsToCreate) {
+              debugPrint('🔄 Creating product: ${product.name} with inventory: ${product.inventory}');
+              context.read<ProductCubit>().addProduct(product);
+            }
+            
+            // Update inventory immediately after creating products
+            if (productsToCreate.isNotEmpty) {
+              debugPrint('🔄 Products created, refreshing and updating inventory...');
+              // Refresh products to ensure we have the latest data
+              context.read<ProductCubit>().fetchProducts();
+              // Wait a bit for products to be refreshed
+              Future.delayed(const Duration(milliseconds: 1000), () {
+                if (mounted) {
+                  _updateInventoryForItems(_items);
+                }
+              });
+            } else {
+              debugPrint('🔄 No new products to create, checking if products exist in Firestore...');
+              // For existing products, ensure they exist in Firestore before updating inventory
+              _ensureProductsExistAndUpdateInventory(_items);
+            }
+          },
+          initial: () => debugPrint('❌ Products not loaded yet'),
+          loading: () => debugPrint('⏳ Products are loading'),
+          error: (message) => debugPrint('❌ Error loading products: $message'),
+        );
+        
+        debugPrint('✅ Finished inventory update process');
+      } else {
+        debugPrint('📝 Editing existing invoice, skipping inventory update');
       }
       
       // Record product usage for smart suggestions after successful save
@@ -245,13 +388,13 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
       }
       
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isEdit ? LocalizationHelper.getLocalizedString(context, 'invoiceInvoiceUpdated') : LocalizationHelper.getLocalizedString(context, 'invoiceInvoiceCreated'))),
+        SnackBar(content: Text(_isEdit ? AppStrings.invoiceInvoiceUpdated : AppStrings.invoiceInvoiceCreated)),
       );
       Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${LocalizationHelper.getLocalizedString(context, 'error')} saving invoice: $e'),
+          content: Text('${AppStrings.error} saving invoice: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -313,20 +456,20 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? LocalizationHelper.getLocalizedString(context, 'invoiceEditTitle') : LocalizationHelper.getLocalizedString(context, 'invoiceAddTitle')),
+        title: Text(_isEdit ? AppStrings.invoiceEditTitle : AppStrings.invoiceAddTitle),
         actions: [
           // Debug button to create sample products
           if (!_isEdit)
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
-              tooltip: LocalizationHelper.getLocalizedString(context, 'invoiceCreateSampleProducts'),
+              tooltip: AppStrings.invoiceCreateSampleProducts,
               onPressed: _createSampleProducts,
             ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.save),
-              label: Text(_isEdit ? LocalizationHelper.getLocalizedString(context, 'invoiceUpdate') : LocalizationHelper.getLocalizedString(context, 'invoiceSave')),
+              label: Text(_isEdit ? AppStrings.invoiceUpdate : AppStrings.invoiceSave),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurple,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -350,7 +493,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                   loaded: (customers) => DropdownButtonFormField<String>(
                     value: _customerId.isNotEmpty ? _customerId : null,
                     decoration: InputDecoration(
-                      labelText: LocalizationHelper.getLocalizedString(context, 'customerName'),
+                      labelText: AppStrings.customerName,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     items: customers.map((c) => DropdownMenuItem(
@@ -367,7 +510,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                       // Load suggestions for this customer
                       context.read<SuggestionsCubit>().loadSuggestionsForCustomer(customer.id);
                     },
-                    validator: (v) => v == null || v.isEmpty ? LocalizationHelper.getLocalizedString(context, 'customerNameRequired') : null,
+                    validator: (v) => v == null || v.isEmpty ? AppStrings.customerNameRequired : null,
                   ),
                   orElse: () => const LinearProgressIndicator(),
                 );
@@ -378,7 +521,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
             DropdownButtonFormField<String>(
               value: _templateId,
               decoration: InputDecoration(
-                labelText: LocalizationHelper.getLocalizedString(context, 'template'),
+                labelText: AppStrings.template,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
               items: _templates.map((tpl) => DropdownMenuItem(
@@ -386,7 +529,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                 child: Text(tpl['name'] ?? 'Unknown Template'),
               )).toList(),
               onChanged: (id) => setState(() => _templateId = id),
-              validator: (v) => v == null || v.isEmpty ? LocalizationHelper.getLocalizedString(context, 'pleaseSelectTemplate') : null,
+              validator: (v) => v == null || v.isEmpty ? AppStrings.pleaseSelectTemplate : null,
             ),
             const SizedBox(height: 24),
             // Tags Section
@@ -404,8 +547,8 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                           _tags = tags;
                         });
                       },
-                      label: LocalizationHelper.getLocalizedString(context, 'invoiceTags'),
-                      hint: LocalizationHelper.getLocalizedString(context, 'addTagsPlaceholder'),
+                      label: AppStrings.invoiceTags,
+                      hint: AppStrings.addTagsPlaceholder,
                       ),
                       const SizedBox(height: 16),
                   ],
@@ -423,7 +566,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                   selectedProducts: _selectedProducts,
                   onProductSelected: _onProductSelected,
                   onProductDeselected: _onProductDeselected,
-                  searchHint: LocalizationHelper.getLocalizedString(context, 'searchProductsToAdd'),
+                  searchHint: AppStrings.searchProductsToAdd,
                   customerId: _customerId.isNotEmpty ? _customerId : null,
                 ),
               ],
@@ -454,14 +597,14 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                                       Text(item.description ?? '', style: const TextStyle(color: Colors.grey)),
                                       Row(
                                         children: [
-                                          Text('${LocalizationHelper.getLocalizedString(context, 'productPrice')}: '),
-                                          Text(LocalizationHelper.formatCurrency(item.unitPrice, context)),
+                                          Text('${AppStrings.productPrice}: '),
+                                          Text(item.unitPrice.toString()),
                                         ],
                                       ),
                                       Row(
                                         children: [
-                                          Text('${LocalizationHelper.getLocalizedString(context, 'productTax')}: '),
-                                          Text(LocalizationHelper.formatCurrency(item.tax, context)),
+                                          Text('${AppStrings.productTax}: '),
+                                          Text(item.tax.toString()),
                                         ],
                                       ),
                                     ],
@@ -474,7 +617,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                                       TextFormField(
                                         initialValue: item.quantity.toStringAsFixed(0),
                                         decoration: InputDecoration(
-                                          labelText: LocalizationHelper.getLocalizedString(context, 'productInventory'),
+                                          labelText: AppStrings.productInventory,
                                           border: const OutlineInputBorder(),
                                           isDense: true,
                                         ),
@@ -486,7 +629,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                        tooltip: LocalizationHelper.getLocalizedString(context, 'invoiceRemoveItem'),
+                                        tooltip: AppStrings.invoiceRemoveItem,
                                         onPressed: () => _removeItem(idx),
                                       ),
                                     ],
@@ -505,7 +648,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                 Expanded(
                   child: InputDecorator(
                     decoration: InputDecoration(
-                      labelText: LocalizationHelper.getLocalizedString(context, 'invoiceDueDate'),
+                      labelText: AppStrings.invoiceDueDate,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     child: InkWell(
@@ -520,7 +663,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Text(_dueDate != null ? '${_dueDate!.toLocal()}'.split(' ')[0] : LocalizationHelper.getLocalizedString(context, 'invoiceSelectDate')),
+                        child: Text(_dueDate != null ? '${_dueDate!.toLocal()}'.split(' ')[0] : AppStrings.invoiceSelectDate),
                       ),
                     ),
                   ),
@@ -530,7 +673,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                   child: DropdownButtonFormField<InvoiceStatus>(
                     value: _status,
                     decoration: InputDecoration(
-                      labelText: LocalizationHelper.getLocalizedString(context, 'invoiceStatus'),
+                      labelText: AppStrings.invoiceStatus,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     items: InvoiceStatus.values.map((s) => DropdownMenuItem(
@@ -553,9 +696,9 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${LocalizationHelper.getLocalizedString(context, 'invoiceSubtotal')}: ${LocalizationHelper.formatCurrency(_subtotal, context)}'),
-                    Text('${LocalizationHelper.getLocalizedString(context, 'invoiceTax')}: ${LocalizationHelper.formatCurrency(_tax, context)}'),
-                    Text('${LocalizationHelper.getLocalizedString(context, 'invoiceTotal')}: ${LocalizationHelper.formatCurrency(_total, context)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('${AppStrings.invoiceSubtotal}: ${_subtotal.toString()}'),
+                    Text('${AppStrings.invoiceTax}: ${_tax.toString()}'),
+                    Text('${AppStrings.invoiceTotal}: ${_total.toString()}', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -565,7 +708,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
             TextFormField(
               initialValue: _note,
               decoration: InputDecoration(
-                labelText: LocalizationHelper.getLocalizedString(context, 'invoiceNote'),
+                labelText: AppStrings.invoiceNote,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onSaved: (v) => _note = v,

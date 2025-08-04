@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class TagInputWidget extends StatefulWidget {
   final List<String> selectedTags;
@@ -184,20 +184,20 @@ class _TagInputWidgetState extends State<TagInputWidget> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(LocalizationHelper.getLocalizedString(context, 'invoiceCreateNewTag')),
+          title: Text(AppStrings.invoiceCreateNewTag),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  labelText: LocalizationHelper.getLocalizedString(context, 'invoiceTagName'),
+                  labelText: AppStrings.invoiceTagName,
                   border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                LocalizationHelper.getLocalizedString(context, 'selectColor'),
+                AppStrings.selectColor,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
@@ -229,7 +229,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(LocalizationHelper.getLocalizedString(context, 'invoiceCancel')),
+              child: Text(AppStrings.invoiceCancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -244,14 +244,14 @@ class _TagInputWidgetState extends State<TagInputWidget> {
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${LocalizationHelper.getLocalizedString(context, 'error')} creating tag: $e'),
+                        content: Text('${AppStrings.error} creating tag: $e'),
                         backgroundColor: Colors.red,
                       ),
                     );
                   }
                 }
               },
-              child: Text(LocalizationHelper.getLocalizedString(context, 'invoiceCreateTag')),
+              child: Text(AppStrings.invoiceCreateTag),
             ),
           ],
         ),

@@ -5,7 +5,7 @@ import 'package:billora/src/features/product/presentation/cubit/product_cubit.da
 import 'package:billora/src/features/product/presentation/cubit/product_state.dart';
 import 'package:billora/src/features/suggestions/domain/entities/suggestion.dart';
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 import 'package:billora/src/features/invoice/presentation/cubit/invoice_cubit.dart';
 
 class ProductSelectionWidget extends StatefulWidget {
@@ -131,7 +131,7 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
             debugPrint('❌ Available product names: ${products.map((p) => p.name).join(', ')}');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(LocalizationHelper.getLocalizedString(context, 'invoiceProductNotFound').replaceAll('{productName}', suggestion.name)),
+                content: Text(AppStrings.invoiceProductNotFound.replaceAll('{productName}', suggestion.name)),
                 backgroundColor: Colors.red,
               ),
             );
@@ -150,7 +150,7 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
         // Show success message with quantity info
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(LocalizationHelper.getLocalizedString(context, 'invoiceAddedWithQuantity')
+            content: Text(AppStrings.invoiceAddedWithQuantity
                 .replaceAll('{productName}', suggestion.name)
                 .replaceAll('{quantity}', quantity.toString())),
             backgroundColor: Colors.green,
@@ -198,7 +198,7 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
         TextField(
           controller: _searchController,
           decoration: InputDecoration(
-            hintText: widget.searchHint ?? LocalizationHelper.getLocalizedString(context, 'searchProducts'),
+            hintText: widget.searchHint ?? AppStrings.searchProducts,
             prefixIcon: const Icon(Icons.search),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
@@ -304,7 +304,7 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                LocalizationHelper.getLocalizedString(context, 'invoiceSmartRecommendations'),
+                                AppStrings.invoiceSmartRecommendations,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -312,7 +312,7 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
                                 ),
                               ),
                               Text(
-                                LocalizationHelper.getLocalizedString(context, 'invoiceBasedOnHistory'),
+                                AppStrings.invoiceBasedOnHistory,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.amber.shade600,
@@ -390,7 +390,7 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          LocalizationHelper.getLocalizedString(context, 'invoiceLoadingRecommendations'),
+                          AppStrings.invoiceLoadingRecommendations,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -467,7 +467,7 @@ class _ProductSelectionWidgetState extends State<ProductSelectionWidget> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          _searchQuery.isEmpty ? LocalizationHelper.getLocalizedString(context, 'noProductsAvailable') : LocalizationHelper.getLocalizedString(context, 'noProductsFound'),
+                          _searchQuery.isEmpty ? AppStrings.noProductsAvailable : AppStrings.noProductsFound,
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey.shade600,
@@ -639,7 +639,7 @@ class _ProductCard extends StatelessWidget {
               
               // Price
               Text(
-                LocalizationHelper.formatCurrency(product.price, context),
+                product.price.toString(),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -761,7 +761,7 @@ class _ProfessionalSuggestionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    LocalizationHelper.formatCurrency(suggestion.price!, context),
+                    suggestion.price.toString(),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,

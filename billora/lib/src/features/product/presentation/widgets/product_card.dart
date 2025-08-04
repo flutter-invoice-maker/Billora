@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/product/domain/entities/product.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -37,19 +37,19 @@ class ProductCard extends StatelessWidget {
                   context: context,
                   builder: (BuildContext dialogContext) {
                     return AlertDialog(
-                      title: Text(LocalizationHelper.getLocalizedString(context, 'confirmDeletion')),
+                      title: Text(AppStrings.confirmDeletion),
                       content: Text('Are you sure you want to delete ${product.name}?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: Text(LocalizationHelper.getLocalizedString(context, 'invoiceCancel')),
+                          child: Text(AppStrings.invoiceCancel),
                         ),
                         TextButton(
                           onPressed: () {
                             context.read<ProductCubit>().deleteProduct(product.id);
                             Navigator.of(context).pop();
                           },
-                          child: Text(LocalizationHelper.getLocalizedString(context, 'delete')),
+                          child: Text(AppStrings.remove),
                         ),
                       ],
                     );

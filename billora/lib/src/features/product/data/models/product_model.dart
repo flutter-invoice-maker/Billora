@@ -50,7 +50,7 @@ class ProductModel {
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'description': description,
+        if (description != null && description!.isNotEmpty) 'description': description,
         'price': price,
         'category': category,
         'tax': tax,

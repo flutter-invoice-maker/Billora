@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:billora/src/widgets/language_switcher.dart';
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:billora/src/core/di/injection_container.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
 
 class HomePage extends StatefulWidget {
-  final void Function(Locale)? onLocaleChanged;
-  const HomePage({super.key, this.onLocaleChanged});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -38,25 +35,25 @@ class _HomePageState extends State<HomePage> {
       ),
       _MenuItem(
         icon: Icons.people_alt_rounded,
-        label: LocalizationHelper.getLocalizedString(context, 'homeTitle'),
+        label: 'Customers',
         route: '/customers',
         color: Colors.blueAccent,
       ),
       _MenuItem(
         icon: Icons.inventory_2_rounded,
-        label: LocalizationHelper.getLocalizedString(context, 'productMenu'),
+        label: 'Products',
         route: '/products',
         color: Colors.deepPurple,
       ),
       _MenuItem(
         icon: Icons.receipt_long,
-        label: LocalizationHelper.getLocalizedString(context, 'invoiceListTitle'),
+        label: 'Invoices',
         route: '/invoices',
         color: Colors.green,
       ),
       _MenuItem(
         icon: Icons.document_scanner,
-        label: LocalizationHelper.getLocalizedString(context, 'billScanner'),
+        label: 'Scan & Upload Invoice',
         route: '/bill-scanner',
         color: Colors.orange,
       ),
@@ -68,13 +65,12 @@ class _HomePageState extends State<HomePage> {
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: Text(LocalizationHelper.getLocalizedString(context, 'homeTitle')),
+          title: const Text('Billora Home'),
           actions: [
-            LanguageSwitcher(onLocaleChanged: widget.onLocaleChanged),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-              tooltip: LocalizationHelper.getLocalizedString(context, 'logout'),
+              tooltip: 'Logout',
             ),
           ],
         ),

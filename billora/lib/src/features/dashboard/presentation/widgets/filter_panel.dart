@@ -47,7 +47,7 @@ class _FilterPanelState extends State<FilterPanel> {
               const Icon(Icons.filter_list),
               const SizedBox(width: 8),
               Text(
-                'Bộ lọc',
+                'Filters',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const Spacer(),
@@ -61,7 +61,7 @@ class _FilterPanelState extends State<FilterPanel> {
           
           // Date Range Selection
           Text(
-            'Khoảng thời gian',
+            'Date Range',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -84,7 +84,7 @@ class _FilterPanelState extends State<FilterPanel> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _applyFilters,
-              child: const Text('Áp dụng bộ lọc'),
+              child: const Text('Apply Filters'),
             ),
           ),
         ],

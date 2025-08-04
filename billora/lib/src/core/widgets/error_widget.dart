@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class AppErrorWidget extends StatelessWidget {
   final String message;
@@ -23,7 +23,7 @@ class AppErrorWidget extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12.0),
               child: ElevatedButton(
                 onPressed: onRetry,
-                child: Text(LocalizationHelper.getLocalizedString(context, 'retry')),
+                child: Text(AppStrings.retry),
               ),
             ),
         ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:billora/src/features/customer/domain/entities/customer.dart';
-import 'package:billora/src/core/utils/localization_helper.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class CustomerCard extends StatelessWidget {
   final Customer customer;
@@ -23,9 +23,9 @@ class CustomerCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (customer.email != null) Text('${LocalizationHelper.getLocalizedString(context, 'email')}: ${customer.email}'),
-            if (customer.phone != null) Text('${LocalizationHelper.getLocalizedString(context, 'phone')}: ${customer.phone}'),
-            if (customer.address != null) Text('${LocalizationHelper.getLocalizedString(context, 'address')}: ${customer.address}'),
+            if (customer.email != null) Text('${AppStrings.email}: ${customer.email}'),
+            if (customer.phone != null) Text('${AppStrings.phone}: ${customer.phone}'),
+            if (customer.address != null) Text('${AppStrings.address}: ${customer.address}'),
           ],
         ),
         trailing: Row(

@@ -174,7 +174,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
             ),
             const SizedBox(height: 16),
             Text(
-              isEmpty ? 'Không có dữ liệu tag' : 'Không có dữ liệu hợp lệ',
+              isEmpty ? 'No tag data' : 'No valid data',
               style: TextStyle(
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                 fontSize: isMobile ? 16 : 18,
@@ -183,7 +183,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
             ),
             const SizedBox(height: 8),
             Text(
-              'Dữ liệu sẽ hiển thị khi có thông tin',
+              'Data will appear when information is available',
               style: TextStyle(
                 color: isDark ? Colors.grey[500] : Colors.grey[500],
                 fontSize: isMobile ? 13 : 14,
@@ -427,7 +427,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Chọn một tag để xem chi tiết',
+                  'Select a tag to see details',
                   style: TextStyle(
                     fontSize: isMobile ? 12 : 14,
                     fontWeight: FontWeight.w600,
@@ -474,7 +474,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Chi tiết - ${selectedTag.tagName}',
+                    'Details - ${selectedTag.tagName}',
                     style: TextStyle(
                       fontSize: isMobile ? 14 : 16,
                       fontWeight: FontWeight.w700,
@@ -579,7 +579,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                         Expanded(
                           child: _buildDetailItem(
                             icon: Icons.attach_money_rounded,
-                            label: 'Doanh thu',
+                            label: 'Revenue',
                             value: _formatCurrency(selectedTag.revenue),
                             color: selectedColor,
                             isDark: isDark,
@@ -590,7 +590,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                         Expanded(
                           child: _buildDetailItem(
                             icon: Icons.receipt_rounded,
-                            label: 'Hóa đơn',
+                            label: 'Invoice',
                             value: '${selectedTag.invoiceCount}',
                             color: selectedColor,
                             isDark: isDark,

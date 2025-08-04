@@ -6,7 +6,7 @@ import 'package:billora/src/features/customer/presentation/widgets/customer_card
 import 'package:billora/src/core/widgets/loading_widget.dart';
 import 'package:billora/src/core/widgets/error_widget.dart';
 import 'customer_form_page.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
 
 class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
@@ -37,10 +37,9 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.customerListTitle),
+        title: const Text(AppStrings.customerListTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -54,7 +53,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: loc.customerSearchHint,
+                                    hintText: AppStrings.customerSearchHint,
                 prefixIcon: const Icon(Icons.search),
               ),
               onChanged: (value) {

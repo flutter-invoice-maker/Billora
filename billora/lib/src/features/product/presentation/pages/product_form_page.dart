@@ -3,7 +3,8 @@ import 'package:billora/src/features/product/domain/entities/product.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:billora/src/core/utils/app_strings.dart';
+import 'dart:math';
 
 class ProductFormPage extends StatefulWidget {
   final Product? product;
@@ -53,11 +54,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isEdit ? loc.productEditTitle : loc.productAddTitle,
+          _isEdit ? AppStrings.productEditTitle : AppStrings.productAddTitle,
         ),
       ),
       body: SingleChildScrollView(
@@ -70,10 +71,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
               children: [
                 TextFormField(
                   initialValue: _name,
-                  decoration: InputDecoration(labelText: loc.productName),
+                  decoration: InputDecoration(labelText: AppStrings.productName),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return loc.productNameRequired;
+                      return AppStrings.productNameRequired;
                     }
                     return null;
                   },
@@ -82,19 +83,19 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   initialValue: _description,
-                  decoration: InputDecoration(labelText: loc.productDescription),
+                  decoration: InputDecoration(labelText: AppStrings.productDescription),
                   onSaved: (value) => _description = value,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   initialValue: _price.toString(),
-                  decoration: InputDecoration(labelText: loc.productPrice),
+                  decoration: InputDecoration(labelText: AppStrings.productPrice),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null ||
                         value.isEmpty ||
                         double.tryParse(value) == null) {
-                      return loc.productPriceRequired;
+                      return AppStrings.productPriceRequired;
                     }
                     return null;
                   },
@@ -114,22 +115,22 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       _category = newValue!;
                     });
                   },
-                  decoration: InputDecoration(labelText: loc.productCategory),
+                  decoration: InputDecoration(labelText: AppStrings.productCategory),
                   validator: (value) =>
-                      value == null ? loc.productCategoryRequired : null,
+                      value == null ? AppStrings.productCategoryRequired : null,
                   onSaved: (value) => _category = value!,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   initialValue: _tax.toString(),
-                  decoration: InputDecoration(labelText: loc.productTax),
+                  decoration: InputDecoration(labelText: AppStrings.productTax),
                   keyboardType: TextInputType.number,
                   onSaved: (value) => _tax = double.tryParse(value ?? '0') ?? 0,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   initialValue: _inventory.toString(),
-                  decoration: InputDecoration(labelText: loc.productInventory),
+                  decoration: InputDecoration(labelText: AppStrings.productInventory),
                   keyboardType: TextInputType.number,
                   enabled: !_isService,
                   onSaved: (value) =>
@@ -137,7 +138,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 ),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: Text(loc.productIsService),
+                  title: Text(AppStrings.productIsService),
                   value: _isService,
                   onChanged: (value) => setState(() => _isService = value),
                 ),
@@ -145,7 +146,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 ElevatedButton(
                   onPressed: _submit,
                   child:
-                      Text(_isEdit ? loc.productEditButton : loc.productAddButton),
+                      Text(_isEdit ? AppStrings.productEditButton : AppStrings.productAddButton),
                 ),
               ],
             ),
@@ -158,8 +159,16 @@ class _ProductFormPageState extends State<ProductFormPage> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      
+      // Generate unique ID for new products
+      String generateUniqueId() {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final random = Random().nextInt(9999);
+        return '${timestamp}_$random';
+      }
+      
       final product = Product(
-        id: widget.product?.id ?? '',
+        id: widget.product?.id ?? generateUniqueId(),
         name: _name,
         description: _description,
         price: _price,

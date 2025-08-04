@@ -66,10 +66,10 @@ class InvoiceModel {
         'total': total,
         'status': status,
         'createdAt': createdAt.toIso8601String(),
-        'dueDate': dueDate?.toIso8601String(),
-        'paidAt': paidAt?.toIso8601String(),
-        'note': note,
-        'templateId': templateId,
+        if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
+        if (paidAt != null) 'paidAt': paidAt!.toIso8601String(),
+        if (note != null && note!.isNotEmpty) 'note': note!,
+        if (templateId != null && templateId!.isNotEmpty) 'templateId': templateId!,
         'tags': tags,
         'searchKeywords': searchKeywords,
       };
@@ -149,7 +149,7 @@ class InvoiceItemModel {
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'description': description,
+        if (description != null && description!.isNotEmpty) 'description': description!,
         'quantity': quantity,
         'unitPrice': unitPrice,
         'tax': tax,
