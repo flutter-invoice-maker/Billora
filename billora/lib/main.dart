@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'src/features/auth/presentation/pages/login_page.dart';
 import 'src/features/auth/presentation/pages/register_page.dart';
 import 'src/features/auth/presentation/cubit/auth_cubit.dart';
+
 import 'src/core/di/injection_container.dart';
 import 'src/features/customer/presentation/pages/customer_list_page.dart';
 import 'src/features/customer/presentation/cubit/customer_cubit.dart';
@@ -73,31 +74,45 @@ class _MyAppState extends State<MyApp> {
               value: sl<AuthCubit>(),
               child: RegisterPage(),
             ),
-        '/home': (context) => HomePage(),
-        '/customers': (context) => BlocProvider(
-              create: (context) => CustomerCubit(
-                getCustomersUseCase: sl(),
-                createCustomerUseCase: sl(),
-                updateCustomerUseCase: sl(),
-                deleteCustomerUseCase: sl(),
-                searchCustomersUseCase: sl(),
-              )..fetchCustomers(),
+        '/home': (context) => BlocProvider.value(
+              value: sl<AuthCubit>(),
+              child: HomePage(),
+            ),
+        '/customers': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
+                BlocProvider<CustomerCubit>(
+                  create: (context) => CustomerCubit(
+                    getCustomersUseCase: sl(),
+                    createCustomerUseCase: sl(),
+                    updateCustomerUseCase: sl(),
+                    deleteCustomerUseCase: sl(),
+                    searchCustomersUseCase: sl(),
+                  )..fetchCustomers(),
+                ),
+              ],
               child: const CustomerListPage(),
             ),
-        '/products': (context) => BlocProvider(
-              create: (_) => ProductCubit(
-                getProductsUseCase: sl<GetProductsUseCase>(),
-                createProductUseCase: sl<CreateProductUseCase>(),
-                updateProductUseCase: sl<UpdateProductUseCase>(),
-                deleteProductUseCase: sl<DeleteProductUseCase>(),
-                searchProductsUseCase: sl<SearchProductsUseCase>(),
-                getCategoriesUseCase: sl<GetCategoriesUseCase>(),
-                updateProductInventoryUseCase: sl<UpdateProductInventoryUseCase>(),
-              ),
+        '/products': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
+                BlocProvider<ProductCubit>(
+                  create: (_) => ProductCubit(
+                    getProductsUseCase: sl<GetProductsUseCase>(),
+                    createProductUseCase: sl<CreateProductUseCase>(),
+                    updateProductUseCase: sl<UpdateProductUseCase>(),
+                    deleteProductUseCase: sl<DeleteProductUseCase>(),
+                    searchProductsUseCase: sl<SearchProductsUseCase>(),
+                    getCategoriesUseCase: sl<GetCategoriesUseCase>(),
+                    updateProductInventoryUseCase: sl<UpdateProductInventoryUseCase>(),
+                  ),
+                ),
+              ],
               child: const ProductCatalogPage(),
             ),
         '/invoices': (context) => MultiBlocProvider(
               providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
                 BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()..fetchInvoices()),
                 BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
                 BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
@@ -119,10 +134,11 @@ class _MyAppState extends State<MyApp> {
             ),
         '/dashboard': (context) => MultiBlocProvider(
               providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
                 BlocProvider<DashboardCubit>(create: (_) => sl<DashboardCubit>()),
                 BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
                 BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()..fetchInvoices()),
-                BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
+                BlocProvider.value(value: sl<CustomerCubit>()),
                 BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
               ],
               child: const DashboardPage(),

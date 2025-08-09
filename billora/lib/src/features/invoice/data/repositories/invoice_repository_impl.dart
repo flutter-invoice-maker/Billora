@@ -43,28 +43,11 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   }
 
   @override
-  ResultFuture<Map<String, int>> getLastInvoiceQuantity(String customerId) async {
+  ResultFuture<List<Invoice>> getCustomerRecentInvoices(String customerId, {int limit = 2}) async {
     try {
-      final models = await remoteDatasource.getInvoices();
-      final customerInvoices = models
-          .where((invoice) => invoice.customerId == customerId)
-          .toList();
-      
-      if (customerInvoices.isEmpty) {
-        return const Right({});
-      }
-      
-      // Sort by creation date descending and get the most recent
-      customerInvoices.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      final lastInvoice = customerInvoices.first;
-      
-      // Extract product quantities from the last invoice
-      final quantities = <String, int>{};
-      for (final item in lastInvoice.items) {
-        quantities[item.productId] = item.quantity.toInt();
-      }
-      
-      return Right(quantities);
+      final models = await remoteDatasource.getCustomerRecentInvoices(customerId, limit: limit);
+      final invoices = models.map((m) => m.toEntity()).toList();
+      return Right(invoices);
     } catch (e) {
       return Left(AuthFailure(e.toString()));
     }

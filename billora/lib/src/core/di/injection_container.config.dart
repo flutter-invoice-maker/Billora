@@ -12,6 +12,7 @@
 import 'package:billora/src/core/di/injection_container.dart' as _i107;
 import 'package:billora/src/core/services/email_service.dart' as _i971;
 import 'package:billora/src/core/services/firebase_email_service.dart' as _i365;
+import 'package:billora/src/core/services/image_upload_service.dart' as _i957;
 import 'package:billora/src/core/services/pdf_service.dart' as _i5;
 import 'package:billora/src/core/services/storage_service.dart' as _i537;
 import 'package:billora/src/features/auth/data/datasources/auth_remote_datasource.dart'
@@ -20,6 +21,8 @@ import 'package:billora/src/features/auth/data/repositories/auth_repository_impl
     as _i1;
 import 'package:billora/src/features/auth/domain/repositories/auth_repository.dart'
     as _i253;
+import 'package:billora/src/features/auth/domain/usecases/get_current_user_usecase.dart'
+    as _i330;
 import 'package:billora/src/features/auth/domain/usecases/login_usecase.dart'
     as _i361;
 import 'package:billora/src/features/auth/domain/usecases/logout_usecase.dart'
@@ -30,10 +33,16 @@ import 'package:billora/src/features/auth/domain/usecases/sign_in_with_apple_use
     as _i579;
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_usecase.dart'
     as _i1057;
+import 'package:billora/src/features/auth/domain/usecases/update_profile_usecase.dart'
+    as _i866;
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart'
     as _i232;
-import 'package:billora/src/features/invoice/domain/repositories/invoice_repository.dart'
-    as _i364;
+import 'package:billora/src/features/dashboard/domain/repositories/dashboard_repository.dart'
+    as _i256;
+import 'package:billora/src/features/dashboard/domain/usecases/export_invoice_report_usecase.dart'
+    as _i423;
+import 'package:billora/src/features/dashboard/domain/usecases/get_invoice_stats_usecase.dart'
+    as _i873;
 import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart'
     as _i936;
 import 'package:billora/src/features/invoice/domain/usecases/send_firebase_email_usecase.dart'
@@ -42,6 +51,12 @@ import 'package:billora/src/features/invoice/domain/usecases/send_invoice_email_
     as _i888;
 import 'package:billora/src/features/invoice/domain/usecases/upload_invoice_usecase.dart'
     as _i1014;
+import 'package:billora/src/features/product/data/datasources/product_remote_datasource.dart'
+    as _i520;
+import 'package:billora/src/features/product/domain/repositories/product_repository.dart'
+    as _i667;
+import 'package:billora/src/features/product/domain/usecases/update_product_inventory_usecase.dart'
+    as _i750;
 import 'package:billora/src/features/suggestions/data/datasources/suggestions_remote_datasource.dart'
     as _i921;
 import 'package:billora/src/features/suggestions/data/repositories/suggestions_repository_impl.dart'
@@ -50,8 +65,6 @@ import 'package:billora/src/features/suggestions/domain/repositories/suggestions
     as _i456;
 import 'package:billora/src/features/suggestions/domain/usecases/calculate_suggestion_score_usecase.dart'
     as _i577;
-import 'package:billora/src/features/suggestions/domain/usecases/get_last_invoice_quantity_usecase.dart'
-    as _i103;
 import 'package:billora/src/features/suggestions/domain/usecases/get_product_suggestions_usecase.dart'
     as _i671;
 import 'package:billora/src/features/suggestions/domain/usecases/record_product_usage_usecase.dart'
@@ -107,6 +120,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i936.GeneratePdfUseCase>(
       () => _i936.GeneratePdfUseCase(gh<_i5.PdfService>()),
     );
+    gh.factory<_i520.ProductRemoteDatasourceImpl>(
+      () => _i520.ProductRemoteDatasourceImpl(gh<_i974.FirebaseFirestore>()),
+    );
     gh.factory<_i897.TagsRemoteDataSource>(
       () => _i897.TagsRemoteDataSourceImpl(
         gh<_i974.FirebaseFirestore>(),
@@ -117,8 +133,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i18.TagsRepository>(
       () => _i625.TagsRepositoryImpl(gh<_i897.TagsRemoteDataSource>()),
     );
-    gh.factory<_i103.GetLastInvoiceQuantityUseCase>(
-      () => _i103.GetLastInvoiceQuantityUseCase(gh<_i364.InvoiceRepository>()),
+    gh.factory<_i423.ExportInvoiceReportUseCase>(
+      () => _i423.ExportInvoiceReportUseCase(gh<_i256.DashboardRepository>()),
+    );
+    gh.factory<_i873.GetInvoiceStatsUseCase>(
+      () => _i873.GetInvoiceStatsUseCase(gh<_i256.DashboardRepository>()),
+    );
+    gh.factory<_i750.UpdateProductInventoryUseCase>(
+      () => _i750.UpdateProductInventoryUseCase(gh<_i667.ProductRepository>()),
     );
     gh.lazySingleton<_i910.AuthRemoteDataSource>(
       () => _i910.AuthRemoteDataSourceImpl(
@@ -134,6 +156,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i888.SendInvoiceEmailUseCase>(
       () => _i888.SendInvoiceEmailUseCase(gh<_i971.EmailService>()),
+    );
+    gh.factory<_i957.ImageUploadService>(
+      () => _i957.ImageUploadService(
+        gh<_i457.FirebaseStorage>(),
+        gh<_i59.FirebaseAuth>(),
+      ),
     );
     gh.factory<_i365.FirebaseEmailService>(
       () => _i365.FirebaseEmailService(
@@ -168,6 +196,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i227.RecordProductUsageUseCase>(
       () => _i227.RecordProductUsageUseCase(gh<_i456.SuggestionsRepository>()),
     );
+    gh.factory<_i330.GetCurrentUserUseCase>(
+      () => _i330.GetCurrentUserUseCase(gh<_i253.AuthRepository>()),
+    );
     gh.factory<_i361.LoginUseCase>(
       () => _i361.LoginUseCase(gh<_i253.AuthRepository>()),
     );
@@ -182,6 +213,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i1057.SignInWithGoogleUseCase>(
       () => _i1057.SignInWithGoogleUseCase(gh<_i253.AuthRepository>()),
+    );
+    gh.factory<_i866.UpdateProfileUseCase>(
+      () => _i866.UpdateProfileUseCase(gh<_i253.AuthRepository>()),
     );
     gh.factory<_i694.SuggestionsCubit>(
       () => _i694.SuggestionsCubit(
@@ -204,6 +238,8 @@ extension GetItInjectableX on _i174.GetIt {
         logoutUseCase: gh<_i731.LogoutUseCase>(),
         signInWithGoogleUseCase: gh<_i1057.SignInWithGoogleUseCase>(),
         signInWithAppleUseCase: gh<_i579.SignInWithAppleUseCase>(),
+        getCurrentUserUseCase: gh<_i330.GetCurrentUserUseCase>(),
+        updateProfileUseCase: gh<_i866.UpdateProfileUseCase>(),
       ),
     );
     return this;

@@ -5,11 +5,13 @@ class UserModel {
   final String id;
   final String? email;
   final String? displayName;
+  final String? photoURL;
 
   const UserModel({
     required this.id,
     this.email,
     this.displayName,
+    this.photoURL,
   });
 
   factory UserModel.fromFirebaseUser(fb_auth.User user) {
@@ -17,6 +19,7 @@ class UserModel {
       id: user.uid,
       email: user.email,
       displayName: user.displayName,
+      photoURL: user.photoURL,
     );
   }
 
@@ -25,6 +28,7 @@ class UserModel {
       id: id,
       email: email ?? '',
       displayName: displayName,
+      photoURL: photoURL,
     );
   }
 } 

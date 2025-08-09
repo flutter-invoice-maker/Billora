@@ -23,47 +23,97 @@ class CustomerCubit extends Cubit<CustomerState> {
   }) : super(const CustomerState.initial());
 
   Future<void> fetchCustomers() async {
-    emit(const CustomerState.loading());
-    final result = await getCustomersUseCase();
-    result.fold(
-      (failure) => emit(CustomerState.error(failure.message)),
-      (customers) => emit(CustomerState.loaded(customers)),
-    );
+    try {
+      if (!isClosed) {
+        emit(const CustomerState.loading());
+        final result = await getCustomersUseCase();
+        if (!isClosed) {
+          result.fold(
+            (failure) => emit(CustomerState.error(failure.message)),
+            (customers) => emit(CustomerState.loaded(customers)),
+          );
+        }
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(CustomerState.error('Failed to fetch customers: $e'));
+      }
+    }
   }
 
   Future<void> addCustomer(Customer customer) async {
-    emit(const CustomerState.loading());
-    final result = await createCustomerUseCase(customer);
-    result.fold(
-      (failure) => emit(CustomerState.error(failure.message)),
-      (_) => fetchCustomers(),
-    );
+    try {
+      if (!isClosed) {
+        emit(const CustomerState.loading());
+        final result = await createCustomerUseCase(customer);
+        if (!isClosed) {
+          result.fold(
+            (failure) => emit(CustomerState.error(failure.message)),
+            (_) => fetchCustomers(),
+          );
+        }
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(CustomerState.error('Failed to add customer: $e'));
+      }
+    }
   }
 
   Future<void> updateCustomer(Customer customer) async {
-    emit(const CustomerState.loading());
-    final result = await updateCustomerUseCase(customer);
-    result.fold(
-      (failure) => emit(CustomerState.error(failure.message)),
-      (_) => fetchCustomers(),
-    );
+    try {
+      if (!isClosed) {
+        emit(const CustomerState.loading());
+        final result = await updateCustomerUseCase(customer);
+        if (!isClosed) {
+          result.fold(
+            (failure) => emit(CustomerState.error(failure.message)),
+            (_) => fetchCustomers(),
+          );
+        }
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(CustomerState.error('Failed to update customer: $e'));
+      }
+    }
   }
 
   Future<void> deleteCustomer(String id) async {
-    emit(const CustomerState.loading());
-    final result = await deleteCustomerUseCase(id);
-    result.fold(
-      (failure) => emit(CustomerState.error(failure.message)),
-      (_) => fetchCustomers(),
-    );
+    try {
+      if (!isClosed) {
+        emit(const CustomerState.loading());
+        final result = await deleteCustomerUseCase(id);
+        if (!isClosed) {
+          result.fold(
+            (failure) => emit(CustomerState.error(failure.message)),
+            (_) => fetchCustomers(),
+          );
+        }
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(CustomerState.error('Failed to delete customer: $e'));
+      }
+    }
   }
 
   Future<void> searchCustomers(String query) async {
-    emit(const CustomerState.loading());
-    final result = await searchCustomersUseCase(query);
-    result.fold(
-      (failure) => emit(CustomerState.error(failure.message)),
-      (customers) => emit(CustomerState.loaded(customers)),
-    );
+    try {
+      if (!isClosed) {
+        emit(const CustomerState.loading());
+        final result = await searchCustomersUseCase(query);
+        if (!isClosed) {
+          result.fold(
+            (failure) => emit(CustomerState.error(failure.message)),
+            (customers) => emit(CustomerState.loaded(customers)),
+          );
+        }
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(CustomerState.error('Failed to search customers: $e'));
+      }
+    }
   }
 }
