@@ -114,4 +114,39 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
             ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, _i6.User>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.User?>> getCurrentUser() =>
+      (super.noSuchMethod(
+            Invocation.method(#getCurrentUser, []),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.User?>>.value(
+              _FakeEither_0<_i5.Failure, _i6.User?>(
+                this,
+                Invocation.method(#getCurrentUser, []),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i6.User?>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.User>> updateProfile({
+    required String? displayName,
+    String? photoURL,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateProfile, [], {
+              #displayName: displayName,
+              #photoURL: photoURL,
+            }),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.User>>.value(
+              _FakeEither_0<_i5.Failure, _i6.User>(
+                this,
+                Invocation.method(#updateProfile, [], {
+                  #displayName: displayName,
+                  #photoURL: photoURL,
+                }),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i6.User>>);
 }

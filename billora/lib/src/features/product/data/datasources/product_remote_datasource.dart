@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
 
 abstract class ProductRemoteDatasource {
   Future<void> createProduct(ProductModel product);
@@ -13,6 +14,7 @@ abstract class ProductRemoteDatasource {
   Future<void> updateProductInventory(String productId, int quantity);
 }
 
+@injectable
 class ProductRemoteDatasourceImpl implements ProductRemoteDatasource {
   final FirebaseFirestore firestore;
   ProductRemoteDatasourceImpl(this.firestore);

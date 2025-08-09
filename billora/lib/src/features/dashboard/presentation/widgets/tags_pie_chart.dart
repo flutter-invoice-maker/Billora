@@ -16,7 +16,7 @@ class TagsPieChart extends StatefulWidget {
 
 class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMixin {
   int _touchedIndex = -1;
-  int _clickedIndex = -1; // Để track phần tử được click
+  int _clickedIndex = -1;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -25,18 +25,18 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+        
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    
+        
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
     );
-    
+        
     _animationController.forward();
   }
 
@@ -58,8 +58,8 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       return _buildEmptyState(context, isDark, isMobile);
     }
 
-    final validTags = widget.topTags.where((tag) => 
-      tag.revenue > 0 && tag.tagName.isNotEmpty
+    final validTags = widget.topTags.where((tag) =>
+        tag.revenue > 0 && tag.tagName.isNotEmpty
     ).toList();
 
     if (validTags.isEmpty) {
@@ -74,19 +74,19 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Container(
-              width: double.infinity, // Đảm bảo chiều rộng tối đa
+              width: double.infinity,
               constraints: BoxConstraints(
-                minHeight: isMobile ? 400 : 350,
-                maxHeight: isTablet ? 600 : (isMobile ? 700 : 500), // Tăng chiều cao
-                minWidth: double.infinity, // Đảm bảo chiều rộng tối thiểu
+                minHeight: isMobile ? 300 : 280, // Reduced height
+                maxHeight: isTablet ? 450 : (isMobile ? 500 : 400), // More compact
+                minWidth: double.infinity,
               ),
-              margin: EdgeInsets.all(isMobile ? 8 : 12), // Giảm margin để có thêm không gian
+              margin: EdgeInsets.all(isMobile ? 4 : 6), // Reduced margin
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: isDark 
-                    ? [
+                  colors: isDark
+                     ? [
                         const Color(0xFF1E1E1E),
                         const Color(0xFF2D2D2D),
                       ]
@@ -95,38 +95,38 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                         const Color(0xFFFAFAFA),
                       ],
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(20), // Reduced from 24
                 boxShadow: [
                   BoxShadow(
-                    color: isDark 
-                      ? Colors.black.withValues(alpha: 0.3)
-                      : Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 8),
-                    blurRadius: 24,
+                    color: isDark
+                       ? Colors.black.withAlpha(80)
+                      : Colors.black.withAlpha(25),
+                    offset: const Offset(0, 6), // Reduced from 8
+                    blurRadius: 20, // Reduced from 24
                     spreadRadius: 0,
                   ),
                   BoxShadow(
-                    color: isDark 
-                      ? Colors.white.withValues(alpha: 0.02)
-                      : Colors.white.withValues(alpha: 0.8),
-                    offset: const Offset(0, -2),
-                    blurRadius: 8,
+                    color: isDark
+                       ? Colors.white.withAlpha(5)
+                      : Colors.white.withAlpha(200),
+                    offset: const Offset(0, -1),
+                    blurRadius: 6,
                     spreadRadius: 0,
                   ),
                 ],
                 border: Border.all(
-                  color: isDark 
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
+                  color: isDark
+                     ? Colors.white.withAlpha(25)
+                    : Colors.black.withAlpha(15),
                   width: 1,
                 ),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(20),
                 child: Padding(
-                  padding: EdgeInsets.all(isMobile ? 16 : 20), // Giảm padding
-                  child: isTablet 
-                    ? _buildTabletLayout(context, validTags, isDark)
+                  padding: EdgeInsets.all(isMobile ? 12 : 14), // Reduced padding
+                  child: isTablet
+                     ? _buildTabletLayout(context, validTags, isDark)
                     : _buildMobileLayout(context, validTags, isDark),
                 ),
               ),
@@ -137,23 +137,22 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
     );
   }
 
-
   Widget _buildEmptyState(BuildContext context, bool isDark, bool isMobile, {bool isEmpty = true}) {
     return Container(
       width: double.infinity,
-      height: isMobile ? 300 : 350,
-      margin: EdgeInsets.all(isMobile ? 8 : 12),
+      height: isMobile ? 250 : 280, // More compact
+      margin: EdgeInsets.all(isMobile ? 4 : 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: isDark 
-            ? [const Color(0xFF1E1E1E), const Color(0xFF2D2D2D)]
+          colors: isDark
+             ? [const Color(0xFF1E1E1E), const Color(0xFF2D2D2D)]
             : [Colors.white, const Color(0xFFFAFAFA)],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15),
         ),
       ),
       child: Center(
@@ -161,32 +160,32 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20), // Reduced from 24
               decoration: BoxDecoration(
-                color: (isDark ? Colors.grey[700] : Colors.grey[200])?.withValues(alpha: 0.5),
+                color: (isDark ? Colors.grey[700] : Colors.grey[200])?.withAlpha(120),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.pie_chart_outline_rounded,
-                size: 48,
+                size: 40, // Reduced from 48
                 color: isDark ? Colors.grey[500] : Colors.grey[400],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12), // Reduced from 16
             Text(
               isEmpty ? 'No tag data' : 'No valid data',
               style: TextStyle(
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontSize: isMobile ? 16 : 18,
+                fontSize: isMobile ? 14 : 16, // Reduced
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6), // Reduced from 8
             Text(
               'Data will appear when information is available',
               style: TextStyle(
                 color: isDark ? Colors.grey[500] : Colors.grey[500],
-                fontSize: isMobile ? 13 : 14,
+                fontSize: isMobile ? 11 : 12, // Reduced
               ),
             ),
           ],
@@ -195,20 +194,22 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
     );
   }
 
+
+
   Widget _buildMobileLayout(BuildContext context, List<TagRevenue> validTags, bool isDark) {
     return Column(
       children: [
-        // Chart section - tăng tỷ lệ
+        // Chart section - more compact
         Expanded(
-          flex: 3,
+          flex: 2, // Reduced from 3
           child: _buildAnimatedPieChart(validTags),
         ),
-        const SizedBox(height: 16),
-        // Legend
-        _buildModernLegend(context, validTags, isDark, true),
-        const SizedBox(height: 16),
-        // Details - responsive theo nội dung
-        _buildScrollableDetails(context, validTags, isDark, true),
+        const SizedBox(height: 10), // Reduced from 16
+        // Legend - more compact
+        _buildCompactLegend(context, validTags, isDark, true),
+        const SizedBox(height: 10), // Reduced from 16
+        // Details - more compact
+        _buildCompactDetails(context, validTags, isDark, true),
       ],
     );
   }
@@ -219,19 +220,19 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       children: [
         // Chart section
         Expanded(
-          flex: 3,
+          flex: 2, // Reduced from 3
           child: _buildAnimatedPieChart(validTags),
         ),
-        const SizedBox(width: 24),
-        // Right panel - responsive theo nội dung
+        const SizedBox(width: 16), // Reduced from 24
+        // Right panel
         Expanded(
-          flex: 2, // Giảm flex để không chiếm quá nhiều không gian
+          flex: 2,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildModernLegend(context, validTags, isDark, false),
-              const SizedBox(height: 20),
-              _buildScrollableDetails(context, validTags, isDark, false),
+              _buildCompactLegend(context, validTags, isDark, false),
+              const SizedBox(height: 14), // Reduced from 20
+              _buildCompactDetails(context, validTags, isDark, false),
             ],
           ),
         ),
@@ -241,19 +242,22 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
 
   Widget _buildAnimatedPieChart(List<TagRevenue> validTags) {
     return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
       tween: Tween(begin: 0.0, end: 1.0),
       curve: Curves.elasticOut,
       builder: (context, value, child) {
         return Transform.scale(
-          scale: 0.8 + (0.2 * value),
+          scale: 0.85 + (0.15 * value), // More compact scale
           child: PieChart(
             PieChartData(
               sections: _buildAnimatedSections(validTags, value),
-              centerSpaceRadius: 50, // Giảm để có thêm không gian cho chart
-              sectionsSpace: 2,
+              centerSpaceRadius: 35, // Reduced from 50
+              sectionsSpace: 1, // Reduced from 2
               pieTouchData: PieTouchData(
                 touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                  // Prevent mouse tracker errors by checking if widget is still mounted
+                  if (!mounted) return;
+                  
                   setState(() {
                     if (!event.isInterestedForInteractions ||
                         pieTouchResponse == null ||
@@ -261,11 +265,18 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                       _touchedIndex = -1;
                       return;
                     }
-                    
+                                        
                     final touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                    _touchedIndex = touchedIndex;
                     
-                    // Chỉ cập nhật _clickedIndex khi có tap/click
+                    // Validate index bounds to prevent errors
+                    if (touchedIndex < 0 || touchedIndex >= validTags.length) {
+                      _touchedIndex = -1;
+                      return;
+                    }
+                    
+                    _touchedIndex = touchedIndex;
+                                        
+                    // Only update _clickedIndex when there's a tap/click
                     if (event is FlTapUpEvent) {
                       _clickedIndex = _clickedIndex == touchedIndex ? -1 : touchedIndex;
                     }
@@ -286,15 +297,15 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       final color = _getModernTagColor(index);
       final isTouched = index == _touchedIndex;
       final isClicked = index == _clickedIndex;
-      final radius = (isTouched ? 85.0 : 75.0) * animationValue; // Giảm radius
-      
+      final radius = (isTouched ? 70.0 : 60.0) * animationValue; // More compact radius
+            
       return PieChartSectionData(
         color: color,
         value: tag.revenue * animationValue,
-        title: isClicked ? '${tag.percentage.toStringAsFixed(1)}%' : '', // Chỉ hiển thị % khi click
+        title: isClicked ? '${tag.percentage.toStringAsFixed(1)}%' : '',
         radius: radius,
         titleStyle: const TextStyle(
-          fontSize: 14,
+          fontSize: 12, // Reduced from 14
           fontWeight: FontWeight.w700,
           color: Colors.white,
           shadows: [
@@ -306,58 +317,58 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           ],
         ),
         borderSide: BorderSide(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 2,
+          color: Colors.white.withAlpha(50),
+          width: 1.5, // Reduced from 2
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             color,
-            color.withValues(alpha: 0.7),
+            color.withAlpha(180),
           ],
         ),
       );
     }).toList();
   }
 
-  Widget _buildModernLegend(BuildContext context, List<TagRevenue> validTags, bool isDark, bool isMobile) {
+  Widget _buildCompactLegend(BuildContext context, List<TagRevenue> validTags, bool isDark, bool isMobile) {
     return SizedBox(
-      width: double.infinity, // Đảm bảo chiều rộng tối đa
+      width: double.infinity,
       child: Wrap(
-        spacing: isMobile ? 6 : 8, // Giảm spacing
-        runSpacing: isMobile ? 6 : 8,
+        spacing: isMobile ? 4 : 6, // More compact spacing
+        runSpacing: isMobile ? 4 : 6,
         alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
         children: validTags.asMap().entries.map((entry) {
           final index = entry.key;
           final tag = entry.value;
           final color = _getModernTagColor(index);
           final isSelected = index == _clickedIndex;
-          
+                    
           return AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeInOut,
             padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 10 : 12, // Giảm padding
-              vertical: isMobile ? 6 : 8,
+              horizontal: isMobile ? 8 : 10, // More compact padding
+              vertical: isMobile ? 4 : 6,
             ),
             decoration: BoxDecoration(
               gradient: isSelected
                 ? LinearGradient(
-                    colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.1)],
+                    colors: [color.withAlpha(50), color.withAlpha(25)],
                   )
                 : null,
-              color: isSelected ? null : color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16), // Giảm border radius
+              color: isSelected ? null : color.withAlpha(25),
+              borderRadius: BorderRadius.circular(12), // More compact radius
               border: Border.all(
-                color: isSelected ? color : color.withValues(alpha: 0.3),
-                width: isSelected ? 2 : 1,
+                color: isSelected ? color : color.withAlpha(80),
+                width: isSelected ? 1.5 : 1,
               ),
               boxShadow: isSelected ? [
                 BoxShadow(
-                  color: color.withValues(alpha: 0.3),
-                  offset: const Offset(0, 4),
-                  blurRadius: 12,
+                  color: color.withAlpha(80),
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
                 ),
               ] : null,
             ),
@@ -365,27 +376,27 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: isMobile ? 10 : 12, // Giảm kích thước
-                  height: isMobile ? 10 : 12,
+                  width: isMobile ? 8 : 10, // More compact size
+                  height: isMobile ? 8 : 10,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [color, color.withValues(alpha: 0.7)],
+                      colors: [color, color.withAlpha(180)],
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: color.withValues(alpha: 0.4),
-                        offset: const Offset(0, 2),
-                        blurRadius: 4,
+                        color: color.withAlpha(100),
+                        offset: const Offset(0, 1),
+                        blurRadius: 3,
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: isMobile ? 6 : 8), // Giảm spacing
+                SizedBox(width: isMobile ? 4 : 6), // More compact spacing
                 Text(
                   tag.tagName,
                   style: TextStyle(
-                    fontSize: isMobile ? 11 : 12, // Giảm font size
+                    fontSize: isMobile ? 10 : 11, // More compact font
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                   ),
@@ -398,38 +409,38 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
     );
   }
 
-  Widget _buildScrollableDetails(BuildContext context, List<TagRevenue> validTags, bool isDark, bool isMobile) {
-    // Chỉ hiển thị chi tiết nếu có tag được chọn
+  Widget _buildCompactDetails(BuildContext context, List<TagRevenue> validTags, bool isDark, bool isMobile) {
+    // Show hint if no tag selected
     if (_clickedIndex == -1) {
       return Container(
         width: double.infinity,
         constraints: BoxConstraints(
-          minHeight: isMobile ? 80 : 100,
-          maxHeight: isMobile ? 120 : 140,
+          minHeight: isMobile ? 60 : 70, // More compact
+          maxHeight: isMobile ? 90 : 100,
         ),
         decoration: BoxDecoration(
-          color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(16),
+          color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
+          borderRadius: BorderRadius.circular(12), // More compact radius
           border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+            color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15),
           ),
         ),
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(isMobile ? 16 : 20),
+            padding: EdgeInsets.all(isMobile ? 12 : 14), // More compact padding
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.touch_app_rounded,
-                  size: isMobile ? 24 : 28,
+                  size: isMobile ? 20 : 22, // More compact icon
                   color: isDark ? Colors.grey[500] : Colors.grey[400],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6), // More compact spacing
                 Text(
                   'Select a tag to see details',
                   style: TextStyle(
-                    fontSize: isMobile ? 12 : 14,
+                    fontSize: isMobile ? 10 : 12, // More compact font
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
@@ -442,41 +453,85 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       );
     }
 
-    // Hiển thị chi tiết của tag được chọn
+    // Show selected tag details
+    // Validate clicked index to prevent errors
+    if (_clickedIndex < 0 || _clickedIndex >= validTags.length) {
+      _clickedIndex = -1; // Reset to valid state
+      return Container(
+        width: double.infinity,
+        constraints: BoxConstraints(
+          minHeight: isMobile ? 60 : 70,
+          maxHeight: isMobile ? 90 : 100,
+        ),
+        decoration: BoxDecoration(
+          color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15),
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 12 : 14),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.touch_app_rounded,
+                  size: isMobile ? 20 : 22,
+                  color: isDark ? Colors.grey[500] : Colors.grey[400],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Select a tag to see details',
+                  style: TextStyle(
+                    fontSize: isMobile ? 10 : 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
     final selectedTag = validTags[_clickedIndex];
     final selectedColor = _getModernTagColor(_clickedIndex);
-
+    
     return Container(
       width: double.infinity,
       constraints: BoxConstraints(
-        minHeight: isMobile ? 140 : 160,
-        maxHeight: isMobile ? 220 : 260,
+        minHeight: isMobile ? 100 : 120, // More compact
+        maxHeight: isMobile ? 160 : 180,
       ),
       decoration: BoxDecoration(
-        color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
+        color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(isMobile ? 12 : 16),
+            padding: EdgeInsets.all(isMobile ? 10 : 12), // More compact padding
             child: Row(
               children: [
                 Icon(
                   Icons.analytics_rounded,
-                  size: isMobile ? 16 : 18,
+                  size: isMobile ? 14 : 16, // More compact icon
                   color: isDark ? Colors.white70 : Colors.black87,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6), // More compact spacing
                 Expanded(
                   child: Text(
                     'Details - ${selectedTag.tagName}',
                     style: TextStyle(
-                      fontSize: isMobile ? 14 : 16,
+                      fontSize: isMobile ? 12 : 14, // More compact font
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                     ),
@@ -488,31 +543,31 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(isMobile ? 12 : 16),
+              padding: EdgeInsets.all(isMobile ? 10 : 12), // More compact padding
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 width: double.infinity,
-                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                padding: EdgeInsets.all(isMobile ? 12 : 14), // More compact padding
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      selectedColor.withValues(alpha: 0.15),
-                      selectedColor.withValues(alpha: 0.05),
+                      selectedColor.withAlpha(40),
+                      selectedColor.withAlpha(15),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: selectedColor.withValues(alpha: 0.4),
-                    width: 2,
+                    color: selectedColor.withAlpha(100),
+                    width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: selectedColor.withValues(alpha: 0.2),
-                      offset: const Offset(0, 6),
-                      blurRadius: 16,
+                      color: selectedColor.withAlpha(50),
+                      offset: const Offset(0, 4),
+                      blurRadius: 12,
                     ),
                   ],
                 ),
@@ -523,26 +578,26 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                     Row(
                       children: [
                         Container(
-                          width: isMobile ? 16 : 18,
-                          height: isMobile ? 16 : 18,
+                          width: isMobile ? 12 : 14, // More compact size
+                          height: isMobile ? 12 : 14,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [selectedColor, selectedColor.withValues(alpha: 0.7)]),
+                            gradient: LinearGradient(colors: [selectedColor, selectedColor.withAlpha(180)]),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: selectedColor.withValues(alpha: 0.4),
-                                offset: const Offset(0, 2),
-                                blurRadius: 4,
+                                color: selectedColor.withAlpha(100),
+                                offset: const Offset(0, 1),
+                                blurRadius: 3,
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8), // More compact spacing
                         Expanded(
                           child: Text(
                             selectedTag.tagName,
                             style: TextStyle(
-                              fontSize: isMobile ? 16 : 18,
+                              fontSize: isMobile ? 14 : 16, // More compact font
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                             ),
@@ -550,22 +605,22 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // More compact
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [selectedColor, selectedColor.withValues(alpha: 0.8)]),
-                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(colors: [selectedColor, selectedColor.withAlpha(200)]),
+                            borderRadius: BorderRadius.circular(8), // More compact radius
                             boxShadow: [
                               BoxShadow(
-                                color: selectedColor.withValues(alpha: 0.3),
-                                offset: const Offset(0, 2),
-                                blurRadius: 6,
+                                color: selectedColor.withAlpha(80),
+                                offset: const Offset(0, 1),
+                                blurRadius: 4,
                               ),
                             ],
                           ),
                           child: Text(
                             '${selectedTag.percentage.toStringAsFixed(1)}%',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 12, // More compact font
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -573,11 +628,11 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10), // More compact spacing
                     Row(
                       children: [
                         Expanded(
-                          child: _buildDetailItem(
+                          child: _buildCompactDetailItem(
                             icon: Icons.attach_money_rounded,
                             label: 'Revenue',
                             value: _formatCurrency(selectedTag.revenue),
@@ -586,9 +641,9 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                             isMobile: isMobile,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8), // More compact spacing
                         Expanded(
-                          child: _buildDetailItem(
+                          child: _buildCompactDetailItem(
                             icon: Icons.receipt_rounded,
                             label: 'Invoice',
                             value: '${selectedTag.invoiceCount}',
@@ -609,7 +664,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
     );
   }
 
-  Widget _buildDetailItem({
+  Widget _buildCompactDetailItem({
     required IconData icon,
     required String label,
     required String value,
@@ -619,11 +674,11 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 6 : 8),
+      padding: EdgeInsets.all(isMobile ? 4 : 6), // More compact padding
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(6), // More compact radius
+        border: Border.all(color: color.withAlpha(50)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,15 +688,15 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
             children: [
               Icon(
                 icon,
-                size: isMobile ? 12 : 14,
+                size: isMobile ? 10 : 12, // More compact icon
                 color: color,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 3), // More compact spacing
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: isMobile ? 9 : 10,
+                    fontSize: isMobile ? 8 : 9, // More compact font
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
@@ -650,11 +705,11 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1), // More compact spacing
           Text(
             value,
             style: TextStyle(
-              fontSize: isMobile ? 11 : 12,
+              fontSize: isMobile ? 10 : 11, // More compact font
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : const Color(0xFF1A1A1A),
             ),

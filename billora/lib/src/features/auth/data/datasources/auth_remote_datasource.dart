@@ -10,6 +10,11 @@ abstract class AuthRemoteDataSource {
   Future<void> logout();
   Future<UserModel> signInWithGoogle();
   Future<UserModel> signInWithApple();
+  Future<UserModel?> getCurrentUser();
+  Future<UserModel> updateProfile({
+    required String displayName,
+    String? photoURL,
+  });
 }
 
 @LazySingleton(as: AuthRemoteDataSource)
@@ -81,6 +86,29 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (user == null) {
       throw Exception('User not found');
     }
+    return UserModel.fromFirebaseUser(user);
+  }
+
+  @override
+  Future<UserModel?> getCurrentUser() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return null;
+    return UserModel.fromFirebaseUser(user);
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    required String displayName,
+    String? photoURL,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) throw Exception('User not found');
+    
+    await user.updateDisplayName(displayName);
+    if (photoURL != null) {
+      await user.updatePhotoURL(photoURL);
+    }
+    
     return UserModel.fromFirebaseUser(user);
   }
 } 

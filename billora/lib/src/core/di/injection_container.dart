@@ -27,18 +27,22 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_apple_usecase.dart';
+import 'package:billora/src/features/auth/domain/usecases/get_current_user_usecase.dart';
+import 'package:billora/src/features/auth/domain/usecases/update_profile_usecase.dart';
 
 import 'package:billora/src/features/invoice/data/datasources/invoice_remote_datasource.dart';
 import 'package:billora/src/features/invoice/data/repositories/invoice_repository_impl.dart';
 import 'package:billora/src/features/invoice/domain/repositories/invoice_repository.dart';
 import 'package:billora/src/features/invoice/domain/usecases/create_invoice_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/get_invoices_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/get_customer_recent_invoices_usecase.dart';
 import 'package:billora/src/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'package:billora/src/features/invoice/domain/usecases/delete_invoice_usecase.dart';
 import 'package:billora/src/core/services/pdf_service.dart';
 import 'package:billora/src/core/services/email_service.dart';
 import 'package:billora/src/core/services/firebase_email_service.dart';
 import 'package:billora/src/core/services/storage_service.dart';
+import 'package:billora/src/core/services/image_upload_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart';
@@ -192,6 +196,16 @@ Future<void> configureDependencies() async {
       () => SignInWithAppleUseCase(sl()),
     );
   }
+  if (!sl.isRegistered<GetCurrentUserUseCase>()) {
+    sl.registerLazySingleton<GetCurrentUserUseCase>(
+      () => GetCurrentUserUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<UpdateProfileUseCase>()) {
+    sl.registerLazySingleton<UpdateProfileUseCase>(
+      () => UpdateProfileUseCase(sl()),
+    );
+  }
   if (!sl.isRegistered<AuthCubit>()) {
     sl.registerLazySingleton<AuthCubit>(
       () => AuthCubit(
@@ -200,6 +214,8 @@ Future<void> configureDependencies() async {
         logoutUseCase: sl(),
         signInWithGoogleUseCase: sl(),
         signInWithAppleUseCase: sl(),
+        getCurrentUserUseCase: sl(),
+        updateProfileUseCase: sl(),
       ),
     );
   }
@@ -226,6 +242,11 @@ Future<void> configureDependencies() async {
   if (!sl.isRegistered<DeleteInvoiceUseCase>()) {
     sl.registerLazySingleton<DeleteInvoiceUseCase>(
       () => DeleteInvoiceUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<GetCustomerRecentInvoicesUseCase>()) {
+    sl.registerLazySingleton<GetCustomerRecentInvoicesUseCase>(
+      () => GetCustomerRecentInvoicesUseCase(sl()),
     );
   }
   if (!sl.isRegistered<InvoiceCubit>()) {
@@ -278,6 +299,9 @@ Future<void> configureDependencies() async {
   }
   if (!sl.isRegistered<StorageService>()) {
     sl.registerLazySingleton<StorageService>(() => StorageService(sl<FirebaseStorage>(), sl<FirebaseAuth>()));
+  }
+  if (!sl.isRegistered<ImageUploadService>()) {
+    sl.registerLazySingleton<ImageUploadService>(() => ImageUploadService(sl<FirebaseStorage>(), sl<FirebaseAuth>()));
   }
   if (!sl.isRegistered<GeneratePdfUseCase>()) {
     sl.registerLazySingleton<GeneratePdfUseCase>(() => GeneratePdfUseCase(sl()));

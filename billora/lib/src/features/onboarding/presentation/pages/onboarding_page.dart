@@ -190,18 +190,12 @@ class _OnboardingPageState extends State<OnboardingPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left side - Skip button (on slide 1 and 2)
+          // Left side - Skip text (on slide 1 and 2)
           (_currentPage == 0 || _currentPage == 1)
               ? FadeTransition(
                   opacity: _fadeAnimation,
-                  child: TextButton(
-                    onPressed: _skipOnboarding,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
+                  child: GestureDetector(
+                    onTap: _skipOnboarding,
                     child: Text(
                       'Skip',
                       style: TextStyle(
@@ -225,21 +219,22 @@ class _OnboardingPageState extends State<OnboardingPage>
             ),
           ),
           
-          // Right side - Navigation button (only arrow for slide 1 and 2)
+          // Right side - Navigation icon (only arrow for slide 1 and 2)
           _currentPage < _totalPages - 1
               ? FadeTransition(
                   opacity: _fadeAnimation,
-                  child: IconButton(
-                    onPressed: _nextPage,
-                    icon: Icon(
-                      Icons.arrow_forward_rounded,
-                      color: _slides[_currentPage].primaryColor,
-                      size: 28,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: _slides[_currentPage].primaryColor.withValues(alpha: 0.1),
-                      shape: RoundedRectangleBorder(
+                  child: GestureDetector(
+                    onTap: _nextPage,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _slides[_currentPage].primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: _slides[_currentPage].primaryColor,
+                        size: 24,
                       ),
                     ),
                   ),

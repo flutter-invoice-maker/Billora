@@ -1,21 +1,10 @@
 const List<Map<String, String>> defaultInvoiceCategories = [
-  // Quốc tế
-  {'key': 'commercial_invoice', 'en': 'Commercial Invoice', 'vi': 'Hóa đơn thương mại'},
-  {'key': 'proforma_invoice', 'en': 'Proforma Invoice', 'vi': 'Hóa đơn tạm tính'},
-  {'key': 'tax_invoice', 'en': 'Tax Invoice', 'vi': 'Hóa đơn thuế'},
-  {'key': 'electronic_invoice', 'en': 'Electronic Invoice', 'vi': 'Hóa đơn điện tử'},
-  {'key': 'credit_note', 'en': 'Credit Note', 'vi': 'Giấy ghi có'},
-  {'key': 'debit_note', 'en': 'Debit Note', 'vi': 'Giấy ghi nợ'},
-  {'key': 'self_billing_invoice', 'en': 'Self-Billing Invoice', 'vi': 'Hóa đơn tự lập'},
-  {'key': 'timesheet_invoice', 'en': 'Timesheet Invoice', 'vi': 'Hóa đơn tính giờ'},
-  // Việt Nam
-  {'key': 'vat_invoice', 'en': 'VAT Invoice', 'vi': 'Hóa đơn giá trị gia tăng'},
-  {'key': 'sales_invoice', 'en': 'Sales Invoice', 'vi': 'Hóa đơn bán hàng'},
-  {'key': 'internal_transfer', 'en': 'Internal Transfer Note', 'vi': 'Phiếu xuất kho kiêm vận chuyển nội bộ'},
-  {'key': 'consignment', 'en': 'Consignment Note', 'vi': 'Phiếu xuất kho gửi bán đại lý'},
-  {'key': 'stamp_ticket_card', 'en': 'Stamp/Ticket/Card', 'vi': 'Tem, vé, thẻ'},
-  {'key': 'transport_receipt', 'en': 'Transport Receipt', 'vi': 'Phiếu thu tiền cước vận chuyển quốc tế'},
-  {'key': 'bank_fee', 'en': 'Bank Fee Receipt', 'vi': 'Chứng từ thu phí dịch vụ ngân hàng'},
+  {'key': 'professional_business', 'en': 'Commercial Invoice'},
+  {'key': 'modern_creative', 'en': 'Sales Invoice'},
+  {'key': 'minimal_clean', 'en': 'Proforma Invoice'},
+  {'key': 'corporate_formal', 'en': 'Internal Transfer'},
+  {'key': 'service_based', 'en': 'Timesheet Invoice'},
+  {'key': 'simple_receipt', 'en': 'Payment Receipt'},
 ];
 
 const List<Map<String, String>> defaultInvoiceFormats = [

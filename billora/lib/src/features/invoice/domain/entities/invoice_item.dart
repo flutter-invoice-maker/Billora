@@ -7,6 +7,8 @@ class InvoiceItem {
   final double tax;
   final double total;
   final String productId;
+  final String? companyOrShopName;
+  final Map<String, dynamic> extraFields;
 
   InvoiceItem({
     required this.id,
@@ -17,6 +19,8 @@ class InvoiceItem {
     required this.tax,
     required this.total,
     required this.productId,
+    this.companyOrShopName,
+    this.extraFields = const {},
   });
 
   InvoiceItem copyWith({
@@ -28,6 +32,8 @@ class InvoiceItem {
     double? tax,
     double? total,
     String? productId,
+    String? companyOrShopName,
+    Map<String, dynamic>? extraFields,
   }) {
     return InvoiceItem(
       id: id ?? this.id,
@@ -38,6 +44,8 @@ class InvoiceItem {
       tax: tax ?? this.tax,
       total: total ?? this.total,
       productId: productId ?? this.productId,
+      companyOrShopName: companyOrShopName ?? this.companyOrShopName,
+      extraFields: extraFields ?? this.extraFields,
     );
   }
 } 

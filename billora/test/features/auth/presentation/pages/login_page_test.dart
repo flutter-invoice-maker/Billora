@@ -8,6 +8,8 @@ import 'package:billora/src/features/auth/domain/usecases/register_usecase.dart'
 import 'package:billora/src/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:billora/src/features/auth/domain/usecases/sign_in_with_apple_usecase.dart';
+import 'package:billora/src/features/auth/domain/usecases/get_current_user_usecase.dart';
+import 'package:billora/src/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:dartz/dartz.dart';
@@ -18,6 +20,8 @@ class MockRegisterUseCase extends Mock implements RegisterUseCase {}
 class MockLogoutUseCase extends Mock implements LogoutUseCase {}
 class MockSignInWithGoogleUseCase extends Mock implements SignInWithGoogleUseCase {}
 class MockSignInWithAppleUseCase extends Mock implements SignInWithAppleUseCase {}
+class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
+class MockUpdateProfileUseCase extends Mock implements UpdateProfileUseCase {}
 
 void main() {
   late AuthCubit cubit;
@@ -26,6 +30,8 @@ void main() {
   late MockLogoutUseCase logoutUseCase;
   late MockSignInWithGoogleUseCase signInWithGoogleUseCase;
   late MockSignInWithAppleUseCase signInWithAppleUseCase;
+  late MockGetCurrentUserUseCase getCurrentUserUseCase;
+  late MockUpdateProfileUseCase updateProfileUseCase;
 
   setUp(() {
     loginUseCase = MockLoginUseCase();
@@ -33,12 +39,16 @@ void main() {
     logoutUseCase = MockLogoutUseCase();
     signInWithGoogleUseCase = MockSignInWithGoogleUseCase();
     signInWithAppleUseCase = MockSignInWithAppleUseCase();
+    getCurrentUserUseCase = MockGetCurrentUserUseCase();
+    updateProfileUseCase = MockUpdateProfileUseCase();
     cubit = AuthCubit(
       loginUseCase: loginUseCase,
       registerUseCase: registerUseCase,
       logoutUseCase: logoutUseCase,
       signInWithGoogleUseCase: signInWithGoogleUseCase,
       signInWithAppleUseCase: signInWithAppleUseCase,
+      getCurrentUserUseCase: getCurrentUserUseCase,
+      updateProfileUseCase: updateProfileUseCase,
     );
     when(() => loginUseCase.call(email: any(named: 'email'), password: any(named: 'password')))
         .thenAnswer((_) async => Right(User(id: '1', email: 'test', displayName: 'Test')));
@@ -47,6 +57,7 @@ void main() {
     when(() => logoutUseCase.call()).thenAnswer((_) async => Future.value());
     when(() => signInWithGoogleUseCase.call()).thenAnswer((_) async => Right(User(id: '1', email: 'test', displayName: 'Test')));
     when(() => signInWithAppleUseCase.call()).thenAnswer((_) async => Right(User(id: '1', email: 'test', displayName: 'Test')));
+    when(() => getCurrentUserUseCase.call()).thenAnswer((_) async => Right(User(id: '1', email: 'test', displayName: 'Test')));
   });
 
   testWidgets('LoginPage renders form and login button', (tester) async {

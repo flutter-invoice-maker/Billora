@@ -7,6 +7,7 @@ abstract class InvoiceRemoteDatasource {
   Future<void> createInvoice(InvoiceModel invoice);
   Future<List<InvoiceModel>> getInvoices();
   Future<void> deleteInvoice(String id);
+  Future<List<InvoiceModel>> getCustomerRecentInvoices(String customerId, {int limit = 2});
 }
 
 class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
@@ -55,7 +56,28 @@ class InvoiceRemoteDatasourceImpl implements InvoiceRemoteDatasource {
 
   @override
   Future<void> deleteInvoice(String id) async {
-    if (id.isEmpty) return;
     await firestore.collection('invoices').doc(id).delete();
+  }
+
+  @override
+  Future<List<InvoiceModel>> getCustomerRecentInvoices(String customerId, {int limit = 2}) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+    
+    final snapshot = await firestore
+        .collection('invoices')
+        .where('userId', isEqualTo: userId)
+        .where('customerId', isEqualTo: customerId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return InvoiceModel.fromJson(data);
+    }).toList();
   }
 } 

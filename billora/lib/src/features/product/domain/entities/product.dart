@@ -7,6 +7,8 @@ class Product {
   final double tax;
   final int inventory;
   final bool isService;
+  final String? companyOrShopName;
+  final Map<String, dynamic> extraFields;
 
   Product({
     required this.id,
@@ -17,6 +19,8 @@ class Product {
     required this.tax,
     required this.inventory,
     this.isService = false,
+    this.companyOrShopName,
+    this.extraFields = const {},
   });
 
   Product copyWith({
@@ -28,6 +32,8 @@ class Product {
     double? tax,
     int? inventory,
     bool? isService,
+    String? companyOrShopName,
+    Map<String, dynamic>? extraFields,
   }) {
     return Product(
       id: id ?? this.id,
@@ -38,6 +44,8 @@ class Product {
       tax: tax ?? this.tax,
       inventory: inventory ?? this.inventory,
       isService: isService ?? this.isService,
+      companyOrShopName: companyOrShopName ?? this.companyOrShopName,
+      extraFields: extraFields ?? this.extraFields,
     );
   }
 } 
