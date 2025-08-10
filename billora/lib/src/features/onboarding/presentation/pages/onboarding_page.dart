@@ -225,17 +225,10 @@ class _OnboardingPageState extends State<OnboardingPage>
                   opacity: _fadeAnimation,
                   child: GestureDetector(
                     onTap: _nextPage,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _slides[_currentPage].primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
                       child: Icon(
                         Icons.arrow_forward_rounded,
                         color: _slides[_currentPage].primaryColor,
                         size: 24,
-                      ),
                     ),
                   ),
                 )

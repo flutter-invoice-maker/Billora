@@ -74,8 +74,11 @@ class _MyAppState extends State<MyApp> {
               value: sl<AuthCubit>(),
               child: RegisterPage(),
             ),
-        '/home': (context) => BlocProvider.value(
-              value: sl<AuthCubit>(),
+        '/home': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
+                BlocProvider<DashboardCubit>(create: (_) => sl<DashboardCubit>()),
+              ],
               child: HomePage(),
             ),
         '/customers': (context) => MultiBlocProvider(

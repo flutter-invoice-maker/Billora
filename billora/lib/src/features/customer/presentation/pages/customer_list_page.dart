@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math' as math;
 import 'dart:async';
-import 'package:billora/src/features/customer/domain/entities/customer.dart';
-import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
-import 'package:billora/src/features/customer/presentation/cubit/customer_state.dart';
-import 'package:billora/src/features/customer/presentation/pages/customer_form_page.dart';
+import '../cubit/customer_cubit.dart';
+import '../cubit/customer_state.dart';
+import '../../domain/entities/customer.dart';
+import 'customer_form_page.dart';
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
+import 'package:billora/src/core/widgets/delete_dialog.dart';
 
 class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
@@ -489,43 +490,20 @@ class _CustomerListPageState extends State<CustomerListPage>
             ],
           ],
         ),
-        trailing: PopupMenuButton<String>(
-          icon: Icon(
-            Icons.more_vert,
-            color: Colors.grey[600],
+        trailing: GestureDetector(
+          onTap: () => _showOptionsMenu(customer),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.more_vert,
+              color: Colors.grey,
+              size: 20,
+            ),
           ),
-          onSelected: (value) {
-            switch (value) {
-              case 'edit':
-                _openForm(customer);
-                break;
-              case 'delete':
-                _showDeleteDialog(customer);
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit, size: 16),
-                  SizedBox(width: 8),
-                  Text('Edit'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, size: 16, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
         ),
         onTap: () => _openForm(customer),
       ),
@@ -661,25 +639,83 @@ class _CustomerListPageState extends State<CustomerListPage>
   void _showDeleteDialog(Customer customer) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Customer'),
-        content: Text('Are you sure you want to delete ${customer.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<CustomerCubit>().deleteCustomer(customer.id);
-              Navigator.of(context).pop();
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+      builder: (context) => DeleteDialog(
+        title: 'Delete Customer',
+        message: 'Are you sure you want to delete this customer? This action cannot be undone.',
+        itemName: customer.name,
+        onDelete: () {
+          context.read<CustomerCubit>().deleteCustomer(customer.id);
+        },
+      ),
+    );
+  }
+
+  void _showOptionsMenu(Customer customer) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.edit_outlined,
+                  color: Color(0xFF6366F1),
+                  size: 20,
+                ),
+              ),
+              title: const Text('Edit Customer'),
+              subtitle: const Text('Modify customer details'),
+              onTap: () {
+                Navigator.pop(context);
+                _openForm(customer);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 20,
+                ),
+              ),
+              title: const Text('Delete Customer'),
+              subtitle: const Text('Remove from database'),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteDialog(customer);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

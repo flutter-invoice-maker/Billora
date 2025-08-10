@@ -120,7 +120,7 @@ class _AppHeaderState extends State<AppHeader> with TickerProviderStateMixin {
 
   Widget _buildHomeHeaderContent(AuthState authState) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end, // Thay đổi từ start thành end
       mainAxisSize: MainAxisSize.min,
       children: [
         Flexible(
@@ -133,6 +133,7 @@ class _AppHeaderState extends State<AppHeader> with TickerProviderStateMixin {
                 color: Color(0xFF2D3748),
               ),
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end, // Thêm textAlign end
             ),
             orElse: () => const Text(
               'Hello, Guest! 👋',
@@ -142,6 +143,7 @@ class _AppHeaderState extends State<AppHeader> with TickerProviderStateMixin {
                 color: Color(0xFF2D3748),
               ),
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end, // Thêm textAlign end
             ),
           ),
         ),
@@ -159,6 +161,7 @@ class _AppHeaderState extends State<AppHeader> with TickerProviderStateMixin {
               color: Colors.white,
               fontWeight: FontWeight.w500,
             ),
+            textAlign: TextAlign.end, // Thêm textAlign end
           ),
         ),
       ],

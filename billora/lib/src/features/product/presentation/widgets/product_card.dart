@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/product/domain/entities/product.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
+import 'package:billora/src/core/widgets/delete_dialog.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -17,34 +18,7 @@ class ProductCard extends StatefulWidget {
   State<ProductCard> createState() => _ProductCardState();
 }
 
-class _ProductCardState extends State<ProductCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _slideController;
-  late Animation<Offset> _slideAnimation;
-  bool _showDeleteOptions = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-0.3, 0),
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeInOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _slideController.dispose();
-    super.dispose();
-  }
-
+class _ProductCardState extends State<ProductCard> {
   void _showOptionsMenu() {
     showModalBottomSheet(
       context: context,
@@ -116,27 +90,19 @@ class _ProductCardState extends State<ProductCard>
   }
 
   void _showDeleteConfirmation() {
-    setState(() {
-      _showDeleteOptions = true;
-    });
-    _slideController.forward();
-  }
-
-  void _cancelDelete() {
-    _slideController.reverse().then((_) {
-      setState(() {
-        _showDeleteOptions = false;
-      });
-    });
-  }
-
-  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return DeleteDialog(
+          title: 'Delete Product',
+          message: 'Are you sure you want to delete this product? This action cannot be undone.',
+          itemName: widget.product.name,
+          onDelete: () {
     context.read<ProductCubit>().deleteProduct(widget.product.id);
-    _slideController.reverse().then((_) {
-      setState(() {
-        _showDeleteOptions = false;
-      });
-    });
+          },
+        );
+      },
+    );
   }
 
   Widget _getProductImage() {
@@ -167,67 +133,6 @@ class _ProductCardState extends State<ProductCard>
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Stack(
-        children: [
-          // Delete options background
-          if (_showDeleteOptions)
-            Container(
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  GestureDetector(
-                    onTap: _cancelDelete,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          bottomLeft: Radius.circular(12),
-                        ),
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.close, color: Colors.black54),
-                          Text('Cancel', style: TextStyle(fontSize: 10)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _confirmDelete,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.delete, color: Colors.white),
-                          Text('Delete', style: TextStyle(fontSize: 10, color: Colors.white)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          // Main card
-          SlideTransition(
-            position: _slideAnimation,
             child: Container(
               height: 80,
               decoration: BoxDecoration(
@@ -281,7 +186,6 @@ class _ProductCardState extends State<ProductCard>
                         ],
                       ),
                     ),
-                    if (!_showDeleteOptions)
                       GestureDetector(
                         onTap: _showOptionsMenu,
                         child: Container(
@@ -300,9 +204,6 @@ class _ProductCardState extends State<ProductCard>
                   ],
                 ),
               ),
-            ),
-          ),
-        ],
       ),
     );
   }
