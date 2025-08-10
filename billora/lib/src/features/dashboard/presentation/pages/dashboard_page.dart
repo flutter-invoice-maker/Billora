@@ -89,12 +89,19 @@ class _DashboardPageState extends State<DashboardPage>
         );
       }
     });
+  }
 
-    // Load initial dashboard data
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Load dashboard data immediately when component is mounted
+    final dashboardState = context.read<DashboardCubit>().state;
+    if (dashboardState is! DashboardLoaded && dashboardState is! DashboardLoading) {
       context.read<DashboardCubit>().loadDashboardStats();
       context.read<CustomerCubit>().fetchCustomers();
-    });
+      context.read<ProductCubit>().fetchProducts();
+    }
   }
 
   void _refreshDashboard() {
@@ -113,14 +120,6 @@ class _DashboardPageState extends State<DashboardPage>
         }
       });
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshDashboard();
-    });
   }
 
   @override

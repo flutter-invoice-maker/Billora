@@ -150,7 +150,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(
                               Icons.arrow_back_ios_rounded,
-                              color: Colors.white,
+                              color: Color(0xFF2D3748), // Thay đổi từ Colors.white thành màu đậm
                             ),
                           ),
                         ),
@@ -161,7 +161,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                                 ? AppStrings.customerAddTitle 
                                 : AppStrings.customerEditTitle,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF2D3748), // Thay đổi từ Colors.white thành màu đậm
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),

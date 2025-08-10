@@ -157,7 +157,7 @@ class _ProductFormPageState extends State<ProductFormPage>
                             ),
                             child: const Icon(
                               Icons.arrow_back,
-                              color: Colors.white,
+                              color: Color(0xFF2D3748), // Thay đổi từ Colors.white thành màu đậm
                             ),
                           ),
                         ),
@@ -168,7 +168,7 @@ class _ProductFormPageState extends State<ProductFormPage>
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Color(0xFF2D3748), // Thay đổi từ Colors.white thành màu đậm
                             ),
                           ),
                         ),
@@ -691,8 +691,17 @@ class _ProductFormPageState extends State<ProductFormPage>
     required FormFieldSetter<String?> onSaved,
     bool isRequired = false,
   }) {
+    // Validate that the value exists in items, if not, set to null or first item
+    String? validatedValue = value;
+    if (value != null) {
+      bool valueExists = items.any((item) => item['value'] == value);
+      if (!valueExists) {
+        validatedValue = items.isNotEmpty ? items.first['value'] : null;
+      }
+    }
+    
     return DropdownButtonFormField2<String>(
-      value: value,
+      value: validatedValue,
       items: items.map((item) => DropdownMenuItem<String>(
         value: item['value'],
         child: Row(

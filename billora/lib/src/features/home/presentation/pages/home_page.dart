@@ -4,7 +4,9 @@ import 'dart:math' as math;
 import 'dart:async';
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
+import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:billora/src/core/di/injection_container.dart';
+import 'package:billora/src/core/utils/currency_formatter.dart';
 import '../widgets/app_scaffold.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,6 +20,9 @@ class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   final int _currentIndex = -1;
   final ScrollController _scrollController = ScrollController();
+
+  // GIF loading state
+  bool _isGifLoaded = false;
 
   // Animation controllers
   late AnimationController _invoiceController;
@@ -43,7 +48,7 @@ class _HomePageState extends State<HomePage>
   final bool _showCursor = true;
   bool _isTyping = false;
   bool _showInvoice = false;
-
+  
   final List<Map<String, dynamic>> _tabData = [
     {
       'icon': Icons.speed,
@@ -112,6 +117,22 @@ class _HomePageState extends State<HomePage>
         _contentController.forward();
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Load dashboard stats if not already loaded
+    final dashboardState = context.read<DashboardCubit>().state;
+    if (dashboardState is! DashboardLoaded) {
+      context.read<DashboardCubit>().loadDashboardStats();
+    }
+    
+    // Preload the GIF if not already loaded
+    if (!_isGifLoaded) {
+      _preloadGif();
+    }
   }
 
   void _onScroll() {
@@ -260,6 +281,7 @@ class _HomePageState extends State<HomePage>
       providers: [
         BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
         BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+        BlocProvider<DashboardCubit>(create: (_) => sl<DashboardCubit>()),
       ],
       child: AppScaffold(
         currentTabIndex: _currentIndex,
@@ -269,6 +291,33 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomepage() {
+    // Show loading screen until GIF is loaded
+    if (!_isGifLoaded) {
+      return Container(
+        color: const Color(0xFF667eea),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Loading...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Stack(
       children: [
         // Main content
@@ -302,7 +351,7 @@ class _HomePageState extends State<HomePage>
       width: double.infinity,
       child: Stack(
         children: [
-          // GIF Background
+          // GIF Background - Always show
           ClipRRect(
             borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(30),
@@ -340,9 +389,9 @@ class _HomePageState extends State<HomePage>
             ),
           ),
           
-          // Welcome text inside banner
+          // Welcome text inside banner - Moved closer to bottom
           Positioned(
-            bottom: 60,
+            bottom: 20, // Changed from 60 to 20
             left: 0,
             right: 0,
             child: Column(
@@ -593,39 +642,64 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildStatsSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            'Your Business at a Glance',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildStatItem('1,234', 'Invoices', Icons.receipt_long, const Color(0xFF667eea)),
-              _buildStatItem('₹2.5M', 'Revenue', Icons.trending_up, const Color(0xFF4CAF50)),
-              _buildStatItem('456', 'Customers', Icons.people, const Color(0xFF2196F3)),
+    return BlocBuilder<DashboardCubit, DashboardState>(
+      builder: (context, state) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
             ],
           ),
-        ],
-      ),
+          child: Column(
+            children: [
+              const Text(
+                'Your Business at a Glance',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _buildStatItem(
+                    state is DashboardLoaded 
+                        ? state.stats.totalInvoices.toString()
+                        : '0',
+                    'Invoices',
+                    Icons.receipt_long,
+                    const Color(0xFF667eea),
+                  ),
+                  _buildStatItem(
+                    state is DashboardLoaded 
+                        ? CurrencyFormatter.format(state.stats.totalRevenue)
+                        : '₹0',
+                    'Revenue',
+                    Icons.trending_up,
+                    const Color(0xFF4CAF50),
+                  ),
+                  _buildStatItem(
+                    state is DashboardLoaded 
+                        ? state.stats.newCustomers.toString()
+                        : '0',
+                    'Customers',
+                    Icons.people,
+                    const Color(0xFF2196F3),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -935,6 +1009,27 @@ class _HomePageState extends State<HomePage>
       const Color(0xFF9C27B0),
     ];
     return colors[index % colors.length];
+  }
+
+  void _preloadGif() async {
+    try {
+      await precacheImage(
+        const AssetImage('assets/images/homepage.gif'),
+        context,
+      );
+      if (mounted) {
+        setState(() {
+          _isGifLoaded = true;
+        });
+      }
+    } catch (e) {
+      // If precache fails, still show the page
+      if (mounted) {
+        setState(() {
+          _isGifLoaded = true;
+        });
+      }
+    }
   }
 }
 

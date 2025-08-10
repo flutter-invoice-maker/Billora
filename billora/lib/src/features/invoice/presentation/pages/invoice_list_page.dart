@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
+import 'package:billora/src/core/widgets/delete_dialog.dart';
 
 class InvoiceListPage extends StatefulWidget {
   const InvoiceListPage({super.key});
@@ -836,6 +837,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
           _filterStatus = status;
           _currentPage = 0;
         });
+        // Close filter form and apply filter immediately
+        Navigator.pop(context);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -899,7 +902,12 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
           );
         }
         
-        final tags = snapshot.data ?? [];
+        final allTags = snapshot.data ?? [];
+        return StatefulBuilder(
+          builder: (context, setState) {
+            String searchQuery = '';
+            List<String> filteredTags = allTags;
+            
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -922,21 +930,90 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                   color: Colors.grey[600],
                 ),
               ),
-              const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+                  
+                  // Search bar for tags
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search tags...',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        prefixIcon: Icon(Icons.search, color: const Color(0xFF667eea), size: 20),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                          filteredTags = allTags.where((tag) => 
+                            tag.toLowerCase().contains(value.toLowerCase())
+                          ).toList();
+                        });
+                      },
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Tags display with better layout
               Expanded(
                 child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                          // All Tags option
                       _buildModernTagChip('All Tags', null),
-                      ...tags.map((tag) => _buildModernTagChip(tag, tag)),
+                          const SizedBox(height: 12),
+                          
+                          // Available tags
+                          if (filteredTags.isNotEmpty) ...[
+                            Text(
+                              'Available Tags (${filteredTags.length})',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: filteredTags.map((tag) => _buildModernTagChip(tag, tag)).toList(),
+                            ),
+                          ] else if (searchQuery.isNotEmpty) ...[
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'No tags found for "$searchQuery"',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                     ],
                   ),
                 ),
               ),
             ],
           ),
+            );
+          },
         );
       },
     );
@@ -952,6 +1029,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
           _selectedTag = tag;
           _currentPage = 0;
         });
+        // Close filter form and apply filter immediately
+        Navigator.pop(context);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -1325,22 +1404,13 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
   void _deleteInvoice(BuildContext parentContext, Invoice invoice) {
     showDialog(
       context: parentContext,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppStrings.deleteInvoice),
-        content: Text(AppStrings.deleteInvoiceConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(AppStrings.invoiceCancel),
-          ),
-          TextButton(
-            onPressed: () {
+      builder: (dialogContext) => DeleteDialog(
+        title: 'Delete Invoice',
+        message: 'Are you sure you want to delete this invoice? This action cannot be undone.',
+        itemName: 'Invoice #${invoice.id}',
+        onDelete: () {
               parentContext.read<InvoiceCubit>().deleteInvoice(invoice.id);
-              Navigator.of(dialogContext).pop();
             },
-            child: Text(AppStrings.remove),
-          ),
-        ],
       ),
     );
   }
