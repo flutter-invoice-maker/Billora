@@ -1,16 +1,26 @@
-import 'package:dartz/dartz.dart';
-import '../../../../core/errors/failures.dart';
-import '../../../../core/usecase/usecase.dart';
-import '../entities/scan_result.dart';
+import 'dart:io';
+import '../entities/scanned_bill.dart';
 import '../repositories/bill_scanner_repository.dart';
 
-class ScanBillUseCase implements UseCase<ScanResult, String> {
-  final BillScannerRepository repository;
+class ScanBillUseCase {
+  final BillScannerRepository _repository;
 
-  ScanBillUseCase(this.repository);
+  ScanBillUseCase(this._repository);
 
-  @override
-  Future<Either<Failure, ScanResult>> call(String imagePath) async {
-    return await repository.scanBill(imagePath);
+  Future<ScannedBill> call(File imageFile) async {
+    try {
+      // Step 1: Scan the bill
+      final scannedBill = await _repository.scanBill(imageFile);
+      
+      // Step 2: Validate and correct if needed
+      final validatedBill = await _repository.validateAndCorrectBill(scannedBill);
+      
+      // Step 3: Save the bill
+      await _repository.saveBill(validatedBill);
+      
+      return validatedBill;
+    } catch (e) {
+      throw Exception('Scan bill use case failed: $e');
+    }
   }
 } 

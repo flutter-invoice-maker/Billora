@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 import 'src/features/auth/presentation/pages/login_page.dart';
 import 'src/features/auth/presentation/pages/register_page.dart';
 import 'src/features/auth/presentation/cubit/auth_cubit.dart';
@@ -23,14 +24,22 @@ import 'package:billora/src/features/product/domain/usecases/update_product_inve
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/product/presentation/pages/product_catalog_page.dart';
 import 'src/features/invoice/presentation/pages/invoice_list_page.dart';
+import 'src/features/invoice/presentation/pages/invoice_form_page.dart';
 import 'src/features/invoice/presentation/cubit/invoice_cubit.dart';
-import 'src/features/bill_scanner/presentation/pages/bill_scanner_hub_page.dart';
-import 'src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
+import 'src/features/bill_scanner/presentation/pages/image_upload_page.dart';
+import 'src/features/bill_scanner/presentation/pages/enhanced_image_upload_page.dart';
+// import 'src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
 import 'src/features/suggestions/presentation/pages/suggestions_demo_page.dart';
 import 'src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'src/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'src/features/bill_scanner/presentation/pages/scan_library_page.dart';
+import 'src/features/bill_scanner/presentation/cubit/scan_library_cubit.dart';
+
+import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,9 +47,19 @@ void main() async {
   // Load environment variables
   await dotenv.load(fileName: ".env");
   
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    Firebase.app();
+  } on FirebaseException {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code != 'duplicate-app') {
+        rethrow;
+      }
+    }
+  }
   await configureDependencies();
   runApp(const MyApp());
 }
@@ -124,9 +143,38 @@ class _MyAppState extends State<MyApp> {
               ],
               child: const InvoiceListPage(),
             ),
-        '/bill-scanner': (context) => BlocProvider(
-              create: (context) => sl<BillScannerCubit>(),
-              child: const BillScannerHubPage(),
+        '/invoice-form': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
+                BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()),
+                BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
+                BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
+                BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
+                BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+                Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
+                Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
+                Provider<ClassifyInvoiceUseCase>(create: (_) => sl<ClassifyInvoiceUseCase>()),
+              ],
+              child: const InvoiceFormPage(),
+            ),
+        // '/bill-scanner': (context) => BlocProvider(
+        //       create: (context) => sl<BillScannerCubit>(),
+        //       child: const BillScannerHubPage(),
+        //     ),
+        '/bill-scanner': (context) => BlocProvider.value(
+              value: sl<AuthCubit>(),
+              child: const ImageUploadPage(),
+            ),
+        '/enhanced-bill-scanner': (context) => BlocProvider.value(
+              value: sl<AuthCubit>(),
+              child: const EnhancedImageUploadPage(),
+            ),
+        '/scan-library': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
+                BlocProvider<ScanLibraryCubit>(create: (_) => sl<ScanLibraryCubit>()),
+              ],
+              child: const ScanLibraryPage(),
             ),
         '/suggestions-demo': (context) => MultiBlocProvider(
               providers: [

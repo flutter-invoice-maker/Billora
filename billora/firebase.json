@@ -1,1 +1,35 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"billora-invoice-maker","appId":"1:1018575120402:android:a0c31a6d5a51630fd190cb","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"billora-invoice-maker","configurations":{"android":"1:1018575120402:android:a0c31a6d5a51630fd190cb","ios":"1:1018575120402:ios:3806aa2780e0152bd190cb","macos":"1:1018575120402:ios:3806aa2780e0152bd190cb","web":"1:1018575120402:web:3c10646dd3b3ed3cd190cb","windows":"1:1018575120402:web:437e83eabe88956ed190cb"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": {
+    "source": "functions"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "billora-invoice-maker",
+          "appId": "1:1018575120402:android:a0c31a6d5a51630fd190cb",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "billora-invoice-maker",
+          "configurations": {
+            "android": "1:1018575120402:android:a0c31a6d5a51630fd190cb",
+            "ios": "1:1018575120402:ios:3806aa2780e0152bd190cb",
+            "macos": "1:1018575120402:ios:3806aa2780e0152bd190cb",
+            "web": "3c10646dd3b3ed3cd190cb",
+            "windows": "437e83eabe88956ed190cb"
+          }
+        }
+      }
+    }
+  }
+}

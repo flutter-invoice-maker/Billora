@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
+// import 'package:camera/camera.dart';  // Temporarily disabled due to compatibility issues
+// import 'package:permission_handler/permission_handler.dart';  // Temporarily disabled due to compatibility issues
 import 'package:billora/src/core/utils/app_strings.dart';
 
 class BillScannerHubPage extends StatefulWidget {
@@ -13,7 +12,7 @@ class BillScannerHubPage extends StatefulWidget {
 
 class _BillScannerHubPageState extends State<BillScannerHubPage>
     with TickerProviderStateMixin {
-  CameraController? _controller;
+  // CameraController? _controller;  // Temporarily disabled
   late AnimationController _animationController;
 
   @override
@@ -24,13 +23,13 @@ class _BillScannerHubPageState extends State<BillScannerHubPage>
       vsync: this,
     )..repeat();
     
-    _initializeCamera();
+    // _initializeCamera();  // Temporarily disabled
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _controller?.dispose();
+    // _controller?.dispose();  // Temporarily disabled
     super.dispose();
   }
 
@@ -68,63 +67,5 @@ class _BillScannerHubPageState extends State<BillScannerHubPage>
     );
   }
 
-  Future<void> _initializeCamera() async {
-    try {
-      final status = await Permission.camera.request();
-      if (status != PermissionStatus.granted) {
-        _showPermissionDialog();
-        return;
-      }
 
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) {
-        return;
-      }
-
-      final camera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-
-      _controller = CameraController(
-        camera,
-        ResolutionPreset.high,
-        enableAudio: false,
-        imageFormatGroup: Platform.isAndroid 
-            ? ImageFormatGroup.yuv420 
-            : ImageFormatGroup.bgra8888,
-      );
-
-      await _controller!.initialize();
-      
-      if (mounted) {
-        setState(() {});
-      }
-    } catch (e) {
-      // Camera không khả dụng
-    }
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppStrings.cameraPermission),
-        content: Text(AppStrings.cameraPermissionMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              openAppSettings();
-            },
-            child: Text(AppStrings.settings),
-          ),
-        ],
-      ),
-    );
-  }
 } 

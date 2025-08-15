@@ -77,12 +77,22 @@ class StorageService {
       },
     );
     
-    final uploadTask = await ref.putData(pdfData, metadata);
-    
-    // Get download URL
-    final downloadUrl = await uploadTask.ref.getDownloadURL();
-    
-    return downloadUrl;
+    int attempt = 0;
+    while (true) {
+      try {
+        final uploadTask = await ref.putData(pdfData, metadata);
+        final downloadUrl = await uploadTask.ref.getDownloadURL();
+        return downloadUrl;
+      } on FirebaseException catch (e) {
+        // Retry for transient Storage errors (-13010 Not Found) a few times
+        if (attempt < 3 && (e.code == 'object-not-found' || e.code == 'unknown')) {
+          attempt++;
+          await Future.delayed(Duration(milliseconds: 400 * attempt));
+          continue;
+        }
+        rethrow;
+      }
+    }
   }
 
   Future<String> _uploadForWeb(String userId, String invoiceId, Uint8List pdfData, String userUid) async {

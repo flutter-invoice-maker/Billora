@@ -8,24 +8,27 @@ plugins {
 
 android {
     namespace = "com.example.billora"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = "29.0.13599879"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Application ID
         applicationId = "com.Billora.invoice_maker"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Firebase yêu cầu tối thiểu API 23
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -37,9 +40,11 @@ android {
             dimension = "env"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
+            minSdk = 23
         }
         create("prod") {
             dimension = "env"
+            minSdk = 23
         }
     }
 
@@ -54,4 +59,18 @@ android {
 
 flutter {
     source = "../.."
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.concurrent:concurrent-futures:1.1.0")
+        force("androidx.annotation:annotation:1.7.1")
+        force("androidx.core:core:1.12.0")
+    }
+}
+
+dependencies {
+    implementation("androidx.concurrent:concurrent-futures:1.1.0")
+    implementation("androidx.annotation:annotation:1.7.1")
+    implementation("androidx.core:core:1.12.0")
 }

@@ -54,16 +54,16 @@ import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 
 // Bill Scanner imports
-import 'package:billora/src/features/bill_scanner/domain/repositories/bill_scanner_repository.dart';
-import 'package:billora/src/features/bill_scanner/data/repositories/bill_scanner_repository_impl.dart';
-import 'package:billora/src/features/bill_scanner/data/datasources/ocr_datasource.dart';
-import 'package:billora/src/features/bill_scanner/data/datasources/free_ocr_api_datasource.dart';
-import 'package:billora/src/features/bill_scanner/data/datasources/image_processing_datasource.dart';
-import 'package:billora/src/features/bill_scanner/domain/usecases/scan_bill_usecase.dart';
-import 'package:billora/src/features/bill_scanner/domain/usecases/extract_bill_data_usecase.dart';
-import 'package:billora/src/features/bill_scanner/domain/usecases/validate_bill_data_usecase.dart';
-import 'package:billora/src/features/bill_scanner/domain/usecases/process_with_regex_usecase.dart';
-import 'package:billora/src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
+// import 'package:billora/src/features/bill_scanner/domain/repositories/bill_scanner_repository.dart';
+// import 'package:billora/src/features/bill_scanner/data/repositories/bill_scanner_repository_impl.dart';
+// import 'package:billora/src/features/bill_scanner/data/datasources/ocr_datasource.dart';
+// import 'package:billora/src/features/bill_scanner/data/datasources/free_ocr_api_datasource.dart';
+// import 'package:billora/src/features/bill_scanner/data/datasources/image_processing_datasource.dart';
+// import 'package:billora/src/features/bill_scanner/domain/usecases/scan_bill_usecase.dart';
+// import 'package:billora/src/features/bill_scanner/domain/usecases/extract_bill_data_usecase.dart';
+// import 'package:billora/src/features/bill_scanner/domain/usecases/validate_bill_data_usecase.dart';
+// import 'package:billora/src/features/bill_scanner/domain/usecases/process_with_regex_usecase.dart';
+// import 'package:billora/src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
 
 // Week 7 - Suggestions & Tags imports
 import 'package:uuid/uuid.dart';
@@ -89,6 +89,19 @@ import 'package:billora/src/features/dashboard/data/datasources/dashboard_remote
 import 'package:billora/src/features/dashboard/domain/usecases/get_invoice_stats_usecase.dart';
 import 'package:billora/src/features/dashboard/domain/usecases/export_invoice_report_usecase.dart';
 import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+
+// Week 9 - AI & QR Code Dependencies
+import 'package:billora/src/core/services/ai_service.dart';
+import 'package:billora/src/core/services/qr_service.dart';
+import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart';
+import 'package:billora/src/features/invoice/domain/usecases/generate_qr_code_usecase.dart';
+
+import 'package:billora/src/features/bill_scanner/domain/repositories/scan_library_repository.dart';
+import 'package:billora/src/features/bill_scanner/data/repositories/scan_library_repository_impl.dart';
+import 'package:billora/src/features/bill_scanner/domain/usecases/scan_library_usecases.dart';
+import 'package:billora/src/features/bill_scanner/presentation/cubit/scan_library_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -304,58 +317,58 @@ Future<void> configureDependencies() async {
     sl.registerLazySingleton<ImageUploadService>(() => ImageUploadService(sl<FirebaseStorage>(), sl<FirebaseAuth>()));
   }
   if (!sl.isRegistered<GeneratePdfUseCase>()) {
-    sl.registerLazySingleton<GeneratePdfUseCase>(() => GeneratePdfUseCase(sl()));
+    sl.registerLazySingleton<GeneratePdfUseCase>(() => GeneratePdfUseCase(sl<PdfService>()));
   }
   if (!sl.isRegistered<SendInvoiceEmailUseCase>()) {
-    sl.registerLazySingleton<SendInvoiceEmailUseCase>(() => SendInvoiceEmailUseCase(sl()));
+    sl.registerLazySingleton<SendInvoiceEmailUseCase>(() => SendInvoiceEmailUseCase(sl<EmailService>()));
   }
   if (!sl.isRegistered<SendFirebaseEmailUseCase>()) {
-    sl.registerLazySingleton<SendFirebaseEmailUseCase>(() => SendFirebaseEmailUseCase(sl()));
+    sl.registerLazySingleton<SendFirebaseEmailUseCase>(() => SendFirebaseEmailUseCase(sl<FirebaseEmailService>()));
   }
   if (!sl.isRegistered<UploadInvoiceUseCase>()) {
-    sl.registerLazySingleton<UploadInvoiceUseCase>(() => UploadInvoiceUseCase(sl()));
+    sl.registerLazySingleton<UploadInvoiceUseCase>(() => UploadInvoiceUseCase(sl<StorageService>()));
   }
 
-  // Bill Scanner Dependencies
-  if (!sl.isRegistered<OCRDataSource>()) {
-    sl.registerLazySingleton<OCRDataSource>(() => MLKitOCRDataSource());
-  }
-  if (!sl.isRegistered<FreeOCRApiDataSource>()) {
-    sl.registerLazySingleton<FreeOCRApiDataSource>(() => FreeOCRApiDataSource());
-  }
-  if (!sl.isRegistered<ImageProcessingDataSource>()) {
-    sl.registerLazySingleton<ImageProcessingDataSource>(() => ImageProcessingDataSource());
-  }
-  if (!sl.isRegistered<BillScannerRepository>()) {
-    sl.registerLazySingleton<BillScannerRepository>(
-      () => BillScannerRepositoryImpl(
-            mlKitDataSource: sl(),
-            apiDataSource: sl(),
-            imageProcessingDataSource: sl(),
-          ),
-    );
-  }
-  if (!sl.isRegistered<ScanBillUseCase>()) {
-    sl.registerLazySingleton<ScanBillUseCase>(() => ScanBillUseCase(sl()));
-  }
-  if (!sl.isRegistered<ExtractBillDataUseCase>()) {
-    sl.registerLazySingleton<ExtractBillDataUseCase>(() => ExtractBillDataUseCase(sl()));
-  }
-  if (!sl.isRegistered<ValidateBillDataUseCase>()) {
-    sl.registerLazySingleton<ValidateBillDataUseCase>(() => ValidateBillDataUseCase(sl()));
-  }
-  if (!sl.isRegistered<ProcessWithRegexUseCase>()) {
-    sl.registerLazySingleton<ProcessWithRegexUseCase>(() => ProcessWithRegexUseCase(sl()));
-  }
-  if (!sl.isRegistered<BillScannerCubit>()) {
-    sl.registerLazySingleton<BillScannerCubit>(
-      () => BillScannerCubit(
-        scanBillUseCase: sl(),
-        extractBillDataUseCase: sl(),
-        validateBillDataUseCase: sl(),
-      ),
-    );
-  }
+  // Bill Scanner Dependencies - Temporarily disabled due to compatibility issues
+  // if (!sl.isRegistered<OCRDataSource>()) {
+  //   sl.registerLazySingleton<OCRDataSource>(() => MLKitOCRDataSource());
+  // }
+  // if (!sl.isRegistered<FreeOCRApiDataSource>()) {
+  //   sl.registerLazySingleton<FreeOCRApiDataSource>(() => FreeOCRApiDataSource());
+  // }
+  // if (!sl.isRegistered<ImageProcessingDataSource>()) {
+  //   sl.registerLazySingleton<ImageProcessingDataSource>(() => ImageProcessingDataSource());
+  // }
+  // if (!sl.isRegistered<BillScannerRepository>()) {
+  //   sl.registerLazySingleton<BillScannerRepository>(
+  //     () => BillScannerRepositoryImpl(
+  //           mlKitDataSource: sl(),
+  //           apiDataSource: sl(),
+  //           imageProcessingDataSource: sl(),
+  //         ),
+  //   );
+  // }
+  // if (!sl.isRegistered<ScanBillUseCase>()) {
+  //   sl.registerLazySingleton<ScanBillUseCase>(() => ScanBillUseCase(sl()));
+  // }
+  // if (!sl.isRegistered<ExtractBillDataUseCase>()) {
+  //   sl.registerLazySingleton<ExtractBillDataUseCase>(() => ExtractBillDataUseCase(sl()));
+  // }
+  // if (!sl.isRegistered<ValidateBillDataUseCase>()) {
+  //   sl.registerLazySingleton<ValidateBillDataUseCase>(() => ValidateBillDataUseCase(sl()));
+  // }
+  // if (!sl.isRegistered<ProcessWithRegexUseCase>()) {
+  //   sl.registerLazySingleton<ProcessWithRegexUseCase>(() => ProcessWithRegexUseCase(sl()));
+  // }
+  // if (!sl.isRegistered<BillScannerCubit>()) {
+  //   sl.registerLazySingleton<BillScannerCubit>(
+  //     () => BillScannerCubit(
+  //       scanBillUseCase: sl(),
+  //       extractBillDataUseCase: sl(),
+  //       validateBillDataUseCase: sl(),
+  //       ),
+  //   );
+  // }
 
   // Week 7 - Suggestions & Tags Dependencies
   if (!sl.isRegistered<Uuid>()) {
@@ -454,6 +467,75 @@ Future<void> configureDependencies() async {
       () => DashboardCubit(
         getInvoiceStatsUseCase: sl(),
         exportInvoiceReportUseCase: sl(),
+      ),
+    );
+  }
+
+  // Week 9 - AI & QR Code Dependencies
+  if (!sl.isRegistered<AIService>()) {
+    sl.registerLazySingleton<AIService>(() => AIService());
+  }
+  if (!sl.isRegistered<QRService>()) {
+    sl.registerLazySingleton<QRService>(() => QRService());
+  }
+  if (!sl.isRegistered<SuggestTagsUseCase>()) {
+    sl.registerLazySingleton<SuggestTagsUseCase>(() => SuggestTagsUseCase(sl()));
+  }
+  if (!sl.isRegistered<ClassifyInvoiceUseCase>()) {
+    sl.registerLazySingleton<ClassifyInvoiceUseCase>(() => ClassifyInvoiceUseCase(sl()));
+  }
+  if (!sl.isRegistered<GenerateSummaryUseCase>()) {
+    sl.registerLazySingleton<GenerateSummaryUseCase>(() => GenerateSummaryUseCase(sl()));
+  }
+  if (!sl.isRegistered<GenerateQRCodeUseCase>()) {
+    sl.registerLazySingleton<GenerateQRCodeUseCase>(() => GenerateQRCodeUseCase(sl()));
+  }
+
+  // Bill Scanner dependencies
+  if (!sl.isRegistered<ScanLibraryRepository>()) {
+    sl.registerLazySingleton<ScanLibraryRepository>(
+      () => ScanLibraryRepositoryImpl(sl<FirebaseFirestore>(), sl<FirebaseAuth>()),
+    );
+  }
+
+  if (!sl.isRegistered<GetScanItemsUseCase>()) {
+    sl.registerLazySingleton<GetScanItemsUseCase>(
+      () => GetScanItemsUseCase(sl<ScanLibraryRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<SaveScanItemUseCase>()) {
+    sl.registerLazySingleton<SaveScanItemUseCase>(
+      () => SaveScanItemUseCase(sl<ScanLibraryRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<UpdateScanItemUseCase>()) {
+    sl.registerLazySingleton<UpdateScanItemUseCase>(
+      () => UpdateScanItemUseCase(sl<ScanLibraryRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<DeleteScanItemUseCase>()) {
+    sl.registerLazySingleton<DeleteScanItemUseCase>(
+      () => DeleteScanItemUseCase(sl<ScanLibraryRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<GetScanItemByIdUseCase>()) {
+    sl.registerLazySingleton<GetScanItemByIdUseCase>(
+      () => GetScanItemByIdUseCase(sl<ScanLibraryRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<ScanLibraryCubit>()) {
+    sl.registerLazySingleton<ScanLibraryCubit>(
+      () => ScanLibraryCubit(
+        getScanItemsUseCase: sl<GetScanItemsUseCase>(),
+        saveScanItemUseCase: sl<SaveScanItemUseCase>(),
+        updateScanItemUseCase: sl<UpdateScanItemUseCase>(),
+        deleteScanItemUseCase: sl<DeleteScanItemUseCase>(),
+        getScanItemByIdUseCase: sl<GetScanItemByIdUseCase>(),
       ),
     );
   }

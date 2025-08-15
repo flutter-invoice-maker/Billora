@@ -18,6 +18,16 @@ class Invoice {
   final String? templateId;
   final List<String> tags;
   final List<String> searchKeywords;
+  
+  // AI-generated fields
+  final String? aiClassification;
+  final String? aiSummary;
+  final List<String> aiSuggestedTags;
+  final String? aiStatus; // 'pending', 'done', 'error'
+  
+  // QR Code fields
+  final String? qrCodeData;
+  final String? qrCodeHash;
 
   Invoice({
     required this.id,
@@ -35,6 +45,12 @@ class Invoice {
     this.templateId,
     this.tags = const [],
     this.searchKeywords = const [],
+    this.aiClassification,
+    this.aiSummary,
+    this.aiSuggestedTags = const [],
+    this.aiStatus,
+    this.qrCodeData,
+    this.qrCodeHash,
   });
 
   Invoice copyWith({
@@ -53,6 +69,12 @@ class Invoice {
     String? templateId,
     List<String>? tags,
     List<String>? searchKeywords,
+    String? aiClassification,
+    String? aiSummary,
+    List<String>? aiSuggestedTags,
+    String? aiStatus,
+    String? qrCodeData,
+    String? qrCodeHash,
   }) {
     return Invoice(
       id: id ?? this.id,
@@ -70,6 +92,12 @@ class Invoice {
       templateId: templateId ?? this.templateId,
       tags: tags ?? this.tags,
       searchKeywords: searchKeywords ?? this.searchKeywords,
+      aiClassification: aiClassification ?? this.aiClassification,
+      aiSummary: aiSummary ?? this.aiSummary,
+      aiSuggestedTags: aiSuggestedTags ?? this.aiSuggestedTags,
+      aiStatus: aiStatus ?? this.aiStatus,
+      qrCodeData: qrCodeData ?? this.qrCodeData,
+      qrCodeHash: qrCodeHash ?? this.qrCodeHash,
     );
   }
 } 

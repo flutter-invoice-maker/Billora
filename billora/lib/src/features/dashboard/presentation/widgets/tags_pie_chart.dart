@@ -305,7 +305,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
         title: isClicked ? '${tag.percentage.toStringAsFixed(1)}%' : '',
         radius: radius,
         titleStyle: const TextStyle(
-          fontSize: 12, // Reduced from 14
+          fontSize: 12, // Back to original size for pie chart title
           fontWeight: FontWeight.w700,
           color: Colors.white,
           shadows: [
@@ -415,8 +415,8 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       return Container(
         width: double.infinity,
         constraints: BoxConstraints(
-          minHeight: isMobile ? 60 : 70, // More compact
-          maxHeight: isMobile ? 90 : 100,
+          minHeight: isMobile ? 80 : 90, // Increased height to prevent overflow
+          maxHeight: isMobile ? 110 : 120,
         ),
         decoration: BoxDecoration(
           color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
@@ -426,29 +426,29 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           ),
         ),
         child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(isMobile ? 12 : 14), // More compact padding
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.touch_app_rounded,
-                  size: isMobile ? 20 : 22, // More compact icon
-                  color: isDark ? Colors.grey[500] : Colors.grey[400],
-                ),
-                const SizedBox(height: 6), // More compact spacing
-                Text(
-                  'Select a tag to see details',
-                  style: TextStyle(
-                    fontSize: isMobile ? 10 : 12, // More compact font
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      child: Padding(
+              padding: EdgeInsets.all(isMobile ? 16 : 18), // Increased padding
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.touch_app_rounded,
+                    size: isMobile ? 24 : 26, // Increased icon size
+                    color: isDark ? Colors.grey[500] : Colors.grey[400],
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                  const SizedBox(height: 8), // Increased spacing
+                  Text(
+                    'Select a tag to see details',
+                    style: TextStyle(
+                      fontSize: isMobile ? 12 : 14, // Increased font size
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
-          ),
         ),
       );
     }
@@ -460,8 +460,8 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       return Container(
         width: double.infinity,
         constraints: BoxConstraints(
-          minHeight: isMobile ? 60 : 70,
-          maxHeight: isMobile ? 90 : 100,
+          minHeight: isMobile ? 80 : 90,
+          maxHeight: isMobile ? 110 : 120,
         ),
         decoration: BoxDecoration(
           color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
@@ -503,10 +503,10 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
     
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(
-        minHeight: isMobile ? 100 : 120, // More compact
-        maxHeight: isMobile ? 160 : 180,
-      ),
+              constraints: BoxConstraints(
+          minHeight: isMobile ? 140 : 160, // Increased height to prevent overflow
+          maxHeight: isMobile ? 200 : 220,
+        ),
       decoration: BoxDecoration(
         color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
         borderRadius: BorderRadius.circular(12),
@@ -518,20 +518,20 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(isMobile ? 10 : 12), // More compact padding
+            padding: EdgeInsets.all(isMobile ? 12 : 14), // Increased padding
             child: Row(
               children: [
                 Icon(
                   Icons.analytics_rounded,
-                  size: isMobile ? 14 : 16, // More compact icon
+                  size: isMobile ? 16 : 18, // Increased icon size
                   color: isDark ? Colors.white70 : Colors.black87,
                 ),
-                const SizedBox(width: 6), // More compact spacing
+                const SizedBox(width: 8), // Increased spacing
                 Expanded(
-                  child: Text(
+                  child:                   Text(
                     'Details - ${selectedTag.tagName}',
                     style: TextStyle(
-                      fontSize: isMobile ? 12 : 14, // More compact font
+                      fontSize: isMobile ? 12 : 14, // Back to original size for details title
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                     ),
@@ -543,12 +543,12 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(isMobile ? 10 : 12), // More compact padding
+              padding: EdgeInsets.all(isMobile ? 12 : 14), // Increased padding
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 width: double.infinity,
-                padding: EdgeInsets.all(isMobile ? 12 : 14), // More compact padding
+                padding: EdgeInsets.all(isMobile ? 16 : 18), // Increased padding
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -578,8 +578,8 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                     Row(
                       children: [
                         Container(
-                          width: isMobile ? 12 : 14, // More compact size
-                          height: isMobile ? 12 : 14,
+                          width: isMobile ? 14 : 16, // Increased size
+                          height: isMobile ? 14 : 16,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(colors: [selectedColor, selectedColor.withAlpha(180)]),
                             shape: BoxShape.circle,
@@ -592,12 +592,12 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8), // More compact spacing
+                        const SizedBox(width: 10), // Increased spacing
                         Expanded(
                           child: Text(
                             selectedTag.tagName,
                             style: TextStyle(
-                              fontSize: isMobile ? 14 : 16, // More compact font
+                              fontSize: isMobile ? 18 : 20, // Increased font size for better readability
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                             ),
@@ -605,10 +605,10 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // More compact
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Increased padding
                           decoration: BoxDecoration(
                             gradient: LinearGradient(colors: [selectedColor, selectedColor.withAlpha(200)]),
-                            borderRadius: BorderRadius.circular(8), // More compact radius
+                            borderRadius: BorderRadius.circular(10), // Increased radius
                             boxShadow: [
                               BoxShadow(
                                 color: selectedColor.withAlpha(80),
@@ -620,7 +620,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                           child: Text(
                             '${selectedTag.percentage.toStringAsFixed(1)}%',
                             style: const TextStyle(
-                              fontSize: 12, // More compact font
+                              fontSize: 16, // Increased font size for better readability
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -628,7 +628,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10), // More compact spacing
+                                            const SizedBox(height: 16), // Increased spacing
                     Row(
                       children: [
                         Expanded(
@@ -641,7 +641,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                             isMobile: isMobile,
                           ),
                         ),
-                        const SizedBox(width: 8), // More compact spacing
+                        const SizedBox(width: 12), // Increased spacing
                         Expanded(
                           child: _buildCompactDetailItem(
                             icon: Icons.receipt_rounded,
@@ -674,10 +674,10 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 4 : 6), // More compact padding
+      padding: EdgeInsets.all(isMobile ? 8 : 10), // Increased padding to prevent overflow
       decoration: BoxDecoration(
         color: color.withAlpha(25),
-        borderRadius: BorderRadius.circular(6), // More compact radius
+        borderRadius: BorderRadius.circular(8), // Increased radius
         border: Border.all(color: color.withAlpha(50)),
       ),
       child: Column(
@@ -688,15 +688,15 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
             children: [
               Icon(
                 icon,
-                size: isMobile ? 10 : 12, // More compact icon
+                size: isMobile ? 14 : 16, // Increased icon size
                 color: color,
               ),
-              const SizedBox(width: 3), // More compact spacing
+              const SizedBox(width: 6), // Increased spacing
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: isMobile ? 8 : 9, // More compact font
+                    fontSize: isMobile ? 12 : 14, // Increased font size to prevent overflow
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
@@ -705,11 +705,11 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
               ),
             ],
           ),
-          const SizedBox(height: 1), // More compact spacing
+          const SizedBox(height: 4), // Increased spacing
           Text(
             value,
             style: TextStyle(
-              fontSize: isMobile ? 10 : 11, // More compact font
+              fontSize: isMobile ? 14 : 16, // Increased font size to prevent overflow
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : const Color(0xFF1A1A1A),
             ),

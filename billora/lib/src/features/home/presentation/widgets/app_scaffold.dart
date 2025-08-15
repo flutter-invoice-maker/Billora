@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_header.dart';
 import 'app_tabbar.dart';
+import 'global_ai_button.dart';
 
 class AppScaffold extends StatelessWidget {
   final Widget body;
@@ -9,6 +10,7 @@ class AppScaffold extends StatelessWidget {
   final Widget? floatingActionButton;
   final FloatingActionButtonLocation? floatingActionButtonLocation;
   final List<Widget>? actions;
+  final String? invoiceId; // Add invoiceId parameter for AI context
 
   const AppScaffold({
     super.key,
@@ -18,6 +20,7 @@ class AppScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.floatingActionButtonLocation,
     this.actions,
+    this.invoiceId,
   });
 
   Widget _buildDefaultFAB(BuildContext context) {
@@ -33,7 +36,7 @@ class AppScaffold extends StatelessWidget {
       case 2:
         return const ProductAddFAB();
       case 3:
-        return const ScanFAB();
+        return const InvoiceFAB();
       case -1:
         return const ScanFAB();
       default:
@@ -58,6 +61,12 @@ class AppScaffold extends StatelessWidget {
         children: [
           // Main body content
           body,
+          // Global AI Button - positioned above tabbar
+          GlobalAIButton(
+            invoiceId: invoiceId,
+            primaryColor: Theme.of(context).primaryColor,
+            isVisible: true,
+          ),
           // Floating tabbar positioned at bottom
           Positioned(
             left: 0,
@@ -73,7 +82,7 @@ class AppScaffold extends StatelessWidget {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 48), // Move FAB up more
+        padding: const EdgeInsets.only(bottom: 30), // Move FAB down a bit to reduce overlap
         child: _buildDefaultFAB(context),
       ),
       floatingActionButtonLocation: floatingActionButtonLocation ?? FloatingActionButtonLocation.centerDocked,

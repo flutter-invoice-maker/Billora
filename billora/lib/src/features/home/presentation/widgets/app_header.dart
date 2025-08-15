@@ -388,15 +388,15 @@ class _AppHeaderState extends State<AppHeader> with TickerProviderStateMixin {
           value: parentContext.read<AuthCubit>(),
           child: BlocBuilder<AuthCubit, AuthState>(
             builder: (context, authState) {
-              return Dialog(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                insetPadding: const EdgeInsets.all(20),
-                child: authState.maybeWhen(
-                  authenticated: (user) => ProfileForm(
-                    user: user,
-                    onClose: () => Navigator.of(parentContext).pop(),
-                  ),
+                                return Dialog(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    insetPadding: const EdgeInsets.all(20),
+                    child: authState.maybeWhen(
+                      authenticated: (user) => ProfileForm(
+                        user: user,
+                        onProfileUpdated: () => Navigator.of(parentContext).pop(),
+                      ),
                   orElse: () => Container(
                     width: 320,
                     padding: const EdgeInsets.all(24),

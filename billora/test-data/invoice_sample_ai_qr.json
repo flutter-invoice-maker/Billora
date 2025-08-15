@@ -1,0 +1,54 @@
+{
+  "id": "INV-2024-001",
+  "customerId": "CUST-001",
+  "customerName": "Tech Solutions Inc.",
+  "items": [
+    {
+      "id": "ITEM-001",
+      "name": "Laptop Computer",
+      "description": "Dell XPS 13, 16GB RAM, 512GB SSD",
+      "quantity": 2,
+      "unitPrice": 1299.99,
+      "tax": 259.99,
+      "total": 2859.97,
+      "productId": "PROD-001"
+    },
+    {
+      "id": "ITEM-002",
+      "name": "Wireless Mouse",
+      "description": "Logitech MX Master 3",
+      "quantity": 5,
+      "unitPrice": 79.99,
+      "tax": 40.00,
+      "total": 439.95,
+      "productId": "PROD-002"
+    },
+    {
+      "id": "ITEM-003",
+      "name": "Software License",
+      "description": "Adobe Creative Suite Annual License",
+      "quantity": 1,
+      "unitPrice": 599.99,
+      "tax": 60.00,
+      "total": 659.99,
+      "productId": "PROD-003"
+    }
+  ],
+  "subtotal": 3959.97,
+  "tax": 359.99,
+  "total": 4319.96,
+  "status": "sent",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "dueDate": "2024-02-15T10:30:00Z",
+  "paidAt": null,
+  "note": "Payment due within 30 days. Early payment discount available.",
+  "templateId": "template_a",
+  "tags": ["Electronics", "Software", "Hardware"],
+  "searchKeywords": ["laptop", "mouse", "software", "tech", "computer"],
+  "aiClassification": "Electronics",
+  "aiSummary": "Tech Solutions - Electronics & Software - 3 items",
+  "aiSuggestedTags": ["Electronics", "Software", "Hardware", "Technology", "Office Equipment"],
+  "aiStatus": "done",
+  "qrCodeData": "{\"t\":\"inv\",\"id\":\"INV-2024-001\",\"v\":1}",
+  "qrCodeHash": "abc123def456"
+} 

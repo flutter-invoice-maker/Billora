@@ -10,10 +10,12 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:billora/src/core/di/injection_container.dart' as _i107;
+import 'package:billora/src/core/services/ai_service.dart' as _i17;
 import 'package:billora/src/core/services/email_service.dart' as _i971;
 import 'package:billora/src/core/services/firebase_email_service.dart' as _i365;
 import 'package:billora/src/core/services/image_upload_service.dart' as _i957;
 import 'package:billora/src/core/services/pdf_service.dart' as _i5;
+import 'package:billora/src/core/services/qr_service.dart' as _i314;
 import 'package:billora/src/core/services/storage_service.dart' as _i537;
 import 'package:billora/src/features/auth/data/datasources/auth_remote_datasource.dart'
     as _i910;
@@ -43,12 +45,20 @@ import 'package:billora/src/features/dashboard/domain/usecases/export_invoice_re
     as _i423;
 import 'package:billora/src/features/dashboard/domain/usecases/get_invoice_stats_usecase.dart'
     as _i873;
+import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart'
+    as _i980;
 import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart'
     as _i936;
+import 'package:billora/src/features/invoice/domain/usecases/generate_qr_code_usecase.dart'
+    as _i486;
+import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart'
+    as _i760;
 import 'package:billora/src/features/invoice/domain/usecases/send_firebase_email_usecase.dart'
     as _i1012;
 import 'package:billora/src/features/invoice/domain/usecases/send_invoice_email_usecase.dart'
     as _i888;
+import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart'
+    as _i261;
 import 'package:billora/src/features/invoice/domain/usecases/upload_invoice_usecase.dart'
     as _i1014;
 import 'package:billora/src/features/product/data/datasources/product_remote_datasource.dart'
@@ -100,8 +110,10 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final firebaseModule = _$FirebaseModule();
+    gh.factory<_i17.AIService>(() => _i17.AIService());
     gh.factory<_i971.EmailService>(() => _i971.EmailService());
     gh.factory<_i5.PdfService>(() => _i5.PdfService());
+    gh.factory<_i314.QRService>(() => _i314.QRService());
     gh.factory<_i577.CalculateSuggestionScoreUseCase>(
       () => _i577.CalculateSuggestionScoreUseCase(),
     );
@@ -156,6 +168,18 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i888.SendInvoiceEmailUseCase>(
       () => _i888.SendInvoiceEmailUseCase(gh<_i971.EmailService>()),
+    );
+    gh.factory<_i980.ClassifyInvoiceUseCase>(
+      () => _i980.ClassifyInvoiceUseCase(gh<_i17.AIService>()),
+    );
+    gh.factory<_i760.GenerateSummaryUseCase>(
+      () => _i760.GenerateSummaryUseCase(gh<_i17.AIService>()),
+    );
+    gh.factory<_i261.SuggestTagsUseCase>(
+      () => _i261.SuggestTagsUseCase(gh<_i17.AIService>()),
+    );
+    gh.factory<_i486.GenerateQRCodeUseCase>(
+      () => _i486.GenerateQRCodeUseCase(gh<_i314.QRService>()),
     );
     gh.factory<_i957.ImageUploadService>(
       () => _i957.ImageUploadService(

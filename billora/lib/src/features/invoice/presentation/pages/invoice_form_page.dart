@@ -6,6 +6,7 @@ import 'package:billora/src/features/invoice/domain/entities/invoice_item.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/customer_selection_widget.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/product_list_widget.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/smart_recommendations_widget.dart';
+import 'package:billora/src/features/invoice/presentation/widgets/ai_suggestions_widget.dart';
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:billora/src/features/customer/domain/entities/customer.dart';
@@ -14,6 +15,7 @@ import 'package:billora/src/features/product/presentation/cubit/product_cubit.da
 import 'package:billora/src/core/utils/app_strings.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/template_selector_dialog.dart';
+import 'package:billora/src/features/invoice/presentation/widgets/ai_floating_button.dart';
 
 class InvoiceFormPage extends StatefulWidget {
   final Invoice? invoice;
@@ -40,6 +42,12 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
   List<String> _tags = [];
   final List<Product> _selectedProducts = [];
   bool _isEdit = false;
+  
+  // AI and QR Code state
+  String? _aiClassification;
+  String? _aiSummary;
+  List<String> _aiSuggestedTags = [];
+  String? _qrCodeData;
 
   // Animation controllers
   late AnimationController _backgroundController;
@@ -146,8 +154,60 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
       if (mounted) {
         _fadeController.forward();
         _backgroundController.repeat();
+        
+        // Check if data comes from scanner
+        _checkScannerData();
       }
     });
+  }
+
+  void _checkScannerData() {
+    final route = ModalRoute.of(context);
+    if (route != null && route.settings.arguments != null) {
+      final args = route.settings.arguments as Map<String, dynamic>;
+      if (args['fromScanner'] == true && args['scannedBill'] != null) {
+        _populateFromScannedBill(args['scannedBill']);
+      }
+    }
+  }
+
+  void _populateFromScannedBill(dynamic scannedBill) {
+    try {
+      // Convert scanned bill data to invoice form
+      setState(() {
+        _customerName = scannedBill.storeName ?? 'Cửa hàng';
+        _total = scannedBill.totalAmount ?? 0.0;
+        _subtotal = _total;
+        _tax = 0.0;
+        
+        // Convert scanned items to invoice items
+        if (scannedBill.items != null && scannedBill.items.isNotEmpty) {
+          _items = scannedBill.items.map<InvoiceItem>((item) => InvoiceItem(
+            id: item.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            productId: item.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            name: item.description ?? 'Sản phẩm',
+            description: item.description ?? '',
+            quantity: item.quantity ?? 1.0,
+            unitPrice: item.unitPrice ?? 0.0,
+            total: item.totalPrice ?? 0.0,
+            tax: 0.0,
+          )).toList();
+        }
+        
+        // Add note with scan information
+        _note = 'Quét từ hóa đơn: ${scannedBill.scanDate?.toString() ?? DateTime.now().toString()}';
+      });
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã tự động điền dữ liệu từ hóa đơn đã quét!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error populating from scanned bill: $e');
+    }
   }
 
   @override
@@ -207,9 +267,33 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
   }
 
   void _recalculateTotals() {
-    _subtotal = _items.fold(0, (sum, item) => sum + (item.unitPrice * item.quantity));
-    _tax = _items.fold(0, (sum, item) => sum + item.tax);
+    _subtotal = _items.fold(0.0, (sum, item) => sum + item.total);
+    _tax = _items.fold(0.0, (sum, item) => sum + item.tax);
     _total = _subtotal + _tax;
+  }
+
+  Invoice _buildCurrentInvoice() {
+    return Invoice(
+      id: widget.invoice?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      customerId: _customerId.isNotEmpty ? _customerId : 'unknown',
+      customerName: _customerName.isNotEmpty ? _customerName : 'Unknown Customer',
+      items: _items,
+      subtotal: _subtotal,
+      tax: _tax,
+      total: _total,
+      status: _status,
+      createdAt: _createdAt,
+      dueDate: _dueDate,
+      paidAt: _paidAt,
+      note: _note,
+      templateId: _templateId ?? 'template_a',
+      tags: _tags,
+      searchKeywords: [],
+      aiClassification: _aiClassification,
+      aiSummary: _aiSummary,
+      aiSuggestedTags: _aiSuggestedTags,
+      qrCodeData: _qrCodeData,
+    );
   }
 
   void _updateInventoryForItems(List<InvoiceItem> items) {
@@ -354,6 +438,34 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
       debugPrint('🎯 Final _selectedProducts: ${_selectedProducts.map((p) => '${p.name}(${p.id})').join(', ')}');
       debugPrint('🎯 Final _items: ${_items.map((item) => '${item.name}(${item.productId})').join(', ')}');
     });
+  }
+
+  Widget _buildAIInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade800,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _showTemplateSelector() {
@@ -823,6 +935,10 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
       templateId: _templateId ?? 'template_a',
       tags: _tags,
       searchKeywords: keywords,
+      aiClassification: _aiClassification,
+      aiSummary: _aiSummary,
+      aiSuggestedTags: _aiSuggestedTags,
+      qrCodeData: _qrCodeData,
     );
     
     debugPrint('📝 Creating invoice with ID: ${invoice.id}');
@@ -1275,6 +1391,36 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                     const SizedBox(height: 16),
                                   ],
                                   
+                                  // AI Suggestions (only show when items are added)
+                                  if (_items.isNotEmpty) ...[
+                                    AISuggestionsWidget(
+                                      invoice: _buildCurrentInvoice(),
+                                      onTagsSuggested: (tags) {
+                                        setState(() {
+                                          _aiSuggestedTags = tags;
+                                          // Auto-add suggested tags if not already present
+                                          for (final tag in tags) {
+                                            if (!_tags.contains(tag)) {
+                                              _tags.add(tag);
+                                            }
+                                          }
+                                        });
+                                      },
+                                      onClassificationSuggested: (classification) {
+                                        setState(() {
+                                          _aiClassification = classification;
+                                        });
+                                      },
+                                      onSummarySuggested: (summary) {
+                                        setState(() {
+                                          _aiSummary = summary;
+                                        });
+                                      },
+                                      primaryColor: _primaryColor,
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                  
                                   // Invoice Items Section
                                   Text(
                                     'Invoice Items',
@@ -1688,6 +1834,70 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                           ),
                         ),
 
+                        const SizedBox(height: 24),
+                        
+                        // AI Summary Section (only show when AI data is available)
+                        if (_aiClassification != null || _aiSummary != null || _aiSuggestedTags.isNotEmpty) ...[
+                          FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [_secondaryColor.withValues(alpha: 0.1), _accentColor.withValues(alpha: 0.1)],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: _secondaryColor.withValues(alpha: 0.2)),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.auto_awesome,
+                                          color: _secondaryColor,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'AI Analysis',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: _secondaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    
+                                    // AI Classification
+                                    if (_aiClassification != null) ...[
+                                      _buildAIInfoRow('Classification:', _aiClassification!),
+                                      const SizedBox(height: 12),
+                                    ],
+                                    
+                                    // AI Summary
+                                    if (_aiSummary != null) ...[
+                                      _buildAIInfoRow('Summary:', _aiSummary!),
+                                      const SizedBox(height: 12),
+                                    ],
+                                    
+                                    // AI Suggested Tags
+                                    if (_aiSuggestedTags.isNotEmpty) ...[
+                                      _buildAIInfoRow('Suggested Tags:', _aiSuggestedTags.join(', ')),
+                                      const SizedBox(height: 12),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                        
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -1697,6 +1907,13 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
             ),
           );
         },
+      ),
+      
+      // AI Floating Button
+      floatingActionButton: AIFloatingButton(
+        invoiceId: widget.invoice?.id ?? 'new',
+        primaryColor: _primaryColor,
+        isVisible: true,
       ),
     );
   }

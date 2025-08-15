@@ -10,11 +10,13 @@ class FreeOCRApiDataSource {
     
     FormData formData = FormData.fromMap({
       'apikey': apiKey,
-      'language': 'vie',  // Tiếng Việt
+      'language': 'vie+eng',  // Hỗ trợ cả tiếng Việt và tiếng Anh
       'isOverlayRequired': false,
       'detectOrientation': true,
       'isTable': true,  // Chế độ receipt scanning
       'OCREngine': 2,   // Engine mới nhất
+      'scale': true,     // Tự động scale ảnh
+      'fileType': 'jpg', // Chỉ định file type
       'file': await MultipartFile.fromFile(
         imageFile.path,
         filename: 'bill.jpg',

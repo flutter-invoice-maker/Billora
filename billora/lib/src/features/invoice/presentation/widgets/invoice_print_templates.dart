@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:billora/src/features/invoice/domain/entities/invoice.dart';
+import 'package:billora/src/features/invoice/presentation/widgets/qr_code_widget.dart';
 
 class InvoicePrintTemplates {
   // Wrapper function để thu nhỏ template cho preview
@@ -96,24 +97,12 @@ class InvoicePrintTemplates {
                   ),
                 ],
               ),
-              // QR Code placeholder
-              Container(
-                width: isPreview ? 20 : 80,
-                height: isPreview ? 20 : 80,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(isPreview ? 2 : 8),
-                ),
-                child: Center(
-                  child: Text(
-                    'QR\nCODE',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: isPreview ? 4 : 12, // Tăng từ 2 lên 4
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
+              // QR Code
+              CompactQRCodeWidget(
+                invoice: invoice,
+                size: isPreview ? 20.0 : 80.0,
+                color: const Color(0xFF1E3A8A),
+                showBackground: false,
               ),
             ],
           ),
@@ -2336,21 +2325,27 @@ class InvoicePrintTemplates {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 80,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
+        Flexible(
+          flex: 0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 80),
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
             ),
           ),
         ),
+        const SizedBox(width: 6),
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),

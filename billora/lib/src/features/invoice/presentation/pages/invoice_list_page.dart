@@ -39,6 +39,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
   late PageController _pageController;
   int _currentBannerIndex = 0;
 
+  // FAB animation controller removed - no longer needed
+
   final List<Map<String, dynamic>> _bannerData = [
     {
       'title': 'Invoice Management',
@@ -76,6 +78,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
     )..repeat();
     
     _pageController = PageController();
+    
+    // FAB animation controller removed - no longer needed
     
     // Auto-slide banner
     Timer.periodic(const Duration(seconds: 5), (timer) {
@@ -153,6 +157,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
       },
     );
   }
+
+  // Split FAB functionality removed - now using centralized FAB from AppScaffold
 
   @override
   Widget build(BuildContext context) {
@@ -382,20 +388,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                 ),
               ),
             ),
-            // Add floating button
-            Positioned(
-              bottom: 120, // Move up more above tabbar
-              right: 24,
-              child: FloatingActionButton(
-                onPressed: () => _openForm(),
-                backgroundColor: const Color(0xFF667eea),
-                elevation: 6,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.add, color: Colors.white),
-              ),
-            ),
+            // Floating button removed - now using centralized FAB from AppScaffold
           ],
         ),
       ),
@@ -1419,48 +1412,74 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.6, // Giảm từ 70% xuống 60%
-          height: MediaQuery.of(context).size.height * 0.7, // Giảm từ 95% xuống 70%
-          padding: const EdgeInsets.all(12), // Giảm padding
+          width: MediaQuery.of(context).size.width * 0.9, // Tăng width để hiển thị đầy đủ
+          height: MediaQuery.of(context).size.height * 0.85, // Tăng height để không bị tràn
+          padding: const EdgeInsets.all(20), // Tăng padding để đẹp hơn
           child: Column(
             children: [
-              // Header
-              Row(
-                children: [
-                  Icon(Icons.preview, color: Colors.grey.shade600, size: 16), // Giảm size
-                  const SizedBox(width: 6), // Giảm spacing
-                  Text(
-                    'Invoice Preview',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14, // Giảm font size
-                      color: Colors.grey.shade700,
-                    ),
+              // Header với thiết kế đẹp hơn
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF667eea),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, size: 18), // Giảm size
-                    padding: EdgeInsets.zero, // Giảm padding
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Giảm kích thước
-                  ),
-                ],
-              ),
-              // Preview content - hiển thị template thu nhỏ trực tiếp
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Center(
-                    child: Transform.scale(
-                      scale: 0.8, // Scale 80% để hóa đơn lấp đầy container
-                      child: SizedBox(
-                        width: 595,
-                        height: 842,
-                        child: InvoicePreviewWidget(invoice: invoice),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.preview,
+                        color: Colors.white,
+                        size: 20,
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Invoice Preview',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Preview content với InvoicePreviewWidget responsive
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: InvoicePreviewWidget(invoice: invoice),
                   ),
                 ),
               ),
