@@ -1,264 +1,229 @@
 import 'dart:io';
-import 'package:dartz/dartz.dart';
-import '../../../../core/errors/failures.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../datasources/ocr_datasource.dart';
-import '../datasources/free_ocr_api_datasource.dart';
-import '../datasources/image_processing_datasource.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/scanned_bill.dart';
-import '../../domain/entities/scan_result.dart';
 import '../../domain/entities/bill_line_item.dart';
+import '../../domain/entities/scan_result.dart';
 import '../../domain/repositories/bill_scanner_repository.dart';
-import '../models/extraction_result_model.dart';
+import '../datasources/enhanced_free_ocr_datasource.dart';
 
 class BillScannerRepositoryImpl implements BillScannerRepository {
-  final OCRDataSource mlKitDataSource;
-  final FreeOCRApiDataSource apiDataSource;
-  final ImageProcessingDataSource imageProcessingDataSource;
+  final EnhancedFreeOCRApiDataSource _ocrDataSource;
 
   BillScannerRepositoryImpl({
-    required this.mlKitDataSource,
-    required this.apiDataSource,
-    required this.imageProcessingDataSource,
-  });
+    required EnhancedFreeOCRApiDataSource ocrDataSource,
+  }) : _ocrDataSource = ocrDataSource;
 
   @override
-  Future<Either<Failure, ScanResult>> scanBill(String imagePath) async {
+  Future<ScannedBill> scanBill(File imageFile) async {
     try {
-      // Kiểm tra nếu là web file
-      if (imagePath.startsWith('web_file_')) {
-        // Trên web, không thể xử lý file local
-        return Left(ServerFailure('Không thể xử lý file trên web. Vui lòng sử dụng mobile app.'));
+      debugPrint('🔍 Starting bill scan for file: ${imageFile.path}');
+      final ocrResult = await _ocrDataSource.extractText(imageFile);
+      
+      if (!ocrResult['success']) {
+        debugPrint('❌ OCR processing failed: ${ocrResult['error']}');
+        throw Exception(ocrResult['error'] ?? 'OCR processing failed');
       }
 
-      final imageFile = File(imagePath);
-      if (!await imageFile.exists()) {
-        return Left(ServerFailure('File ảnh không tồn tại'));
-      }
+      final structuredData = ocrResult['structuredData'] as Map<String, dynamic>;
+      final rawText = ocrResult['rawText'] as String;
+      final confidence = ocrResult['confidence'] as String;
+      final billType = ocrResult['billType'] as String;
 
-      // Tối ưu ảnh trước khi OCR
-      final optimizedFile = await imageProcessingDataSource.optimizeForOCR(imageFile);
-      
-      String extractedText = '';
-      ScanConfidence confidence = ScanConfidence.unknown;
-      
-      try {
-        // Thử ML Kit trước
-        extractedText = await mlKitDataSource.extractText(optimizedFile);
-        confidence = ScanConfidence.high;
-      } catch (e) {
-        // Fallback sang API
-        try {
-          final apiResponse = await apiDataSource.extractText(optimizedFile);
-          extractedText = apiDataSource.parseOCRSpaceResponse(apiResponse);
-          confidence = ScanConfidence.medium;
-        } catch (apiError) {
-          return Left(ServerFailure('Lỗi khi quét bill: $apiError'));
-        }
-      }
-      
-      if (extractedText.trim().isEmpty) {
-        return Left(ServerFailure('Không thể trích xuất text từ ảnh'));
-      }
-      
-      return Right(ScanResult(
-        rawText: extractedText,
-        confidence: confidence,
+      debugPrint('🔍 Creating scan result with confidence: $confidence, billType: $billType');
+
+      final scanResult = ScanResult(
+        rawText: rawText,
+        confidence: _mapConfidenceString(confidence),
         processedAt: DateTime.now(),
-        ocrProvider: confidence == ScanConfidence.high ? 'ML Kit' : 'OCR.Space API',
-      ));
-      
-    } catch (e) {
-      return Left(ServerFailure('Lỗi khi quét bill: $e'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, ScannedBill>> extractBillData(String imagePath) async {
-    try {
-      final scanResult = await scanBill(imagePath);
-      
-      return scanResult.fold(
-        (failure) => Left(failure),
-        (result) async {
-          final extractedData = _extractBillDataFromText(result.rawText);
-          
-          final scannedBill = ScannedBill(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            imagePath: imagePath,
-            storeName: extractedData.storeName,
-            totalAmount: extractedData.totalAmount,
-            scanDate: DateTime.now(),
-            scanResult: result,
-            items: extractedData.items?.map((item) => BillLineItem(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              description: item['description'] ?? '',
-              quantity: item['quantity'] ?? 1.0,
-              unitPrice: item['unit_price'] ?? 0.0,
-              totalPrice: item['total_price'] ?? 0.0,
-              confidence: item['confidence'] ?? 0.0,
-            )).toList(),
-            phone: extractedData.phone,
-            address: extractedData.address,
-            subtotal: extractedData.subtotal,
-            tax: extractedData.tax,
-            currency: extractedData.currency,
-          );
-
-          return Right(scannedBill);
-        },
+        ocrProvider: 'OCR.Space Enhanced',
+        detectedBillType: _mapBillTypeString(billType),
+        extractedFields: structuredData,
+        detectedLanguages: ['english'], // Only English now
+        processingTimeMs: 0,
       );
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } catch (e) {
-      return Left(ServerFailure('Lỗi khi trích xuất dữ liệu: $e'));
-    }
-  }
 
-  @override
-  Future<Either<Failure, ScannedBill>> validateBillData(ScannedBill bill) async {
-    try {
-      // Validation logic
-      if (bill.storeName.isEmpty) {
-        return Left(ServerFailure('Tên cửa hàng không được để trống'));
+      final items = _createLineItems(structuredData['lineItems'] as List<dynamic>? ?? []);
+      
+      // Calculate subtotal from line items if not provided
+      double subtotal = (structuredData['subtotal'] ?? 0.0).toDouble();
+      if (subtotal == 0.0 && items.isNotEmpty) {
+        subtotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
       }
       
-      if (bill.totalAmount <= 0) {
-        return Left(ServerFailure('Tổng tiền phải lớn hơn 0'));
+      // Calculate total amount if not provided
+      double totalAmount = (structuredData['totalAmount'] ?? 0.0).toDouble();
+      if (totalAmount == 0.0) {
+        totalAmount = subtotal + (structuredData['tax'] ?? 0.0).toDouble();
       }
-
-      return Right(bill);
+      
+      final scannedBill = ScannedBill(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        imagePath: imageFile.path,
+        storeName: structuredData['storeName'] ?? 'Unknown Store',
+        totalAmount: totalAmount,
+        scanDate: DateTime.now(),
+        scanResult: scanResult,
+        items: items,
+        phone: structuredData['phone'],
+        address: structuredData['address'],
+        note: null,
+        subtotal: subtotal,
+        tax: (structuredData['tax'] ?? 0.0).toDouble(),
+        currency: structuredData['currency'] ?? 'USD',
+      );
+      
+      debugPrint('✅ Successfully created scanned bill: ${scannedBill.storeName}, Total: \$${scannedBill.totalAmount}');
+      return scannedBill;
     } catch (e) {
-      return Left(ServerFailure('Lỗi validation: $e'));
+      debugPrint('❌ Failed to scan bill: $e');
+      throw Exception('Failed to scan bill: $e');
     }
   }
 
-  @override
-  Future<Either<Failure, String>> processWithRegex(String rawText) async {
-    try {
-      final processedText = _processTextWithRegex(rawText);
-      return Right(processedText);
-    } catch (e) {
-      return Left(ServerFailure('Lỗi xử lý regex: $e'));
+  ScanConfidence _mapConfidenceString(String confidence) {
+    switch (confidence.toLowerCase()) {
+      case 'high':
+        return ScanConfidence.high;
+      case 'medium':
+        return ScanConfidence.medium;
+      case 'low':
+        return ScanConfidence.low;
+      default:
+        return ScanConfidence.unknown;
     }
   }
 
-  ScanConfidence _calculateConfidence(String text) {
-    if (text.length > 200) return ScanConfidence.high;
-    if (text.length > 100) return ScanConfidence.medium;
-    if (text.length > 50) return ScanConfidence.low;
-    return ScanConfidence.unknown;
+  BillType _mapBillTypeString(String billType) {
+    switch (billType) {
+      case 'COMMERCIAL_INVOICE':
+        return BillType.commercialInvoice;
+      case 'SALES_INVOICE':
+        return BillType.salesInvoice;
+      case 'SERVICE_INVOICE':
+        return BillType.salesInvoice;
+      case 'RECEIPT':
+        return BillType.paymentReceipt;
+      case 'ESTIMATE':
+        return BillType.proformaInvoice;
+      default:
+        return BillType.unknown;
+    }
   }
 
-  ExtractionResultModel _extractBillDataFromText(String text) {
-    // Patterns cho tiền USD
-    final usdCurrencyPattern = RegExp(
-      r'(\d{1,3}(?:[,.]?\d{3})*(?:\.\d{2})?)\s*(?:usd|USD|\$)',
-      caseSensitive: false,
-    );
+  List<BillLineItem> _createLineItems(List<dynamic> itemsData) {
+    final items = itemsData.map((item) {
+      final itemMap = item as Map<String, dynamic>;
+      
+      // Ensure we have valid data
+      final description = itemMap['description'] ?? '';
+      final quantity = (itemMap['quantity'] ?? 1.0).toDouble();
+      final unitPrice = (itemMap['unitPrice'] ?? 0.0).toDouble();
+      final totalPrice = (itemMap['totalPrice'] ?? 0.0).toDouble();
+      
+      // Calculate total price if not provided
+      final calculatedTotalPrice = totalPrice > 0 ? totalPrice : quantity * unitPrice;
+      
+      return BillLineItem(
+        id: '${DateTime.now().millisecondsSinceEpoch}_${itemsData.indexOf(item)}',
+        description: description,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        totalPrice: calculatedTotalPrice,
+        unit: itemMap['unit'] ?? 'pcs',
+        confidence: 0.8,
+      );
+    }).toList();
     
-    // Pattern cho ngày tháng Việt Nam
-    final vietnamDatePattern = RegExp(
-      r'(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})',
-    );
-    
-    // Pattern cho số điện thoại Việt Nam  
-    final vietnamPhonePattern = RegExp(
-      r'(\+84|0)([3-9]\d{8})',
-    );
-
-    // final result = <String, dynamic>{};
-    
-    // Trích xuất tổng tiền
-    final totalMatches = usdCurrencyPattern.allMatches(text);
-    double totalAmount = 0.0;
-    if (totalMatches.isNotEmpty) {
-      final amounts = totalMatches.map((m) => 
-        _parseUSDCurrency(m.group(1)!)
-      ).toList()..sort();
-      totalAmount = amounts.last; // Số lớn nhất thường là tổng
-    }
-    
-    // Trích xuất ngày
-    String? date;
-    final dateMatch = vietnamDatePattern.firstMatch(text);
-    if (dateMatch != null) {
-      date = _parseVietnameseDate(dateMatch.group(0)!);
-    }
-    
-    // Trích xuất số điện thoại
-    String? phone;
-    final phoneMatch = vietnamPhonePattern.firstMatch(text);
-    if (phoneMatch != null) {
-      phone = phoneMatch.group(0);
-    }
-    
-    // Trích xuất tên cửa hàng (dòng đầu tiên thường là tên)
-    final lines = text.split('\n');
-    String storeName = 'Không xác định';
-    if (lines.isNotEmpty) {
-      storeName = lines.first.trim();
-    }
-    
-    // Trích xuất items
-    final items = _extractLineItems(text);
-    
-    return ExtractionResultModel(
-      storeName: storeName,
-      totalAmount: totalAmount,
-      date: date,
-      phone: phone,
-      items: items,
-      confidence: _calculateConfidence(text).index / ScanConfidence.values.length,
-    );
-  }
-
-  double _parseUSDCurrency(String amount) {
-    return double.parse(amount.replaceAll(RegExp(r'[,.]'), ''));
-  }
-  
-  String _parseVietnameseDate(String dateStr) {
-    final match = RegExp(r'(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})').firstMatch(dateStr);
-    if (match != null) {
-      final day = match.group(1)!.padLeft(2, '0');
-      final month = match.group(2)!.padLeft(2, '0');
-      final year = match.group(3)!;
-      return '$year-$month-$day';
-    }
-    return dateStr;
-  }
-  
-  List<Map<String, dynamic>> _extractLineItems(String text) {
-    final items = <Map<String, dynamic>>[];
-    final lines = text.split('\n');
-    final usdCurrencyPattern = RegExp(
-      r'(\d{1,3}(?:[,.]?\d{3})*(?:\.\d{2})?)\s*(?:usd|USD|\$)',
-      caseSensitive: false,
-    );
-    
-    for (final line in lines) {
-      final currencyMatches = usdCurrencyPattern.allMatches(line);
-      if (currencyMatches.length >= 2) {
-        // Có ít nhất 2 số tiền: giá đơn vị và thành tiền
-        final amounts = currencyMatches.map((m) => 
-          _parseUSDCurrency(m.group(1)!)
-        ).toList();
-        
-        items.add({
-          'description': line.split(RegExp(r'\d'))[0].trim(),
-          'unit_price': amounts.first,
-          'total_price': amounts.last,
-          'quantity': amounts.last / amounts.first,
-          'confidence': 0.8,
-        });
-      }
-    }
-    
+    debugPrint('✅ Created ${items.length} line items');
     return items;
   }
 
-  String _processTextWithRegex(String text) {
-    // Xử lý text với regex patterns
-    return text.trim();
+  @override
+  Future<ScannedBill> validateAndCorrectBill(ScannedBill scannedBill) async {
+    debugPrint('🔍 Validating and correcting scanned bill...');
+    
+    final correctedBill = scannedBill.copyWith(
+      // Ensure total amount matches sum of line items if items exist
+      totalAmount: _validateTotalAmount(scannedBill),
+      // Clean up store name
+      storeName: _cleanStoreName(scannedBill.storeName),
+      // Validate subtotal
+      subtotal: _validateSubtotal(scannedBill),
+    );
+    
+          debugPrint('✅ Bill validation completed');
+    return correctedBill;
+  }
+
+  double _validateTotalAmount(ScannedBill bill) {
+    if (bill.items != null && bill.items!.isNotEmpty) {
+      final calculatedTotal = bill.items!.fold<double>(
+        0.0, 
+        (sum, item) => sum + item.totalPrice,
+      );
+      
+      // If calculated total is significantly different, use the larger value
+      if ((calculatedTotal - bill.totalAmount).abs() > bill.totalAmount * 0.1) {
+        final newTotal = calculatedTotal > bill.totalAmount ? calculatedTotal : bill.totalAmount;
+        debugPrint('🔍 Adjusted total amount from \$${bill.totalAmount} to \$$newTotal');
+        return newTotal;
+      }
+    }
+    return bill.totalAmount;
+  }
+
+  double _validateSubtotal(ScannedBill bill) {
+    if (bill.items != null && bill.items!.isNotEmpty) {
+      final calculatedSubtotal = bill.items!.fold<double>(
+        0.0, 
+        (sum, item) => sum + item.totalPrice,
+      );
+      
+      final currentSubtotal = bill.subtotal ?? 0.0;
+      if (currentSubtotal == 0.0 || (calculatedSubtotal - currentSubtotal).abs() > currentSubtotal * 0.1) {
+        debugPrint('🔍 Adjusted subtotal from \$$currentSubtotal to \$$calculatedSubtotal');
+        return calculatedSubtotal;
+      }
+    }
+    return bill.subtotal ?? 0.0;
+  }
+
+  String _cleanStoreName(String storeName) {
+    final cleaned = storeName.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (cleaned != storeName) {
+      debugPrint('🔍 Cleaned store name: "$storeName" -> "$cleaned"');
+    }
+    return cleaned;
+  }
+
+  @override
+  Future<bool> saveBill(ScannedBill scannedBill) async {
+    // Implement save logic (database, local storage, etc.)
+    try {
+      debugPrint('💾 Saving scanned bill: ${scannedBill.id}');
+      // Save to your preferred storage
+      return true;
+    } catch (e) {
+      debugPrint('❌ Failed to save bill: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<List<ScannedBill>> getAllScannedBills() async {
+    // Implement retrieval logic
+    return [];
+  }
+
+  @override
+  Future<ScannedBill?> getBillById(String id) async {
+    // Implement retrieval by ID
+    return null;
+  }
+
+  @override
+  Future<bool> deleteBill(String id) async {
+    // Implement deletion logic
+    return true;
   }
 } 

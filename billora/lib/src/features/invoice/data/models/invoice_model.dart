@@ -17,6 +17,16 @@ class InvoiceModel {
   final String? templateId;
   final List<String> tags;
   final List<String> searchKeywords;
+  
+  // AI-generated fields
+  final String? aiClassification;
+  final String? aiSummary;
+  final List<String> aiSuggestedTags;
+  final String? aiStatus;
+  
+  // QR Code fields
+  final String? qrCodeData;
+  final String? qrCodeHash;
 
   InvoiceModel({
     required this.id,
@@ -34,6 +44,12 @@ class InvoiceModel {
     this.templateId,
     this.tags = const [],
     this.searchKeywords = const [],
+    this.aiClassification,
+    this.aiSummary,
+    this.aiSuggestedTags = const [],
+    this.aiStatus,
+    this.qrCodeData,
+    this.qrCodeHash,
   });
 
   factory InvoiceModel.fromJson(Map<String, dynamic> json) => InvoiceModel(
@@ -54,6 +70,12 @@ class InvoiceModel {
         templateId: json['templateId'],
         tags: List<String>.from(json['tags'] ?? []),
         searchKeywords: List<String>.from(json['searchKeywords'] ?? []),
+        aiClassification: json['aiClassification'],
+        aiSummary: json['aiSummary'],
+        aiSuggestedTags: List<String>.from(json['aiSuggestedTags'] ?? []),
+        aiStatus: json['aiStatus'],
+        qrCodeData: json['qrCodeData'],
+        qrCodeHash: json['qrCodeHash'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -72,6 +94,12 @@ class InvoiceModel {
         if (templateId != null && templateId!.isNotEmpty) 'templateId': templateId!,
         'tags': tags,
         'searchKeywords': searchKeywords,
+        if (aiClassification != null) 'aiClassification': aiClassification!,
+        if (aiSummary != null) 'aiSummary': aiSummary!,
+        'aiSuggestedTags': aiSuggestedTags,
+        if (aiStatus != null) 'aiStatus': aiStatus!,
+        if (qrCodeData != null) 'qrCodeData': qrCodeData!,
+        if (qrCodeHash != null) 'qrCodeHash': qrCodeHash!,
       };
 
   Invoice toEntity() => Invoice(
@@ -93,6 +121,12 @@ class InvoiceModel {
         templateId: templateId,
         tags: tags,
         searchKeywords: searchKeywords,
+        aiClassification: aiClassification,
+        aiSummary: aiSummary,
+        aiSuggestedTags: aiSuggestedTags,
+        aiStatus: aiStatus,
+        qrCodeData: qrCodeData,
+        qrCodeHash: qrCodeHash,
       );
 
   factory InvoiceModel.fromEntity(Invoice invoice) => InvoiceModel(
@@ -111,6 +145,12 @@ class InvoiceModel {
         templateId: invoice.templateId,
         tags: invoice.tags,
         searchKeywords: invoice.searchKeywords,
+        aiClassification: invoice.aiClassification,
+        aiSummary: invoice.aiSummary,
+        aiSuggestedTags: invoice.aiSuggestedTags,
+        aiStatus: invoice.aiStatus,
+        qrCodeData: invoice.qrCodeData,
+        qrCodeHash: invoice.qrCodeHash,
       );
 }
 

@@ -1,0 +1,63 @@
+{
+  "prompts": {
+    "tagging": {
+      "template": "Analyze the following invoice content and suggest relevant tags for categorization. Invoice details: Customer: {{customer_name}}, Items: {{items}}, Total: {{total}}, Note: {{note}}. Suggest 3-5 relevant tags separated by commas.",
+      "variables": ["customer_name", "items", "total", "note"],
+      "max_tags": 5,
+      "output_format": "comma_separated"
+    },
+    "summarization": {
+      "template": "Create a brief summary of this invoice for quick reference. Format: 'Invoice Type - Customer Name - Number of Items'. Invoice: Customer: {{customer_name}}, Items: {{items}}, Total: {{total}}. Keep summary under 50 characters.",
+      "variables": ["customer_name", "items", "total"],
+      "max_length": 50,
+      "output_format": "text"
+    },
+    "anomaly_detection": {
+      "template": "Analyze this invoice for potential anomalies or unusual patterns. Invoice: Customer: {{customer_name}}, Items: {{items}}, Total: {{total}}, Created: {{created_date}}. Look for: unusual amounts, suspicious patterns, missing information, or inconsistencies.",
+      "variables": ["customer_name", "items", "total", "created_date"],
+      "output_format": "json",
+      "anomaly_types": ["unusual_amount", "suspicious_pattern", "missing_info", "inconsistency"]
+    },
+    "classification": {
+      "template": "Classify this invoice based on its content and context. Invoice: Customer: {{customer_name}}, Items: {{items}}, Total: {{total}}. Classify into one of these categories: [Food & Beverage, Electronics, Services, Clothing, Software, Hardware, General]. Provide only the category name.",
+      "variables": ["customer_name", "items", "total"],
+      "categories": ["Food & Beverage", "Electronics", "Services", "Clothing", "Software", "Hardware", "General"],
+      "output_format": "single_category"
+    },
+    "chat": {
+      "system_prompt": "You are an AI assistant specialized in invoice analysis and business intelligence. You can help with invoice categorization, tag suggestions, anomaly detection, and business insights. Be concise and professional in your responses.",
+      "user_prompt_template": "{{user_message}}",
+      "variables": ["user_message"],
+      "max_response_length": 500,
+      "temperature": 0.7
+    }
+  },
+  "response_parsing": {
+    "tag_extraction": {
+      "pattern": "/([a-zA-Z0-9\\s]+)(?:,|$)/g",
+      "max_tags": 5,
+      "case_sensitive": false
+    },
+    "summary_extraction": {
+      "max_length": 100,
+      "truncate_suffix": "..."
+    },
+    "classification_extraction": {
+      "valid_categories": ["Food & Beverage", "Electronics", "Services", "Clothing", "Software", "Hardware", "General"],
+      "default_category": "General"
+    }
+  },
+  "error_handling": {
+    "fallback_responses": {
+      "tagging": ["General", "Business", "Invoice"],
+      "summarization": "Invoice summary generated",
+      "classification": "General",
+      "anomaly_detection": "No anomalies detected"
+    },
+    "retry_config": {
+      "max_retries": 3,
+      "retry_delay_ms": 1000,
+      "backoff_multiplier": 2
+    }
+  }
+} 

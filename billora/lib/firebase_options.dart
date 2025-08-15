@@ -48,6 +48,7 @@ class DefaultFirebaseOptions {
     authDomain: 'billora-invoice-maker.firebaseapp.com',
     storageBucket: 'billora-invoice-maker.firebasestorage.app',
     measurementId: 'G-MXY3Y64C5L',
+    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -56,6 +57,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1018575120402',
     projectId: 'billora-invoice-maker',
     storageBucket: 'billora-invoice-maker.firebasestorage.app',
+    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -65,6 +67,7 @@ class DefaultFirebaseOptions {
     projectId: 'billora-invoice-maker',
     storageBucket: 'billora-invoice-maker.firebasestorage.app',
     iosBundleId: 'com.example.billora',
+    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -74,6 +77,7 @@ class DefaultFirebaseOptions {
     projectId: 'billora-invoice-maker',
     storageBucket: 'billora-invoice-maker.firebasestorage.app',
     iosBundleId: 'com.example.billora',
+    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -84,6 +88,7 @@ class DefaultFirebaseOptions {
     authDomain: 'billora-invoice-maker.firebaseapp.com',
     storageBucket: 'billora-invoice-maker.firebasestorage.app',
     measurementId: 'G-F8LK4ERNB4',
+    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
   );
 
 }

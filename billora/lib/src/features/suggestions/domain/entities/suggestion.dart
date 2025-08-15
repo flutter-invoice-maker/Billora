@@ -108,7 +108,7 @@ class Suggestion extends Equatable {
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
       customerId: json['customerId'] as String?,
       productId: json['productId'] as String?,
-      price: json['price'] as double?,
+      price: (json['price'] as num?)?.toDouble(),
       currency: json['currency'] as String?,
       commonProducts: (json['commonProducts'] as List<dynamic>?)
           ?.map((e) => e as String)

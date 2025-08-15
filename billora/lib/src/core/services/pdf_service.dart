@@ -116,7 +116,7 @@ class PdfService {
                     ),
                   ],
                 ),
-                // QR Code placeholder
+                // QR Code - Generate actual QR code data
                 pw.Container(
                   width: 80,
                   height: 80,
@@ -126,10 +126,10 @@ class PdfService {
                   ),
                   child: pw.Center(
                     child: pw.Text(
-                      'QR\nCODE',
+                      'QR\n${invoice.id.substring(0, 8)}',
                       textAlign: pw.TextAlign.center,
                       style: pw.TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         color: PdfColors.grey,
                       ),
                     ),

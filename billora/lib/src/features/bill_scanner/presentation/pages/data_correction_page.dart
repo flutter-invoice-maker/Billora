@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/scanned_bill.dart';
 import '../../domain/entities/bill_line_item.dart';
+import '../../domain/entities/scan_result.dart';
 
 class DataCorrectionPage extends StatefulWidget {
   final ScannedBill scannedBill;
@@ -41,15 +42,65 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sửa Dữ Liệu'),
+        title: const Text('Kiểm Tra Dữ Liệu'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: _saveAndContinue,
+            tooltip: 'Xác nhận và tiếp tục',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header with scan info
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.document_scanner, color: Colors.blue.shade600),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Dữ Liệu Đã Quét',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'OCR Provider: ${widget.scannedBill.scanResult.ocrProvider}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  Text(
+                    'Confidence: ${_getConfidenceText(widget.scannedBill.scanResult.confidence)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
             const Text(
               'Kiểm tra và sửa dữ liệu trích xuất',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -62,6 +113,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
               decoration: const InputDecoration(
                 labelText: 'Tên Cửa Hàng',
                 border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.store),
               ),
             ),
             const SizedBox(height: 16),
@@ -72,6 +124,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
               decoration: const InputDecoration(
                 labelText: 'Tổng Tiền',
                 border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.attach_money),
                 suffixText: 'đ',
               ),
               keyboardType: TextInputType.number,
@@ -84,6 +137,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
               decoration: const InputDecoration(
                 labelText: 'Số Điện Thoại',
                 border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.phone),
               ),
               keyboardType: TextInputType.phone,
             ),
@@ -95,45 +149,64 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
               decoration: const InputDecoration(
                 labelText: 'Địa Chỉ',
                 border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.location_on),
               ),
               maxLines: 2,
             ),
+            
             const SizedBox(height: 20),
             
-            // Items
+            // Items Section
             if (_items.isNotEmpty) ...[
-              const Text(
-                'Danh Sách Sản Phẩm',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Text(
+                'Chi Tiết Hàng Hóa (${_items.length} mục)',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 10),
-              ...(_items.asMap().entries.map((entry) => 
-                _buildItemCard(entry.key, entry.value)
-              )),
+              const SizedBox(height: 12),
+              ..._items.asMap().entries.map((entry) => _buildItemCard(entry.key, entry.value)),
+              const SizedBox(height: 16),
             ],
             
-            const SizedBox(height: 20),
+            // Raw OCR Text (collapsible)
+            ExpansionTile(
+              title: const Text('Văn Bản OCR Gốc'),
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Text(
+                    widget.scannedBill.scanResult.rawText,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 24),
             
             // Action Buttons
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Hủy'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
+                    onPressed: _saveAndContinue,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    onPressed: _saveAndContinue,
-                    child: const Text('Lưu & Tiếp Tục'),
+                    child: const Text(
+                      'Xác Nhận & Tiếp Tục',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -218,5 +291,18 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
     );
     
     Navigator.pop(context, correctedBill);
+  }
+
+  String _getConfidenceText(ScanConfidence confidence) {
+    switch (confidence) {
+      case ScanConfidence.high:
+        return 'Cao';
+      case ScanConfidence.medium:
+        return 'Trung bình';
+      case ScanConfidence.low:
+        return 'Thấp';
+      case ScanConfidence.unknown:
+        return 'Không xác định';
+    }
   }
 } 

@@ -7,6 +7,7 @@ import 'package:billora/src/core/di/injection_container.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/product/domain/entities/product.dart';
 
+
 class AppTabBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTabChanged;
@@ -226,6 +227,214 @@ class ScanFAB extends StatelessWidget {
               size: 32,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class InvoiceFAB extends StatelessWidget {
+  const InvoiceFAB({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      width: 70,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF10B981),
+            Color(0xFF059669),
+            Color(0xFF047857),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.4),
+            blurRadius: 25,
+            offset: const Offset(0, 10),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.2),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+            spreadRadius: -5,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(35),
+          onTap: () {
+            _showInvoiceOptions(context);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 2,
+              ),
+            ),
+            child: const Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 32,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showInvoiceOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 50,
+              height: 5,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            
+            // Title
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Invoice Options',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D3748),
+                ),
+              ),
+            ),
+            
+            // Options
+            _buildOption(
+              context,
+              icon: Icons.document_scanner_rounded,
+              title: 'Scan Invoice',
+              subtitle: 'Scan and process bill',
+              color: const Color(0xFFFF6B35),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/bill-scanner');
+              },
+            ),
+            
+            _buildOption(
+              context,
+              icon: Icons.add_circle_rounded,
+              title: 'New Invoice',
+              subtitle: 'Create from scratch',
+              color: const Color(0xFF10B981),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/invoice-form');
+              },
+            ),
+            
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: color.withValues(alpha: 0.5),
+              size: 16,
+            ),
+          ],
         ),
       ),
     );

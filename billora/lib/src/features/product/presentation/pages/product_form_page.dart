@@ -8,8 +8,10 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 
 class ProductFormPage extends StatefulWidget {
   final Product? product;
+  final Map<String, dynamic>? prefill;
+  final bool forceCreate;
 
-  const ProductFormPage({super.key, this.product});
+  const ProductFormPage({super.key, this.product, this.prefill, this.forceCreate = false});
 
   @override
   State<ProductFormPage> createState() => _ProductFormPageState();
@@ -37,16 +39,16 @@ class _ProductFormPageState extends State<ProductFormPage>
   @override
   void initState() {
     super.initState();
-    _isEdit = widget.product != null;
-    _name = widget.product?.name ?? '';
-    _description = widget.product?.description;
-    _price = widget.product?.price ?? 0.0;
-    _tax = widget.product?.tax ?? 0.0;
-    _inventory = widget.product?.inventory ?? 0;
-    _isService = widget.product?.isService ?? false;
-    _companyOrShopName = widget.product?.companyOrShopName ?? '';
+    _isEdit = widget.product != null && !widget.forceCreate;
+    _name = widget.product?.name ?? (widget.prefill?['name']?.toString() ?? '');
+    _description = widget.product?.description ?? widget.prefill?['description']?.toString();
+    _price = widget.product?.price ?? (double.tryParse(widget.prefill?['price']?.toString() ?? '') ?? 0.0);
+    _tax = widget.product?.tax ?? (double.tryParse(widget.prefill?['tax']?.toString() ?? '') ?? 0.0);
+    _inventory = widget.product?.inventory ?? (int.tryParse(widget.prefill?['inventory']?.toString() ?? '') ?? 0);
+    _isService = widget.product?.isService ?? (widget.prefill?['isService'] == true);
+    _companyOrShopName = widget.product?.companyOrShopName ?? widget.prefill?['companyOrShopName']?.toString();
     _extraFields = Map<String, dynamic>.from(widget.product?.extraFields ?? {});
-    _selectedTemplate = widget.product?.category ?? 'professional_business';
+    _selectedTemplate = widget.product?.category ?? (widget.prefill?['category']?.toString() ?? 'professional_business');
     // If Timesheet Invoice, force isService true and disable
     if (_selectedTemplate == 'service_based') {
       _isService = true;
@@ -899,17 +901,12 @@ class _ProductFormPageState extends State<ProductFormPage>
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      String generateUniqueId() {
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final random = Random().nextInt(9999);
-        return '${timestamp}_$random';
-      }
+    if (_formKey.currentState?.validate() ?? false) {
+      final isCreate = widget.forceCreate || !_isEdit;
       final product = Product(
-        id: widget.product?.id ?? generateUniqueId(),
-        name: _name,
-        description: _description,
+        id: isCreate ? _genId() : (widget.product!.id),
+        name: _name.trim(),
+        description: _description?.trim().isEmpty == true ? null : _description?.trim(),
         price: _price,
         category: _selectedTemplate,
         tax: _tax,
@@ -918,13 +915,16 @@ class _ProductFormPageState extends State<ProductFormPage>
         companyOrShopName: _companyOrShopName,
         extraFields: _extraFields,
       );
-      if (_isEdit) {
-        context.read<ProductCubit>().updateProduct(product);
-      } else {
+
+      if (isCreate) {
         context.read<ProductCubit>().addProduct(product);
+      } else {
+        context.read<ProductCubit>().updateProduct(product);
       }
-      // Return the product to the previous page so it can be added to the list immediately
+
       Navigator.of(context).pop(product);
     }
   }
+
+  String _genId() => DateTime.now().millisecondsSinceEpoch.toString() + Random().nextInt(10000).toString();
 }

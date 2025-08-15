@@ -1,11 +1,11 @@
-import 'package:dartz/dartz.dart';
-import '../../../../core/errors/failures.dart';
+import 'dart:io';
 import '../entities/scanned_bill.dart';
-import '../entities/scan_result.dart';
 
 abstract class BillScannerRepository {
-  Future<Either<Failure, ScanResult>> scanBill(String imagePath);
-  Future<Either<Failure, ScannedBill>> extractBillData(String imagePath);
-  Future<Either<Failure, ScannedBill>> validateBillData(ScannedBill bill);
-  Future<Either<Failure, String>> processWithRegex(String rawText);
+  Future<ScannedBill> scanBill(File imageFile);
+  Future<ScannedBill> validateAndCorrectBill(ScannedBill scannedBill);
+  Future<bool> saveBill(ScannedBill scannedBill);
+  Future<List<ScannedBill>> getAllScannedBills();
+  Future<ScannedBill?> getBillById(String id);
+  Future<bool> deleteBill(String id);
 } 

@@ -2,8 +2,20 @@ const functions = require('firebase-functions');
 const sgMail = require('@sendgrid/mail');
 const cors = require('cors')({ origin: true });
 
+// Import AI and QR functions
+const aiFunctions = require('./analyzeInvoice');
+const aiApiFunctions = require('./api/ai/suggestTags');
+const qrApiFunctions = require('./api/qr/resolve');
+
 // Initialize SendGrid with API key
 sgMail.setApiKey(functions.config().sendgrid.key);
+
+// Export AI and QR functions
+exports.analyzeInvoice = aiFunctions.analyzeInvoice;
+exports.triggerAnalyzeInvoice = aiFunctions.triggerAnalyzeInvoice;
+exports.suggestTags = aiApiFunctions.suggestTags;
+exports.qrResolve = qrApiFunctions.resolve;
+exports.qrGenerate = qrApiFunctions.generate;
 
 // Callable function (recommended for authenticated requests)
 exports.sendInvoiceEmail = functions.https.onCall(async (data, context) => {

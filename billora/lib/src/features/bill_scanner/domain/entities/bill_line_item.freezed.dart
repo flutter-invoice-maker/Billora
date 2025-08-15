@@ -26,9 +26,12 @@ mixin _$BillLineItem {
   double get quantity => throw _privateConstructorUsedError;
   double get unitPrice => throw _privateConstructorUsedError;
   double get totalPrice => throw _privateConstructorUsedError;
+  String? get unit => throw _privateConstructorUsedError;
+  String? get category => throw _privateConstructorUsedError;
+  String? get sku => throw _privateConstructorUsedError;
+  double? get discount => throw _privateConstructorUsedError;
   double? get tax => throw _privateConstructorUsedError;
-  String? get notes => throw _privateConstructorUsedError;
-  double? get confidence => throw _privateConstructorUsedError;
+  double get confidence => throw _privateConstructorUsedError;
 
   /// Serializes this BillLineItem to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,9 +56,12 @@ abstract class $BillLineItemCopyWith<$Res> {
     double quantity,
     double unitPrice,
     double totalPrice,
+    String? unit,
+    String? category,
+    String? sku,
+    double? discount,
     double? tax,
-    String? notes,
-    double? confidence,
+    double confidence,
   });
 }
 
@@ -79,9 +85,12 @@ class _$BillLineItemCopyWithImpl<$Res, $Val extends BillLineItem>
     Object? quantity = null,
     Object? unitPrice = null,
     Object? totalPrice = null,
+    Object? unit = freezed,
+    Object? category = freezed,
+    Object? sku = freezed,
+    Object? discount = freezed,
     Object? tax = freezed,
-    Object? notes = freezed,
-    Object? confidence = freezed,
+    Object? confidence = null,
   }) {
     return _then(
       _value.copyWith(
@@ -110,21 +119,36 @@ class _$BillLineItemCopyWithImpl<$Res, $Val extends BillLineItem>
                     ? _value.totalPrice
                     : totalPrice // ignore: cast_nullable_to_non_nullable
                         as double,
+            unit:
+                freezed == unit
+                    ? _value.unit
+                    : unit // ignore: cast_nullable_to_non_nullable
+                        as String?,
+            category:
+                freezed == category
+                    ? _value.category
+                    : category // ignore: cast_nullable_to_non_nullable
+                        as String?,
+            sku:
+                freezed == sku
+                    ? _value.sku
+                    : sku // ignore: cast_nullable_to_non_nullable
+                        as String?,
+            discount:
+                freezed == discount
+                    ? _value.discount
+                    : discount // ignore: cast_nullable_to_non_nullable
+                        as double?,
             tax:
                 freezed == tax
                     ? _value.tax
                     : tax // ignore: cast_nullable_to_non_nullable
                         as double?,
-            notes:
-                freezed == notes
-                    ? _value.notes
-                    : notes // ignore: cast_nullable_to_non_nullable
-                        as String?,
             confidence:
-                freezed == confidence
+                null == confidence
                     ? _value.confidence
                     : confidence // ignore: cast_nullable_to_non_nullable
-                        as double?,
+                        as double,
           )
           as $Val,
     );
@@ -146,9 +170,12 @@ abstract class _$$BillLineItemImplCopyWith<$Res>
     double quantity,
     double unitPrice,
     double totalPrice,
+    String? unit,
+    String? category,
+    String? sku,
+    double? discount,
     double? tax,
-    String? notes,
-    double? confidence,
+    double confidence,
   });
 }
 
@@ -171,9 +198,12 @@ class __$$BillLineItemImplCopyWithImpl<$Res>
     Object? quantity = null,
     Object? unitPrice = null,
     Object? totalPrice = null,
+    Object? unit = freezed,
+    Object? category = freezed,
+    Object? sku = freezed,
+    Object? discount = freezed,
     Object? tax = freezed,
-    Object? notes = freezed,
-    Object? confidence = freezed,
+    Object? confidence = null,
   }) {
     return _then(
       _$BillLineItemImpl(
@@ -202,21 +232,36 @@ class __$$BillLineItemImplCopyWithImpl<$Res>
                 ? _value.totalPrice
                 : totalPrice // ignore: cast_nullable_to_non_nullable
                     as double,
+        unit:
+            freezed == unit
+                ? _value.unit
+                : unit // ignore: cast_nullable_to_non_nullable
+                    as String?,
+        category:
+            freezed == category
+                ? _value.category
+                : category // ignore: cast_nullable_to_non_nullable
+                    as String?,
+        sku:
+            freezed == sku
+                ? _value.sku
+                : sku // ignore: cast_nullable_to_non_nullable
+                    as String?,
+        discount:
+            freezed == discount
+                ? _value.discount
+                : discount // ignore: cast_nullable_to_non_nullable
+                    as double?,
         tax:
             freezed == tax
                 ? _value.tax
                 : tax // ignore: cast_nullable_to_non_nullable
                     as double?,
-        notes:
-            freezed == notes
-                ? _value.notes
-                : notes // ignore: cast_nullable_to_non_nullable
-                    as String?,
         confidence:
-            freezed == confidence
+            null == confidence
                 ? _value.confidence
                 : confidence // ignore: cast_nullable_to_non_nullable
-                    as double?,
+                    as double,
       ),
     );
   }
@@ -231,9 +276,12 @@ class _$BillLineItemImpl implements _BillLineItem {
     required this.quantity,
     required this.unitPrice,
     required this.totalPrice,
+    this.unit,
+    this.category,
+    this.sku,
+    this.discount,
     this.tax,
-    this.notes,
-    this.confidence,
+    this.confidence = 0.0,
   });
 
   factory _$BillLineItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -250,15 +298,22 @@ class _$BillLineItemImpl implements _BillLineItem {
   @override
   final double totalPrice;
   @override
+  final String? unit;
+  @override
+  final String? category;
+  @override
+  final String? sku;
+  @override
+  final double? discount;
+  @override
   final double? tax;
   @override
-  final String? notes;
-  @override
-  final double? confidence;
+  @JsonKey()
+  final double confidence;
 
   @override
   String toString() {
-    return 'BillLineItem(id: $id, description: $description, quantity: $quantity, unitPrice: $unitPrice, totalPrice: $totalPrice, tax: $tax, notes: $notes, confidence: $confidence)';
+    return 'BillLineItem(id: $id, description: $description, quantity: $quantity, unitPrice: $unitPrice, totalPrice: $totalPrice, unit: $unit, category: $category, sku: $sku, discount: $discount, tax: $tax, confidence: $confidence)';
   }
 
   @override
@@ -275,8 +330,13 @@ class _$BillLineItemImpl implements _BillLineItem {
                 other.unitPrice == unitPrice) &&
             (identical(other.totalPrice, totalPrice) ||
                 other.totalPrice == totalPrice) &&
+            (identical(other.unit, unit) || other.unit == unit) &&
+            (identical(other.category, category) ||
+                other.category == category) &&
+            (identical(other.sku, sku) || other.sku == sku) &&
+            (identical(other.discount, discount) ||
+                other.discount == discount) &&
             (identical(other.tax, tax) || other.tax == tax) &&
-            (identical(other.notes, notes) || other.notes == notes) &&
             (identical(other.confidence, confidence) ||
                 other.confidence == confidence));
   }
@@ -290,8 +350,11 @@ class _$BillLineItemImpl implements _BillLineItem {
     quantity,
     unitPrice,
     totalPrice,
+    unit,
+    category,
+    sku,
+    discount,
     tax,
-    notes,
     confidence,
   );
 
@@ -316,9 +379,12 @@ abstract class _BillLineItem implements BillLineItem {
     required final double quantity,
     required final double unitPrice,
     required final double totalPrice,
+    final String? unit,
+    final String? category,
+    final String? sku,
+    final double? discount,
     final double? tax,
-    final String? notes,
-    final double? confidence,
+    final double confidence,
   }) = _$BillLineItemImpl;
 
   factory _BillLineItem.fromJson(Map<String, dynamic> json) =
@@ -335,11 +401,17 @@ abstract class _BillLineItem implements BillLineItem {
   @override
   double get totalPrice;
   @override
+  String? get unit;
+  @override
+  String? get category;
+  @override
+  String? get sku;
+  @override
+  double? get discount;
+  @override
   double? get tax;
   @override
-  String? get notes;
-  @override
-  double? get confidence;
+  double get confidence;
 
   /// Create a copy of BillLineItem
   /// with the given fields replaced by the non-null parameter values.

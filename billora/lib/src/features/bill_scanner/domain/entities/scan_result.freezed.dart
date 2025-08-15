@@ -24,9 +24,12 @@ mixin _$ScanResult {
   String get rawText => throw _privateConstructorUsedError;
   ScanConfidence get confidence => throw _privateConstructorUsedError;
   DateTime get processedAt => throw _privateConstructorUsedError;
-  String? get ocrProvider => throw _privateConstructorUsedError;
-  Map<String, double>? get fieldConfidence =>
+  String get ocrProvider => throw _privateConstructorUsedError;
+  BillType? get detectedBillType => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get extractedFields =>
       throw _privateConstructorUsedError;
+  List<String>? get detectedLanguages => throw _privateConstructorUsedError;
+  double? get processingTimeMs => throw _privateConstructorUsedError;
   String? get errorMessage => throw _privateConstructorUsedError;
 
   /// Serializes this ScanResult to a JSON map.
@@ -50,8 +53,11 @@ abstract class $ScanResultCopyWith<$Res> {
     String rawText,
     ScanConfidence confidence,
     DateTime processedAt,
-    String? ocrProvider,
-    Map<String, double>? fieldConfidence,
+    String ocrProvider,
+    BillType? detectedBillType,
+    Map<String, dynamic>? extractedFields,
+    List<String>? detectedLanguages,
+    double? processingTimeMs,
     String? errorMessage,
   });
 }
@@ -74,8 +80,11 @@ class _$ScanResultCopyWithImpl<$Res, $Val extends ScanResult>
     Object? rawText = null,
     Object? confidence = null,
     Object? processedAt = null,
-    Object? ocrProvider = freezed,
-    Object? fieldConfidence = freezed,
+    Object? ocrProvider = null,
+    Object? detectedBillType = freezed,
+    Object? extractedFields = freezed,
+    Object? detectedLanguages = freezed,
+    Object? processingTimeMs = freezed,
     Object? errorMessage = freezed,
   }) {
     return _then(
@@ -96,15 +105,30 @@ class _$ScanResultCopyWithImpl<$Res, $Val extends ScanResult>
                     : processedAt // ignore: cast_nullable_to_non_nullable
                         as DateTime,
             ocrProvider:
-                freezed == ocrProvider
+                null == ocrProvider
                     ? _value.ocrProvider
                     : ocrProvider // ignore: cast_nullable_to_non_nullable
-                        as String?,
-            fieldConfidence:
-                freezed == fieldConfidence
-                    ? _value.fieldConfidence
-                    : fieldConfidence // ignore: cast_nullable_to_non_nullable
-                        as Map<String, double>?,
+                        as String,
+            detectedBillType:
+                freezed == detectedBillType
+                    ? _value.detectedBillType
+                    : detectedBillType // ignore: cast_nullable_to_non_nullable
+                        as BillType?,
+            extractedFields:
+                freezed == extractedFields
+                    ? _value.extractedFields
+                    : extractedFields // ignore: cast_nullable_to_non_nullable
+                        as Map<String, dynamic>?,
+            detectedLanguages:
+                freezed == detectedLanguages
+                    ? _value.detectedLanguages
+                    : detectedLanguages // ignore: cast_nullable_to_non_nullable
+                        as List<String>?,
+            processingTimeMs:
+                freezed == processingTimeMs
+                    ? _value.processingTimeMs
+                    : processingTimeMs // ignore: cast_nullable_to_non_nullable
+                        as double?,
             errorMessage:
                 freezed == errorMessage
                     ? _value.errorMessage
@@ -129,8 +153,11 @@ abstract class _$$ScanResultImplCopyWith<$Res>
     String rawText,
     ScanConfidence confidence,
     DateTime processedAt,
-    String? ocrProvider,
-    Map<String, double>? fieldConfidence,
+    String ocrProvider,
+    BillType? detectedBillType,
+    Map<String, dynamic>? extractedFields,
+    List<String>? detectedLanguages,
+    double? processingTimeMs,
     String? errorMessage,
   });
 }
@@ -152,8 +179,11 @@ class __$$ScanResultImplCopyWithImpl<$Res>
     Object? rawText = null,
     Object? confidence = null,
     Object? processedAt = null,
-    Object? ocrProvider = freezed,
-    Object? fieldConfidence = freezed,
+    Object? ocrProvider = null,
+    Object? detectedBillType = freezed,
+    Object? extractedFields = freezed,
+    Object? detectedLanguages = freezed,
+    Object? processingTimeMs = freezed,
     Object? errorMessage = freezed,
   }) {
     return _then(
@@ -174,15 +204,30 @@ class __$$ScanResultImplCopyWithImpl<$Res>
                 : processedAt // ignore: cast_nullable_to_non_nullable
                     as DateTime,
         ocrProvider:
-            freezed == ocrProvider
+            null == ocrProvider
                 ? _value.ocrProvider
                 : ocrProvider // ignore: cast_nullable_to_non_nullable
-                    as String?,
-        fieldConfidence:
-            freezed == fieldConfidence
-                ? _value._fieldConfidence
-                : fieldConfidence // ignore: cast_nullable_to_non_nullable
-                    as Map<String, double>?,
+                    as String,
+        detectedBillType:
+            freezed == detectedBillType
+                ? _value.detectedBillType
+                : detectedBillType // ignore: cast_nullable_to_non_nullable
+                    as BillType?,
+        extractedFields:
+            freezed == extractedFields
+                ? _value._extractedFields
+                : extractedFields // ignore: cast_nullable_to_non_nullable
+                    as Map<String, dynamic>?,
+        detectedLanguages:
+            freezed == detectedLanguages
+                ? _value._detectedLanguages
+                : detectedLanguages // ignore: cast_nullable_to_non_nullable
+                    as List<String>?,
+        processingTimeMs:
+            freezed == processingTimeMs
+                ? _value.processingTimeMs
+                : processingTimeMs // ignore: cast_nullable_to_non_nullable
+                    as double?,
         errorMessage:
             freezed == errorMessage
                 ? _value.errorMessage
@@ -200,10 +245,14 @@ class _$ScanResultImpl implements _ScanResult {
     required this.rawText,
     required this.confidence,
     required this.processedAt,
-    this.ocrProvider,
-    final Map<String, double>? fieldConfidence,
+    required this.ocrProvider,
+    this.detectedBillType,
+    final Map<String, dynamic>? extractedFields,
+    final List<String>? detectedLanguages,
+    this.processingTimeMs,
     this.errorMessage,
-  }) : _fieldConfidence = fieldConfidence;
+  }) : _extractedFields = extractedFields,
+       _detectedLanguages = detectedLanguages;
 
   factory _$ScanResultImpl.fromJson(Map<String, dynamic> json) =>
       _$$ScanResultImplFromJson(json);
@@ -215,23 +264,38 @@ class _$ScanResultImpl implements _ScanResult {
   @override
   final DateTime processedAt;
   @override
-  final String? ocrProvider;
-  final Map<String, double>? _fieldConfidence;
+  final String ocrProvider;
   @override
-  Map<String, double>? get fieldConfidence {
-    final value = _fieldConfidence;
+  final BillType? detectedBillType;
+  final Map<String, dynamic>? _extractedFields;
+  @override
+  Map<String, dynamic>? get extractedFields {
+    final value = _extractedFields;
     if (value == null) return null;
-    if (_fieldConfidence is EqualUnmodifiableMapView) return _fieldConfidence;
+    if (_extractedFields is EqualUnmodifiableMapView) return _extractedFields;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(value);
   }
 
+  final List<String>? _detectedLanguages;
+  @override
+  List<String>? get detectedLanguages {
+    final value = _detectedLanguages;
+    if (value == null) return null;
+    if (_detectedLanguages is EqualUnmodifiableListView)
+      return _detectedLanguages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  @override
+  final double? processingTimeMs;
   @override
   final String? errorMessage;
 
   @override
   String toString() {
-    return 'ScanResult(rawText: $rawText, confidence: $confidence, processedAt: $processedAt, ocrProvider: $ocrProvider, fieldConfidence: $fieldConfidence, errorMessage: $errorMessage)';
+    return 'ScanResult(rawText: $rawText, confidence: $confidence, processedAt: $processedAt, ocrProvider: $ocrProvider, detectedBillType: $detectedBillType, extractedFields: $extractedFields, detectedLanguages: $detectedLanguages, processingTimeMs: $processingTimeMs, errorMessage: $errorMessage)';
   }
 
   @override
@@ -246,10 +310,18 @@ class _$ScanResultImpl implements _ScanResult {
                 other.processedAt == processedAt) &&
             (identical(other.ocrProvider, ocrProvider) ||
                 other.ocrProvider == ocrProvider) &&
+            (identical(other.detectedBillType, detectedBillType) ||
+                other.detectedBillType == detectedBillType) &&
             const DeepCollectionEquality().equals(
-              other._fieldConfidence,
-              _fieldConfidence,
+              other._extractedFields,
+              _extractedFields,
             ) &&
+            const DeepCollectionEquality().equals(
+              other._detectedLanguages,
+              _detectedLanguages,
+            ) &&
+            (identical(other.processingTimeMs, processingTimeMs) ||
+                other.processingTimeMs == processingTimeMs) &&
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage));
   }
@@ -262,7 +334,10 @@ class _$ScanResultImpl implements _ScanResult {
     confidence,
     processedAt,
     ocrProvider,
-    const DeepCollectionEquality().hash(_fieldConfidence),
+    detectedBillType,
+    const DeepCollectionEquality().hash(_extractedFields),
+    const DeepCollectionEquality().hash(_detectedLanguages),
+    processingTimeMs,
     errorMessage,
   );
 
@@ -285,8 +360,11 @@ abstract class _ScanResult implements ScanResult {
     required final String rawText,
     required final ScanConfidence confidence,
     required final DateTime processedAt,
-    final String? ocrProvider,
-    final Map<String, double>? fieldConfidence,
+    required final String ocrProvider,
+    final BillType? detectedBillType,
+    final Map<String, dynamic>? extractedFields,
+    final List<String>? detectedLanguages,
+    final double? processingTimeMs,
     final String? errorMessage,
   }) = _$ScanResultImpl;
 
@@ -300,9 +378,15 @@ abstract class _ScanResult implements ScanResult {
   @override
   DateTime get processedAt;
   @override
-  String? get ocrProvider;
+  String get ocrProvider;
   @override
-  Map<String, double>? get fieldConfidence;
+  BillType? get detectedBillType;
+  @override
+  Map<String, dynamic>? get extractedFields;
+  @override
+  List<String>? get detectedLanguages;
+  @override
+  double? get processingTimeMs;
   @override
   String? get errorMessage;
 

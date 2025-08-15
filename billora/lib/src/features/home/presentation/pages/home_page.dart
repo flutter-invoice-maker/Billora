@@ -21,9 +21,6 @@ class _HomePageState extends State<HomePage>
   final int _currentIndex = -1;
   final ScrollController _scrollController = ScrollController();
 
-  // GIF loading state
-  bool _isGifLoaded = false;
-
   // Animation controllers
   late AnimationController _invoiceController;
   late AnimationController _contentController;
@@ -129,10 +126,6 @@ class _HomePageState extends State<HomePage>
       context.read<DashboardCubit>().loadDashboardStats();
     }
     
-    // Preload the GIF if not already loaded
-    if (!_isGifLoaded) {
-      _preloadGif();
-    }
   }
 
   void _onScroll() {
@@ -291,33 +284,6 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomepage() {
-    // Show loading screen until GIF is loaded
-    if (!_isGifLoaded) {
-      return Container(
-        color: const Color(0xFF667eea),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 3,
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Loading...',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Stack(
       children: [
         // Main content
@@ -334,7 +300,7 @@ class _HomePageState extends State<HomePage>
               // 3D Invoice at bottom of content
               _build3DInvoiceSection(),
               
-              const SizedBox(height: 120), // Space for bottom nav and FAB
+              const SizedBox(height: 140), // Space for bottom nav and FAB
             ],
           ),
         ),
@@ -734,96 +700,218 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildQuickActions() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => Navigator.pushNamed(context, '/bill-scanner'),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF6B35),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/bill-scanner'),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B35),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ],
+                  child: const Column(
+                    children: [
+                      Icon(
+                        Icons.document_scanner,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'Scan Bill',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Quick scan & process',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: const Column(
-                children: [
-                  Icon(
-                    Icons.document_scanner,
-                    color: Colors.white,
-                    size: 32,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/invoices'),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Scan Bill',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: const Column(
+                    children: [
+                      Icon(
+                        Icons.add_circle,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'New Invoice',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Create from scratch',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Quick scan & process',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+                ),
               ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/enhanced-bill-scanner'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade600, Colors.purple.shade600],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.shade600.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.smart_toy,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI-Powered Bill Scanner',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Advanced OCR with intelligent data extraction',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => Navigator.pushNamed(context, '/invoices'),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4CAF50),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/scan-library'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.orange.shade600, Colors.red.shade600],
               ),
-              child: const Column(
-                children: [
-                  Icon(
-                    Icons.add_circle,
-                    color: Colors.white,
-                    size: 32,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.shade600.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.library_books,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Scan Library',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Manage and organize scanned documents',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    'New Invoice',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Create from scratch',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+              ],
             ),
           ),
         ),
@@ -1009,27 +1097,6 @@ class _HomePageState extends State<HomePage>
       const Color(0xFF9C27B0),
     ];
     return colors[index % colors.length];
-  }
-
-  void _preloadGif() async {
-    try {
-      await precacheImage(
-        const AssetImage('assets/images/homepage.gif'),
-        context,
-      );
-      if (mounted) {
-        setState(() {
-          _isGifLoaded = true;
-        });
-      }
-    } catch (e) {
-      // If precache fails, still show the page
-      if (mounted) {
-        setState(() {
-          _isGifLoaded = true;
-        });
-      }
-    }
   }
 }
 
