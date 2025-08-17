@@ -49,5 +49,18 @@
 	<string>Ứng dụng cần quyền truy cập Camera để chụp ảnh hóa đơn.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Ứng dụng cần quyền truy cập Thư viện ảnh để chọn ảnh hóa đơn.</string>
+	
+	<!-- Google Sign-In Configuration -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.billora.invoice_maker</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.billora.invoice_maker</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

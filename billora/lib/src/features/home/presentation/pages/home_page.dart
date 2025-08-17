@@ -706,7 +706,7 @@ class _HomePageState extends State<HomePage>
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/bill-scanner'),
+                onTap: () => Navigator.pushNamed(context, '/enhanced-bill-scanner'),
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -729,7 +729,7 @@ class _HomePageState extends State<HomePage>
                       ),
                       SizedBox(height: 10),
                       Text(
-                        'Scan Bill',
+                        'AI Scan',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -738,7 +738,7 @@ class _HomePageState extends State<HomePage>
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Quick scan & process',
+                        'Smart AI scanning',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
@@ -796,124 +796,6 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, '/enhanced-bill-scanner'),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade600, Colors.purple.shade600],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.shade600.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.smart_toy,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'AI-Powered Bill Scanner',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Advanced OCR with intelligent data extraction',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white70,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, '/scan-library'),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.orange.shade600, Colors.red.shade600],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.orange.shade600.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.library_books,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Scan Library',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Manage and organize scanned documents',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white70,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );

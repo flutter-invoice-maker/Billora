@@ -44,22 +44,23 @@ import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_us
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
-  
+  // Load environment variables (ignore errors on web if asset not bundled)
   try {
-    Firebase.app();
-  } on FirebaseException {
+    await dotenv.load(fileName: ".env");
+  } catch (_) {}
+  
+  // Initialize Firebase safely across platforms
+  if (Firebase.apps.isEmpty) {
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
     } on FirebaseException catch (e) {
-      if (e.code != 'duplicate-app') {
-        rethrow;
-      }
+      // Ignore duplicate-app or rethrow others
+      if (e.code != 'duplicate-app') rethrow;
     }
   }
+
   await configureDependencies();
   runApp(const MyApp());
 }
@@ -140,6 +141,10 @@ class _MyAppState extends State<MyApp> {
                 BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
                 BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
                 BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+                // Add AI UseCase providers
+                Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
+                Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
+                Provider<ClassifyInvoiceUseCase>(create: (_) => sl<ClassifyInvoiceUseCase>()),
               ],
               child: const InvoiceListPage(),
             ),
@@ -173,6 +178,10 @@ class _MyAppState extends State<MyApp> {
               providers: [
                 BlocProvider.value(value: sl<AuthCubit>()),
                 BlocProvider<ScanLibraryCubit>(create: (_) => sl<ScanLibraryCubit>()),
+                // Add AI UseCase providers for scan library
+                Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
+                Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
+                Provider<ClassifyInvoiceUseCase>(create: (_) => sl<ClassifyInvoiceUseCase>()),
               ],
               child: const ScanLibraryPage(),
             ),

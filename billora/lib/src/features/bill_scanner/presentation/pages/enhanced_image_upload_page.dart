@@ -7,7 +7,7 @@ import '../../data/repositories/bill_scanner_repository_impl.dart';
 import '../../domain/usecases/scan_bill_usecase.dart';
 import '../../domain/entities/enhanced_scanned_bill.dart';
 import 'enhanced_data_correction_page.dart';
-import 'scan_library_page.dart';
+// Remove scan_library_page.dart import since we'll use named route
 
 class EnhancedImageUploadPage extends StatefulWidget {
   const EnhancedImageUploadPage({super.key});
@@ -40,13 +40,14 @@ class _EnhancedImageUploadPageState extends State<EnhancedImageUploadPage> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.library_books),
-            onPressed: () => _navigateToScanLibrary(),
-            tooltip: 'Scan Library',
-          ),
-        ],
+        // Remove the Scan Library button from app bar
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.library_books),
+        //     onPressed: () => _navigateToScanLibrary(),
+        //     tooltip: 'Scan Library',
+        //   ),
+        // ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -87,34 +88,57 @@ class _EnhancedImageUploadPageState extends State<EnhancedImageUploadPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade100,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.document_scanner,
-            size: 48,
-            color: Colors.blue.shade700,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
+        // Title and description
+        const Text(
           'AI-Powered Bill Scanner',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          style: TextStyle(
+            fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.blue.shade800,
+            color: Colors.blue,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Automatically extract data from receipts, invoices, and bills with high accuracy',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.grey.shade600,
+        const SizedBox(height: 12),
+        const Text(
+          'Upload a bill image and let AI extract all the details automatically',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
           ),
           textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        
+        // Scan Library access button
+        GestureDetector(
+          onTap: () => _navigateToScanLibrary(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.library_books,
+                  color: Colors.blue.shade700,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'View Scan Library',
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -549,11 +573,7 @@ class _EnhancedImageUploadPageState extends State<EnhancedImageUploadPage> {
   }
 
   void _navigateToScanLibrary() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ScanLibraryPage(),
-      ),
-    );
+    // Use named route instead of direct instantiation
+    Navigator.pushNamed(context, '/scan-library');
   }
 } 

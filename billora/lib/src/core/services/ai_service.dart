@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,88 +7,74 @@ import 'package:billora/src/features/invoice/domain/entities/invoice.dart';
 
 @injectable
 class AIService {
-  static const String _metadataPath = 'assets/ai_models/metadata.json';
-  
-  String get _apiKey => dotenv.env['HUGGING_FACE_API_KEY'] ?? '';
-  
-  Map<String, dynamic>? _metadata;
-
-  AIService() {
-    _loadMetadata();
-  }
-
-  Future<void> _loadMetadata() async {
-    try {
-      final metadataString = await rootBundle.loadString(_metadataPath);
-      _metadata = json.decode(metadataString);
-    } catch (e) {
-      debugPrint('Error loading AI metadata: $e');
-    }
-  }
+  String get _apiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
+  static const String _openaiEndpoint = 'https://api.openai.com/v1/chat/completions';
+  static const String _defaultModel = 'gpt-3.5-turbo';
 
   /// Suggest tags for invoice based on content analysis
   Future<List<String>> suggestTags(Invoice invoice) async {
     try {
-      final config = _metadata?['invoice_analysis']?['tag_suggestion'];
-      if (config == null) return [];
-
-      final model = config['model'];
-      final promptTemplate = config['prompt_template'];
-      final maxTags = config['max_tags'] ?? 5;
-
       // Prepare invoice data for analysis
       final itemsText = invoice.items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
       final total = invoice.total.toStringAsFixed(2);
       final note = invoice.note ?? '';
 
-      // Create prompt
-      final prompt = promptTemplate
-          .replaceAll('{customer_name}', invoice.customerName)
-          .replaceAll('{items}', itemsText)
-          .replaceAll('{total}', total)
-          .replaceAll('{note}', note);
+      // Create prompt for ChatGPT
+      final prompt = '''
+Analyze the following invoice content and suggest relevant tags for categorization.
 
-      // Call AI model
-      final response = await _callAIModel(model, prompt);
+Invoice details:
+- Customer: $invoice.customerName
+- Items: $itemsText
+- Total: \$$total
+- Note: $note
+
+Please suggest 3-5 relevant tags separated by commas. Return only the tags, no additional text.
+Example format: tag1, tag2, tag3, tag4
+''';
+
+      // Call ChatGPT API
+      final response = await _callChatGPT(prompt);
       
       if (response != null) {
         // Parse response to extract tags
-        final tags = _parseTagsFromResponse(response, maxTags);
+        final tags = _parseTagsFromResponse(response);
         return tags;
       }
     } catch (e) {
       debugPrint('Error suggesting tags: $e');
     }
     
-    return [];
+    return ['General', 'Business', 'Invoice'];
   }
 
   /// Classify invoice based on content
   Future<String> classifyInvoice(Invoice invoice) async {
     try {
-      final config = _metadata?['invoice_analysis']?['invoice_classification'];
-      if (config == null) return 'General';
-
-      final model = config['model'];
-      final promptTemplate = config['prompt_template'];
-      final categories = List<String>.from(config['categories'] ?? ['General']);
-
-      // Prepare invoice data
-      final itemsText = invoice.items.map((item) => item.name).join(', ');
+      // Prepare invoice data for analysis
+      final itemsText = invoice.items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
       final total = invoice.total.toStringAsFixed(2);
 
-      // Create prompt
-      final prompt = promptTemplate
-          .replaceAll('{customer_name}', invoice.customerName)
-          .replaceAll('{items}', itemsText)
-          .replaceAll('{total}', total);
+      // Create prompt for ChatGPT
+      final prompt = '''
+Classify this invoice based on its content and context.
 
-      // Call AI model
-      final response = await _callAIModel(model, prompt);
+Invoice: 
+- Customer: $invoice.customerName
+- Items: $itemsText
+- Total: \$$total
+
+Classify into one of these categories: [Food & Beverage, Electronics, Services, Clothing, Software, Hardware, General]
+
+Provide only the category name, no additional text.
+''';
+
+      // Call ChatGPT API
+      final response = await _callChatGPT(prompt);
       
       if (response != null) {
         // Parse response to get classification
-        final classification = _parseClassificationFromResponse(response, categories);
+        final classification = _parseClassificationFromResponse(response);
         return classification;
       }
     } catch (e) {
@@ -99,196 +84,147 @@ class AIService {
     return 'General';
   }
 
-  /// Generate content summary for invoice
+  /// Generate summary for invoice
   Future<String> generateSummary(Invoice invoice) async {
     try {
-      final config = _metadata?['invoice_analysis']?['content_summary'];
-      if (config == null) return '';
-
-      final model = config['model'];
-      final promptTemplate = config['prompt_template'];
-      final maxLength = config['max_length'] ?? 50;
-
-      // Prepare invoice data
-      final itemsText = invoice.items.map((item) => item.name).join(', ');
+      // Prepare invoice data for analysis
+      final itemsText = invoice.items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
       final total = invoice.total.toStringAsFixed(2);
 
-      // Create prompt
-      final prompt = promptTemplate
-          .replaceAll('{customer_name}', invoice.customerName)
-          .replaceAll('{items}', itemsText)
-          .replaceAll('{total}', total);
+      // Create prompt for ChatGPT
+      final prompt = '''
+Create a brief summary of this invoice for quick reference.
 
-      // Call AI model
-      final response = await _callAIModel(model, prompt);
+Invoice: 
+- Customer: $invoice.customerName
+- Items: $itemsText
+- Total: \$$total
+
+Format: 'Invoice Type - Customer Name - Number of Items'
+Keep summary under 50 characters. Return only the summary, no additional text.
+''';
+
+      // Call ChatGPT API
+      final response = await _callChatGPT(prompt);
       
       if (response != null) {
         // Parse response to get summary
-        final summary = _parseSummaryFromResponse(response, maxLength);
+        final summary = _parseSummaryFromResponse(response, 50);
         return summary;
       }
     } catch (e) {
       debugPrint('Error generating summary: $e');
     }
     
-    return '';
+    return 'Invoice summary generated';
   }
 
-  /// Call AI model with prompt
-  Future<String?> _callAIModel(String modelName, String prompt) async {
+  /// Call ChatGPT API with prompt
+  Future<String?> _callChatGPT(String prompt) async {
     try {
-      final modelConfig = _metadata?['models']?[modelName];
-      if (modelConfig == null) return null;
-
-      final endpoint = modelConfig['api_endpoint'];
-      final headers = Map<String, String>.from(modelConfig['headers'] ?? {});
-      
-      // Replace API key placeholder
-      headers['Authorization'] = headers['Authorization']?.replaceAll('\${HUGGING_FACE_API_KEY}', _apiKey) ?? 'Bearer $_apiKey';
-      headers['Content-Type'] = 'application/json';
+      if (_apiKey.isEmpty) {
+        debugPrint('OpenAI API key not configured');
+        return null;
+      }
 
       final requestBody = {
-        'inputs': prompt,
-        'parameters': {
-          'max_new_tokens': modelConfig['max_tokens'] ?? 2048,
-          'temperature': modelConfig['temperature'] ?? 0.7,
-          'return_full_text': false,
-        }
+        'model': _defaultModel,
+        'messages': [
+          {
+            'role': 'system',
+            'content': 'You are an AI assistant specialized in invoice analysis and business intelligence. Be concise and professional in your responses.'
+          },
+          {
+            'role': 'user',
+            'content': prompt
+          }
+        ],
+        'max_tokens': 200,
+        'temperature': 0.7,
       };
 
       final response = await http.post(
-        Uri.parse(endpoint),
-        headers: headers,
+        Uri.parse(_openaiEndpoint),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+        },
         body: json.encode(requestBody),
       );
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        return responseData[0]?['generated_text'] ?? '';
+        return responseData['choices'][0]['message']['content'] ?? '';
       } else {
-        debugPrint('AI API error: ${response.statusCode} - ${response.body}');
+        debugPrint('ChatGPT API error: $response.statusCode - $response.body');
       }
     } catch (e) {
-      debugPrint('Error calling AI model: $e');
+      debugPrint('Error calling ChatGPT API: $e');
     }
     
     return null;
   }
 
-  /// Parse tags from AI response
-  List<String> _parseTagsFromResponse(String response, int maxTags) {
+  /// Parse tags from ChatGPT response
+  List<String> _parseTagsFromResponse(String response) {
     try {
-      // Try to extract JSON from response
-      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(response);
-      if (jsonMatch != null) {
-        final jsonData = json.decode(jsonMatch.group(0)!);
-        if (jsonData['suggested_tags'] != null) {
-          final tags = List<String>.from(jsonData['suggested_tags']);
-          return tags.take(maxTags).toList();
-        }
-      }
-
-      // Fallback: extract tags from text
-      final lines = response.split('\n');
-      final tags = <String>[];
+      // Clean response and split by comma
+      final cleanResponse = response.trim().replaceAll('\n', '');
+      final tags = cleanResponse.split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .take(5)
+          .toList();
       
-      for (final line in lines) {
-        if (line.toLowerCase().contains('tag') && line.contains(':')) {
-          final tagText = line.split(':')[1].trim();
-          if (tagText.isNotEmpty) {
-            final lineTags = tagText.split(',').map((tag) => tag.trim()).where((tag) => tag.isNotEmpty);
-            tags.addAll(lineTags);
-          }
-        }
-      }
-
-      return tags.take(maxTags).toList();
+      return tags.isNotEmpty ? tags : ['General', 'Business', 'Invoice'];
     } catch (e) {
-      debugPrint('Error parsing tags from response: $e');
-      return [];
+      debugPrint('Error parsing tags: $e');
+      return ['General', 'Business', 'Invoice'];
     }
   }
 
-  /// Parse classification from AI response
-  String _parseClassificationFromResponse(String response, List<String> categories) {
+  /// Parse classification from ChatGPT response
+  String _parseClassificationFromResponse(String response) {
     try {
-      // Try to extract JSON from response
-      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(response);
-      if (jsonMatch != null) {
-        final jsonData = json.decode(jsonMatch.group(0)!);
-        if (jsonData['classification'] != null) {
-          final classification = jsonData['classification'].toString();
-          if (categories.contains(classification)) {
-            return classification;
-          }
+      final cleanResponse = response.trim().toLowerCase();
+      final validCategories = [
+        'food & beverage', 'electronics', 'services', 'clothing', 
+        'software', 'hardware', 'general'
+      ];
+      
+      for (final category in validCategories) {
+        if (cleanResponse.contains(category)) {
+          return category.split(' ').map((word) => 
+            word.substring(0, 1).toUpperCase() + word.substring(1)
+          ).join(' ');
         }
       }
-
-      // Fallback: find category in text
-      final lowerResponse = response.toLowerCase();
-      for (final category in categories) {
-        if (lowerResponse.contains(category.toLowerCase())) {
-          return category;
-        }
-      }
-
+      
       return 'General';
     } catch (e) {
-      debugPrint('Error parsing classification from response: $e');
+      debugPrint('Error parsing classification: $e');
       return 'General';
     }
   }
 
-  /// Parse summary from AI response
+  /// Parse summary from ChatGPT response
   String _parseSummaryFromResponse(String response, int maxLength) {
     try {
-      // Try to extract JSON from response
-      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(response);
-      if (jsonMatch != null) {
-        final jsonData = json.decode(jsonMatch.group(0)!);
-        if (jsonData['summary'] != null) {
-          final summary = jsonData['summary'].toString();
-          return summary.length > maxLength ? summary.substring(0, maxLength) : summary;
-        }
+      final cleanResponse = response.trim();
+      if (cleanResponse.length <= maxLength) {
+        return cleanResponse;
       }
-
-      // Fallback: extract summary from text
-      final lines = response.split('\n');
-      for (final line in lines) {
-        if (line.toLowerCase().contains('summary') && line.contains(':')) {
-          final summary = line.split(':')[1].trim();
-          if (summary.isNotEmpty) {
-            return summary.length > maxLength ? summary.substring(0, maxLength) : summary;
-          }
-        }
-      }
-
-      // If no summary found, use first meaningful line
-      for (final line in lines) {
-        final trimmedLine = line.trim();
-        if (trimmedLine.isNotEmpty && !trimmedLine.startsWith('{') && !trimmedLine.startsWith('}')) {
-          return trimmedLine.length > maxLength ? trimmedLine.substring(0, maxLength) : trimmedLine;
-        }
-      }
-
-      return 'Invoice analysis completed';
+      
+      return '${cleanResponse.substring(0, maxLength - 3)}...';
     } catch (e) {
-      debugPrint('Error parsing summary from response: $e');
+      debugPrint('Error parsing summary: $e');
       return 'Invoice analysis completed';
     }
   }
 
-  /// Get AI model metadata
-  Map<String, dynamic>? getModelMetadata(String modelName) {
-    return _metadata?['models']?[modelName];
-  }
+  /// Get AI service status
+  bool get isAvailable => _apiKey.isNotEmpty;
 
-  /// Get available models
-  List<String> getAvailableModels() {
-    final models = _metadata?['models'];
-    return models?.keys.toList() ?? [];
-  }
-
-  /// Check if AI service is available
-  bool get isAvailable => _apiKey.isNotEmpty && _metadata != null;
+  /// Get current model being used
+  String get currentModel => _defaultModel;
 } 

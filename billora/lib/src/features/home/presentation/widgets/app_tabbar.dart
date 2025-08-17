@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Add this import for ImageFilter
-import 'package:billora/src/features/customer/presentation/pages/customer_form_page.dart';
-import 'package:billora/src/features/product/presentation/pages/product_form_page.dart';
+import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/core/di/injection_container.dart';
+import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
+import 'package:billora/src/features/customer/presentation/pages/customer_form_page.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
+import 'package:billora/src/features/product/presentation/pages/product_form_page.dart';
 import 'package:billora/src/features/product/domain/entities/product.dart';
+import 'package:billora/src/core/utils/snackbar_helper.dart';
 
 
 class AppTabBar extends StatelessWidget {
@@ -211,7 +213,7 @@ class ScanFAB extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(35),
           onTap: () {
-            Navigator.pushNamed(context, '/bill-scanner');
+            Navigator.pushNamed(context, '/enhanced-bill-scanner');
           },
           child: Container(
             decoration: BoxDecoration(
@@ -222,7 +224,7 @@ class ScanFAB extends StatelessWidget {
               ),
             ),
             child: const Icon(
-              Icons.document_scanner_rounded,
+              Icons.smart_toy_rounded,
               color: Colors.white,
               size: 32,
             ),
@@ -340,13 +342,13 @@ class InvoiceFAB extends StatelessWidget {
             // Options
             _buildOption(
               context,
-              icon: Icons.document_scanner_rounded,
-              title: 'Scan Invoice',
-              subtitle: 'Scan and process bill',
+              icon: Icons.smart_toy_rounded,
+              title: 'AI Scan Invoice',
+              subtitle: 'AI-powered bill scanning',
               color: const Color(0xFFFF6B35),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/bill-scanner');
+                Navigator.pushNamed(context, '/enhanced-bill-scanner');
               },
             ),
             
@@ -544,7 +546,10 @@ class CustomerAddFAB extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const CustomerFormPage(),
+                builder: (context) => BlocProvider<CustomerCubit>(
+                  create: (_) => sl<CustomerCubit>(),
+                  child: const CustomerFormPage(),
+                ),
               ),
             );
           },
@@ -623,12 +628,9 @@ class ProductAddFAB extends StatelessWidget {
               // We just need to ensure the UI updates
               if (context.mounted) {
                 // Show a success message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Product "${result.name}" created successfully!'),
-                    backgroundColor: const Color(0xFF10B981),
-                    duration: const Duration(seconds: 2),
-                  ),
+                SnackBarHelper.showSuccess(
+                  context,
+                  message: 'Product "${result.name}" created successfully!',
                 );
               }
             }

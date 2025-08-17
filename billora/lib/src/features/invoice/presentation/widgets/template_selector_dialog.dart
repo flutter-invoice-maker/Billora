@@ -205,7 +205,7 @@ class TemplateSelectorDialog extends StatelessWidget {
                               // Template preview - thu nhỏ đáng kể
                               Expanded(
                                 child: Container(
-                                  padding: const EdgeInsets.all(6), // Giảm từ 12 xuống 6
+                                  padding: const EdgeInsets.all(4), // Giảm padding
                                   child: _buildTemplatePreview(template['id'] as String),
                                 ),
                               ),
@@ -280,11 +280,11 @@ class TemplateSelectorDialog extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: Center(
-            child: Transform.scale(
-              scale: 0.6, // Scale 60% để hóa đơn lấp đầy card
+            child: FittedBox(
+              fit: BoxFit.contain,
               child: SizedBox(
                 width: 595,
-                height: 842, // Quay lại kích thước A4 gốc
+                height: 842, // Kích thước A4 gốc
                 child: InvoicePrintTemplates.getTemplateById(
                   templateId, 
                   context, 

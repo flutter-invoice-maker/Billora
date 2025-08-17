@@ -345,63 +345,74 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           final color = _getModernTagColor(index);
           final isSelected = index == _clickedIndex;
                     
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 8 : 10, // More compact padding
-              vertical: isMobile ? 4 : 6,
-            ),
-            decoration: BoxDecoration(
-              gradient: isSelected
-                ? LinearGradient(
-                    colors: [color.withAlpha(50), color.withAlpha(25)],
-                  )
-                : null,
-              color: isSelected ? null : color.withAlpha(25),
-              borderRadius: BorderRadius.circular(12), // More compact radius
-              border: Border.all(
-                color: isSelected ? color : color.withAlpha(80),
-                width: isSelected ? 1.5 : 1,
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _clickedIndex = _clickedIndex == index ? -1 : index;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 8 : 10, // More compact padding
+                vertical: isMobile ? 4 : 6,
               ),
-              boxShadow: isSelected ? [
-                BoxShadow(
-                  color: color.withAlpha(80),
-                  offset: const Offset(0, 2),
-                  blurRadius: 8,
+              decoration: BoxDecoration(
+                gradient: isSelected
+                  ? LinearGradient(
+                      colors: [color.withAlpha(50), color.withAlpha(25)],
+                    )
+                  : null,
+                color: isSelected ? null : color.withAlpha(25),
+                borderRadius: BorderRadius.circular(12), // More compact radius
+                border: Border.all(
+                  color: isSelected ? color : color.withAlpha(80),
+                  width: isSelected ? 1.5 : 1,
                 ),
-              ] : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: isMobile ? 8 : 10, // More compact size
-                  height: isMobile ? 8 : 10,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [color, color.withAlpha(180)],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withAlpha(100),
-                        offset: const Offset(0, 1),
-                        blurRadius: 3,
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: color.withAlpha(80),
+                    offset: const Offset(0, 2),
+                    blurRadius: 8,
+                  ),
+                ] : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: isMobile ? 8 : 10, // More compact size
+                    height: isMobile ? 8 : 10,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [color, color.withAlpha(180)],
                       ),
-                    ],
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withAlpha(100),
+                          offset: const Offset(0, 1),
+                          blurRadius: 3,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(width: isMobile ? 4 : 6), // More compact spacing
-                Text(
-                  tag.tagName,
-                  style: TextStyle(
-                    fontSize: isMobile ? 10 : 11, // More compact font
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                  SizedBox(width: isMobile ? 4 : 6), // More compact spacing
+                  Flexible(
+                    child: Text(
+                      tag.tagName,
+                      style: TextStyle(
+                        fontSize: isMobile ? 10 : 11, // More compact font
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -415,40 +426,40 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       return Container(
         width: double.infinity,
         constraints: BoxConstraints(
-          minHeight: isMobile ? 80 : 90, // Increased height to prevent overflow
-          maxHeight: isMobile ? 110 : 120,
+          minHeight: isMobile ? 100 : 120, // Tăng height để tránh overflow
+          maxHeight: isMobile ? 140 : 160,
         ),
         decoration: BoxDecoration(
           color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
-          borderRadius: BorderRadius.circular(12), // More compact radius
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15),
           ),
         ),
         child: Center(
-                      child: Padding(
-              padding: EdgeInsets.all(isMobile ? 16 : 18), // Increased padding
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.touch_app_rounded,
-                    size: isMobile ? 24 : 26, // Increased icon size
-                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 16 : 18),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.touch_app_rounded,
+                  size: isMobile ? 24 : 26,
+                  color: isDark ? Colors.grey[500] : Colors.grey[400],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Select a tag to see details',
+                  style: TextStyle(
+                    fontSize: isMobile ? 12 : 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
-                  const SizedBox(height: 8), // Increased spacing
-                  Text(
-                    'Select a tag to see details',
-                    style: TextStyle(
-                      fontSize: isMobile ? 12 : 14, // Increased font size
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
+          ),
         ),
       );
     }
@@ -460,8 +471,8 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
       return Container(
         width: double.infinity,
         constraints: BoxConstraints(
-          minHeight: isMobile ? 80 : 90,
-          maxHeight: isMobile ? 110 : 120,
+          minHeight: isMobile ? 100 : 120,
+          maxHeight: isMobile ? 140 : 160,
         ),
         decoration: BoxDecoration(
           color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
@@ -503,10 +514,10 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
     
     return Container(
       width: double.infinity,
-              constraints: BoxConstraints(
-          minHeight: isMobile ? 140 : 160, // Increased height to prevent overflow
-          maxHeight: isMobile ? 200 : 220,
-        ),
+      constraints: BoxConstraints(
+        minHeight: isMobile ? 160 : 180, // Tăng height để tránh overflow
+        maxHeight: isMobile ? 220 : 240,
+      ),
       decoration: BoxDecoration(
         color: (isDark ? Colors.grey[800] : Colors.grey[50])?.withAlpha(120),
         borderRadius: BorderRadius.circular(12),
@@ -518,20 +529,20 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(isMobile ? 12 : 14), // Increased padding
+            padding: EdgeInsets.all(isMobile ? 12 : 14),
             child: Row(
               children: [
                 Icon(
                   Icons.analytics_rounded,
-                  size: isMobile ? 16 : 18, // Increased icon size
+                  size: isMobile ? 16 : 18,
                   color: isDark ? Colors.white70 : Colors.black87,
                 ),
-                const SizedBox(width: 8), // Increased spacing
+                const SizedBox(width: 8),
                 Expanded(
-                  child:                   Text(
+                  child: Text(
                     'Details - ${selectedTag.tagName}',
                     style: TextStyle(
-                      fontSize: isMobile ? 12 : 14, // Back to original size for details title
+                      fontSize: isMobile ? 12 : 14,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                     ),
@@ -543,12 +554,12 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(isMobile ? 12 : 14), // Increased padding
+              padding: EdgeInsets.all(isMobile ? 12 : 14),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 width: double.infinity,
-                padding: EdgeInsets.all(isMobile ? 16 : 18), // Increased padding
+                padding: EdgeInsets.all(isMobile ? 16 : 18),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -578,7 +589,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                     Row(
                       children: [
                         Container(
-                          width: isMobile ? 14 : 16, // Increased size
+                          width: isMobile ? 14 : 16,
                           height: isMobile ? 14 : 16,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(colors: [selectedColor, selectedColor.withAlpha(180)]),
@@ -592,23 +603,24 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                             ],
                           ),
                         ),
-                        const SizedBox(width: 10), // Increased spacing
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             selectedTag.tagName,
                             style: TextStyle(
-                              fontSize: isMobile ? 18 : 20, // Increased font size for better readability
+                              fontSize: isMobile ? 14 : 16, // Giảm font size để tránh overflow
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                             ),
                             overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Increased padding
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(colors: [selectedColor, selectedColor.withAlpha(200)]),
-                            borderRadius: BorderRadius.circular(10), // Increased radius
+                            borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
                                 color: selectedColor.withAlpha(80),
@@ -620,7 +632,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                           child: Text(
                             '${selectedTag.percentage.toStringAsFixed(1)}%',
                             style: const TextStyle(
-                              fontSize: 16, // Increased font size for better readability
+                              fontSize: 14, // Giảm font size để tránh overflow
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -628,7 +640,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                         ),
                       ],
                     ),
-                                            const SizedBox(height: 16), // Increased spacing
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
@@ -641,7 +653,7 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
                             isMobile: isMobile,
                           ),
                         ),
-                        const SizedBox(width: 12), // Increased spacing
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildCompactDetailItem(
                             icon: Icons.receipt_rounded,
@@ -674,10 +686,10 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
   }) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 8 : 10), // Increased padding to prevent overflow
+      padding: EdgeInsets.all(isMobile ? 10 : 12), // Tăng padding để tránh overflow
       decoration: BoxDecoration(
         color: color.withAlpha(25),
-        borderRadius: BorderRadius.circular(8), // Increased radius
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withAlpha(50)),
       ),
       child: Column(
@@ -688,15 +700,15 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
             children: [
               Icon(
                 icon,
-                size: isMobile ? 14 : 16, // Increased icon size
+                size: isMobile ? 16 : 18, // Tăng icon size
                 color: color,
               ),
-              const SizedBox(width: 6), // Increased spacing
+              const SizedBox(width: 8), // Tăng spacing
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: isMobile ? 12 : 14, // Increased font size to prevent overflow
+                    fontSize: isMobile ? 13 : 15, // Tăng font size để tránh overflow
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
@@ -705,11 +717,11 @@ class _TagsPieChartState extends State<TagsPieChart> with TickerProviderStateMix
               ),
             ],
           ),
-          const SizedBox(height: 4), // Increased spacing
+          const SizedBox(height: 6), // Tăng spacing
           Text(
             value,
             style: TextStyle(
-              fontSize: isMobile ? 14 : 16, // Increased font size to prevent overflow
+              fontSize: isMobile ? 15 : 17, // Tăng font size để tránh overflow
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : const Color(0xFF1A1A1A),
             ),

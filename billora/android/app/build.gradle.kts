@@ -66,6 +66,11 @@ configurations.all {
         force("androidx.concurrent:concurrent-futures:1.1.0")
         force("androidx.annotation:annotation:1.7.1")
         force("androidx.core:core:1.12.0")
+        force("androidx.activity:activity:1.8.2")
+        force("androidx.activity:activity-ktx:1.8.2")
+        force("androidx.appcompat:appcompat:1.6.1")
+        force("androidx.fragment:fragment:1.6.2")
+        force("androidx.fragment:fragment-ktx:1.6.2")
     }
 }
 
@@ -73,4 +78,17 @@ dependencies {
     implementation("androidx.concurrent:concurrent-futures:1.1.0")
     implementation("androidx.annotation:annotation:1.7.1")
     implementation("androidx.core:core:1.12.0")
+    
+    // Add missing androidx.activity dependency for Google Sign-In
+    implementation("androidx.activity:activity:1.8.2")
+    implementation("androidx.activity:activity-ktx:1.8.2")
+    
+    // Google Sign-In dependencies - updated versions
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.android.gms:play-services-base:18.3.0")
+    
+    // Additional AndroidX dependencies for better compatibility
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.fragment:fragment:1.6.2")
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
 }

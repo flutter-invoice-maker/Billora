@@ -1,72 +1,59 @@
 {
   "models": {
-    "deepseek": {
-      "name": "deepseek-ai/deepseek-coder-6.7b-instruct",
-      "type": "text-generation",
-      "description": "DeepSeek Coder for code generation and analysis",
+    "chatgpt": {
+      "name": "gpt-3.5-turbo",
+      "type": "chat-completion",
+      "description": "ChatGPT for general text generation and analysis",
       "max_tokens": 4096,
       "temperature": 0.7,
-      "use_case": "code_generation",
+      "use_case": "general_analysis",
       "language_support": ["en", "vi"],
-      "api_endpoint": "https://api-inference.huggingface.co/models/deepseek-ai/deepseek-coder-6.7b-instruct",
+      "api_endpoint": "https://api.openai.com/v1/chat/completions",
       "headers": {
-        "Authorization": "Bearer ${HUGGING_FACE_API_KEY}"
+        "Authorization": "Bearer ${OPENAI_API_KEY}"
       }
     },
-    "llama": {
-      "name": "meta-llama/Llama-2-7b-chat-hf",
-      "type": "text-generation",
-      "description": "Llama 2 for general text generation and analysis",
-      "max_tokens": 2048,
-      "temperature": 0.8,
-      "use_case": "text_generation",
-      "language_support": ["en", "vi"],
-      "api_endpoint": "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf",
-      "headers": {
-        "Authorization": "Bearer ${HUGGING_FACE_API_KEY}"
-      }
-    },
-    "mistral": {
-      "name": "mistralai/Mistral-7B-Instruct-v0.2",
-      "type": "text-generation",
-      "description": "Mistral for instruction following and analysis",
-      "max_tokens": 3072,
-      "temperature": 0.6,
-      "use_case": "instruction_following",
-      "language_support": ["en", "vi"],
-      "api_endpoint": "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-      "headers": {
-        "Authorization": "Bearer ${HUGGING_FACE_API_KEY}"
-      }
-    },
-    "codellama": {
-      "name": "codellama/CodeLlama-7b-Instruct-hf",
-      "type": "text-generation",
-      "description": "Code Llama for code analysis and generation",
-      "max_tokens": 4096,
+    "gpt4": {
+      "name": "gpt-4",
+      "type": "chat-completion",
+      "description": "GPT-4 for advanced analysis and complex tasks",
+      "max_tokens": 8192,
       "temperature": 0.5,
-      "use_case": "code_analysis",
+      "use_case": "advanced_analysis",
       "language_support": ["en", "vi"],
-      "api_endpoint": "https://api-inference.huggingface.co/models/codellama/CodeLlama-7b-Instruct-hf",
+      "api_endpoint": "https://api.openai.com/v1/chat/completions",
       "headers": {
-        "Authorization": "Bearer ${HUGGING_FACE_API_KEY}"
+        "Authorization": "Bearer ${OPENAI_API_KEY}"
+      }
+    },
+    "gpt4_vision": {
+      "name": "gpt-4-vision-preview",
+      "type": "vision-completion",
+      "description": "GPT-4 Vision for image analysis and OCR",
+      "max_tokens": 4096,
+      "temperature": 0.3,
+      "use_case": "image_analysis",
+      "language_support": ["en", "vi"],
+      "api_endpoint": "https://api.openai.com/v1/chat/completions",
+      "headers": {
+        "Authorization": "Bearer ${OPENAI_API_KEY}"
       }
     }
   },
   "invoice_analysis": {
     "tag_suggestion": {
-      "model": "mistral",
+      "model": "chatgpt",
       "prompt_template": "Analyze the following invoice content and suggest relevant tags for categorization. Invoice details: Customer: {customer_name}, Items: {items}, Total: {total}, Note: {note}. Suggest 3-5 relevant tags separated by commas.",
       "max_tags": 5,
       "confidence_threshold": 0.7
     },
     "invoice_classification": {
-      "model": "llama",
+      "model": "chatgpt",
       "prompt_template": "Classify this invoice based on its content and context. Invoice: Customer: {customer_name}, Items: {items}, Total: {total}. Classify into one of these categories: [Food & Beverage, Electronics, Services, Clothing, Software, Hardware, General]. Provide only the category name.",
       "categories": ["Food & Beverage", "Electronics", "Services", "Clothing", "Software", "Hardware", "General"]
     },
     "content_summary": {
-      "model": "deepseek",
+      "model": "chatgpt",
       "prompt_template": "Create a brief summary of this invoice for quick reference. Format: 'Invoice Type - Customer Name - Number of Items'. Invoice: Customer: {customer_name}, Items: {items}, Total: {total}. Keep summary under 50 characters.",
       "max_length": 50
     }

@@ -22,6 +22,7 @@ import 'package:billora/src/features/customer/presentation/cubit/customer_state.
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_state.dart';
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
+import 'package:billora/src/core/utils/snackbar_helper.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -95,12 +96,28 @@ class _DashboardPageState extends State<DashboardPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     
-    // Load dashboard data immediately when component is mounted
+    // Only load dashboard data if not already loaded or loading
     final dashboardState = context.read<DashboardCubit>().state;
     if (dashboardState is! DashboardLoaded && dashboardState is! DashboardLoading) {
+      // Load dashboard stats first
       context.read<DashboardCubit>().loadDashboardStats();
-      context.read<CustomerCubit>().fetchCustomers();
-      context.read<ProductCubit>().fetchProducts();
+      
+      // Only fetch other data if not already loaded
+      final customerState = context.read<CustomerCubit>().state;
+      customerState.when(
+        loaded: (_) => null, // Already loaded
+        initial: () => context.read<CustomerCubit>().fetchCustomers(),
+        loading: () => null, // Already loading
+        error: (_) => context.read<CustomerCubit>().fetchCustomers(),
+      );
+      
+      final productState = context.read<ProductCubit>().state;
+      productState.when(
+        loaded: (_) => null, // Already loaded
+        initial: () => context.read<ProductCubit>().fetchProducts(),
+        loading: () => null, // Already loading
+        error: (_) => context.read<ProductCubit>().fetchProducts(),
+      );
     }
   }
 
@@ -108,12 +125,12 @@ class _DashboardPageState extends State<DashboardPage>
     if (!_isRefreshing && mounted) {
       _isRefreshing = true;
       
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          context.read<DashboardCubit>().loadDashboardStats();
-        }
-      });
+      // Only refresh dashboard stats, not other data
+      if (mounted) {
+        context.read<DashboardCubit>().loadDashboardStats();
+      }
       
+      // Reset refreshing flag after a delay
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) {
           _isRefreshing = false;
@@ -278,7 +295,7 @@ class _DashboardPageState extends State<DashboardPage>
                             child: Column(
                               children: [
                                 if (state is DashboardLoading) ...[
-                                  const SizedBox(height: 100),
+                                  const SizedBox(height: 200),
                                   const Center(
                                     child: CircularProgressIndicator(
                                       valueColor: AlwaysStoppedAnimation<Color>(
@@ -286,7 +303,7 @@ class _DashboardPageState extends State<DashboardPage>
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 100),
+                                  const SizedBox(height: 200),
                                 ] else if (state is DashboardLoaded) ...[
                                   const SizedBox(height: 20),
                                   _buildStatsGrid(state.stats),
@@ -1006,73 +1023,11 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    SnackBarHelper.showError(context, message: message);
   }
 
   void _downloadExcelFile(Uint8List excelData, String fileName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'File $fileName has been created successfully!',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
+    SnackBarHelper.showSuccess(context, message: 'File $fileName has been created successfully!');
   }
 
   String _formatDateRange(DateRange dateRange) {

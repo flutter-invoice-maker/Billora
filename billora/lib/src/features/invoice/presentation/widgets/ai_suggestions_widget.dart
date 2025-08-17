@@ -74,6 +74,11 @@ class _AISuggestionsWidgetState extends State<AISuggestionsWidget> {
       widget.onTagsSuggested(tags);
     } catch (e) {
       debugPrint('Error generating tag suggestions: $e');
+      // Fallback: provide empty tags if provider not found
+      setState(() {
+        _suggestedTags = [];
+      });
+      widget.onTagsSuggested([]);
     }
   }
 
@@ -89,6 +94,11 @@ class _AISuggestionsWidgetState extends State<AISuggestionsWidget> {
       widget.onClassificationSuggested(classification);
     } catch (e) {
       debugPrint('Error generating classification: $e');
+      // Fallback: provide default classification if provider not found
+      setState(() {
+        _suggestedClassification = 'General';
+      });
+      widget.onClassificationSuggested('General');
     }
   }
 
@@ -104,6 +114,12 @@ class _AISuggestionsWidgetState extends State<AISuggestionsWidget> {
       widget.onSummarySuggested(summary);
     } catch (e) {
       debugPrint('Error generating summary: $e');
+      // Fallback: provide default summary if provider not found
+      final defaultSummary = 'Invoice summary not available';
+      setState(() {
+        _suggestedSummary = defaultSummary;
+      });
+      widget.onSummarySuggested(defaultSummary);
     }
   }
 

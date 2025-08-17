@@ -9,85 +9,67 @@ import '../../features/bill_scanner/domain/entities/enhanced_scan_result.dart';
 @injectable
 class EnhancedAIService {
   String get _openaiApiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
+  static const String _openaiEndpoint = 'https://api.openai.com/v1/chat/completions';
+  static const String _defaultModel = 'gpt-4';
 
   /// Enhanced bill scanning with AI processing
   Future<EnhancedScanResult> processBillImage(String imagePath) async {
     try {
-      // Step 1: OCR Processing
-      final ocrResult = await _performOCR(imagePath);
+      // Step 1: OCR Processing using ChatGPT Vision API
+      final ocrResult = await _performOCRWithChatGPT(imagePath);
       
       // Step 2: AI Data Extraction
-      final aiExtractedData = await _extractDataWithAI(ocrResult.rawText);
+      final aiExtractedData = await _extractDataWithAI(ocrResult);
       
       // Step 3: Data Validation and Enhancement
-      final validatedData = await _validateAndEnhanceData(aiExtractedData, ocrResult.rawText);
+      final validatedData = await _validateAndEnhanceData(aiExtractedData, ocrResult);
       
       // Step 4: Field Confidence Calculation
-      final fieldConfidence = _calculateFieldConfidence(validatedData, ocrResult.rawText);
+      final fieldConfidence = _calculateFieldConfidence(validatedData, ocrResult);
       
       // Step 5: Generate AI Suggestions
-      final aiSuggestions = await _generateAISuggestions(validatedData, ocrResult.rawText);
+      final aiSuggestions = await _generateAISuggestions(validatedData, ocrResult);
       
       // Step 6: Create Field Mappings
       final fieldMappings = _createFieldMappings(validatedData);
       
       return EnhancedScanResult(
-        rawText: ocrResult.rawText,
+        rawText: ocrResult,
         confidence: _calculateOverallConfidence(fieldConfidence),
         processedAt: DateTime.now(),
-        ocrProvider: 'Enhanced AI OCR',
+        ocrProvider: 'ChatGPT Vision API',
         detectedBillType: _detectBillType(validatedData),
         extractedFields: validatedData,
-        detectedLanguages: _detectLanguages(ocrResult.rawText),
-        processingTimeMs: ocrResult.processingTimeMs,
+        detectedLanguages: _detectLanguages(ocrResult),
+        processingTimeMs: 0,
         errorMessage: null,
         aiExtractedData: validatedData,
         fieldConfidence: fieldConfidence,
         aiSuggestions: aiSuggestions,
         fieldMappings: fieldMappings,
         isDataValidated: true,
-        aiModelVersion: '2.0',
+        aiModelVersion: _defaultModel,
         processingMetadata: {
-          'ocr_engine': 'Enhanced AI',
-          'ai_model': 'GPT-4 Vision',
+          'ocr_engine': 'ChatGPT Vision',
+          'ai_model': _defaultModel,
           'processing_steps': ['OCR', 'AI Extraction', 'Validation', 'Enhancement'],
           'confidence_threshold': 0.7,
         },
       );
     } catch (e) {
-      debugPrint('Error processing bill image: $e');
-      return _createErrorResult(e.toString());
-    }
-  }
-
-  /// Perform OCR on image
-  Future<OCRResult> _performOCR(String imagePath) async {
-    try {
-      final startTime = DateTime.now();
-      
-      // Load image file
-      final imageFile = File(imagePath);
-      final imageBytes = await imageFile.readAsBytes();
-      final base64Image = base64Encode(imageBytes);
-      
-      // Call OCR API (using OpenAI Vision API for better accuracy)
-      final ocrText = await _callOpenAIVisionAPI(base64Image);
-      
-      final processingTime = DateTime.now().difference(startTime).inMilliseconds;
-      
-      return OCRResult(
-        rawText: ocrText,
-        processingTimeMs: processingTime.toDouble(),
-      );
-    } catch (e) {
-      debugPrint('OCR Error: $e');
+      debugPrint('Enhanced AI processing error: $e');
       rethrow;
     }
   }
 
-  /// Call OpenAI Vision API for OCR
-  Future<String> _callOpenAIVisionAPI(String base64Image) async {
+  /// Call ChatGPT Vision API for OCR
+  Future<String> _performOCRWithChatGPT(String imagePath) async {
     try {
+      // Convert image to base64
+      final imageFile = File(imagePath);
+      final imageBytes = await imageFile.readAsBytes();
+      final base64Image = base64Encode(imageBytes);
+
       final response = await http.post(
         Uri.parse('https://api.openai.com/v1/chat/completions'),
         headers: {
@@ -121,15 +103,15 @@ class EnhancedAIService {
         final responseData = json.decode(response.body);
         return responseData['choices'][0]['message']['content'] ?? '';
       } else {
-        throw Exception('OpenAI API error: ${response.statusCode}');
+        throw Exception('ChatGPT Vision API error: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('OpenAI Vision API Error: $e');
+      debugPrint('ChatGPT Vision API Error: $e');
       rethrow;
     }
   }
 
-  /// Extract structured data using AI
+  /// Extract structured data using ChatGPT
   Future<Map<String, dynamic>> _extractDataWithAI(String rawText) async {
     try {
       final prompt = '''
@@ -165,7 +147,7 @@ Extract and return JSON with these fields:
 Return only valid JSON, no additional text.
 ''';
 
-      final response = await _callOpenAICompletion(prompt);
+      final response = await _callChatGPT(prompt);
       return _parseAIResponse(response);
     } catch (e) {
       debugPrint('AI Data Extraction Error: $e');
@@ -173,201 +155,161 @@ Return only valid JSON, no additional text.
     }
   }
 
+  /// Call ChatGPT API for text completion
+  Future<String> _callChatGPT(String prompt) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_openaiEndpoint),
+        headers: {
+          'Authorization': 'Bearer $_openaiApiKey',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'model': _defaultModel,
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'You are an AI assistant specialized in invoice analysis and data extraction. Return only valid JSON responses.'
+            },
+            {
+              'role': 'user',
+              'content': prompt
+            }
+          ],
+          'max_tokens': 2048,
+          'temperature': 0.3,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return responseData['choices'][0]['message']['content'] ?? '';
+      } else {
+        throw Exception('ChatGPT API error: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('ChatGPT API Error: $e');
+      rethrow;
+    }
+  }
+
   /// Validate and enhance extracted data
   Future<Map<String, dynamic>> _validateAndEnhanceData(
-    Map<String, dynamic> extractedData,
-    String rawText,
+    Map<String, dynamic> extractedData, 
+    String rawText
   ) async {
     try {
-      var validatedData = <String, dynamic>{};
+      final validatedData = Map<String, dynamic>.from(extractedData);
       
-      // Validate and clean each field
-      for (final entry in extractedData.entries) {
-        final key = entry.key;
-        final value = entry.value;
-        
-        switch (key) {
-          case 'storeName':
-            validatedData[key] = _validateAndCleanText(value);
-            break;
-          case 'totalAmount':
-          case 'subtotal':
-          case 'tax':
-            validatedData[key] = _validateAndCleanNumber(value);
-            break;
-          case 'currency':
-            validatedData[key] = _validateAndCleanCurrency(value);
-            break;
-          case 'phone':
-            validatedData[key] = _validateAndCleanPhone(value);
-            break;
-          case 'email':
-            validatedData[key] = _validateAndCleanEmail(value);
-            break;
-          case 'items':
-            validatedData[key] = _validateAndCleanItems(value);
-            break;
-          default:
-            validatedData[key] = value;
-        }
+      // Validate required fields
+      if (validatedData['storeName'] == null || validatedData['storeName'].toString().isEmpty) {
+        validatedData['storeName'] = 'Unknown Store';
+      }
+      
+      if (validatedData['totalAmount'] == null) {
+        validatedData['totalAmount'] = 0.0;
+      }
+      
+      if (validatedData['currency'] == null || validatedData['currency'].toString().isEmpty) {
+        validatedData['currency'] = 'USD';
+      }
+      
+      if (validatedData['items'] == null) {
+        validatedData['items'] = [];
+      }
+      
+      // Enhance with additional context from raw text
+      if (validatedData['date'] == null) {
+        validatedData['date'] = DateTime.now().toIso8601String();
       }
       
       return validatedData;
     } catch (e) {
-      debugPrint('Data Validation Error: $e');
+      debugPrint('Data validation error: $e');
       return extractedData;
     }
   }
 
   /// Calculate confidence for each field
   Map<String, double> _calculateFieldConfidence(
-    Map<String, dynamic> data,
-    String rawText,
+    Map<String, dynamic> validatedData, 
+    String rawText
   ) {
     final confidence = <String, double>{};
     
-    for (final entry in data.entries) {
-      final key = entry.key;
-      final value = entry.value;
-      
-      double fieldConfidence = 0.0;
-      
-      if (value != null && value.toString().isNotEmpty) {
-        // Base confidence
-        fieldConfidence = 0.7;
-        
-        // Check if value appears in raw text
-        if (rawText.toLowerCase().contains(value.toString().toLowerCase())) {
-          fieldConfidence += 0.2;
-        }
-        
-        // Pattern validation
-        if (_validateFieldPattern(key, value)) {
-          fieldConfidence += 0.1;
-        }
-      }
-      
-      confidence[key] = fieldConfidence.clamp(0.0, 1.0);
-    }
+    // Calculate confidence based on data quality
+    confidence['storeName'] = validatedData['storeName'] != null && 
+        validatedData['storeName'].toString().isNotEmpty ? 0.9 : 0.3;
+    
+    confidence['totalAmount'] = validatedData['totalAmount'] != null && 
+        validatedData['totalAmount'] > 0 ? 0.95 : 0.2;
+    
+    confidence['items'] = validatedData['items'] != null && 
+        (validatedData['items'] as List).isNotEmpty ? 0.85 : 0.4;
+    
+    confidence['date'] = validatedData['date'] != null ? 0.8 : 0.3;
     
     return confidence;
   }
 
   /// Generate AI suggestions for data improvement
   Future<List<String>> _generateAISuggestions(
-    Map<String, dynamic> data,
-    String rawText,
+    Map<String, dynamic> validatedData, 
+    String rawText
   ) async {
     try {
       final prompt = '''
-Based on this invoice data and raw text, provide suggestions for improvement:
+Based on this extracted invoice data, suggest improvements or additional information that could be captured:
 
-Data: ${json.encode(data)}
+Extracted Data: ${json.encode(validatedData)}
 Raw Text: $rawText
 
-Provide 3-5 specific suggestions for:
-1. Data accuracy improvements
-2. Missing information to look for
-3. Potential data corrections
-4. Business logic validation
-
-Format as a simple list, one suggestion per line.
+Provide 3-5 suggestions for improving data quality or capturing additional fields.
+Return only the suggestions, one per line.
 ''';
 
-      final response = await _callOpenAICompletion(prompt);
-      return _parseSuggestions(response);
+      final response = await _callChatGPT(prompt);
+      return response.split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .take(5)
+          .toList();
     } catch (e) {
-      debugPrint('AI Suggestions Error: $e');
-      return [];
+      debugPrint('AI suggestions error: $e');
+      return [
+        'Verify extracted amounts match raw text',
+        'Check for missing tax information',
+        'Validate item descriptions'
+      ];
     }
   }
 
-  /// Create field mappings for data processing
-  Map<String, String> _createFieldMappings(Map<String, dynamic> data) {
+  /// Create field mappings for UI
+  Map<String, String> _createFieldMappings(Map<String, dynamic> validatedData) {
     return {
-      'storeName': 'customer.name',
-      'customerName': 'customer.name',
-      'phone': 'customer.phone',
-      'email': 'customer.email',
-      'address': 'customer.address',
-      'totalAmount': 'invoice.total',
-      'subtotal': 'invoice.subtotal',
-      'tax': 'invoice.tax',
-      'currency': 'invoice.currency',
-      'invoiceNumber': 'invoice.number',
-      'date': 'invoice.date',
-      'items': 'invoice.items',
+      'storeName': 'Store Name',
+      'totalAmount': 'Total Amount',
+      'subtotal': 'Subtotal',
+      'tax': 'Tax',
+      'currency': 'Currency',
+      'invoiceNumber': 'Invoice Number',
+      'date': 'Date',
+      'phone': 'Phone',
+      'email': 'Email',
+      'address': 'Address',
+      'items': 'Items',
+      'customerName': 'Customer Name',
+      'paymentMethod': 'Payment Method',
+      'dueDate': 'Due Date',
     };
   }
 
-  /// Helper methods
-  String _validateAndCleanText(dynamic value) {
-    if (value == null) return '';
-    final text = value.toString().trim();
-    return text.isNotEmpty ? text : '';
-  }
+  /// Get service status
+  bool get isAvailable => _openaiApiKey.isNotEmpty;
 
-  double _validateAndCleanNumber(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is num) return value.toDouble();
-    
-    final text = value.toString().replaceAll(RegExp(r'[^\d.]'), '');
-    return double.tryParse(text) ?? 0.0;
-  }
+  /// Get current model
+  String get currentModel => _defaultModel;
 
-  String _validateAndCleanCurrency(dynamic value) {
-    if (value == null) return 'USD';
-    final currency = value.toString().toUpperCase().trim();
-    return currency.isNotEmpty ? currency : 'USD';
-  }
-
-  String _validateAndCleanPhone(dynamic value) {
-    if (value == null) return '';
-    final phone = value.toString().replaceAll(RegExp(r'[^\d+\-\(\)\s]'), '');
-    return phone.trim();
-  }
-
-  String _validateAndCleanEmail(dynamic value) {
-    if (value == null) return '';
-    final email = value.toString().trim();
-    if (RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
-      return email;
-    }
-    return '';
-  }
-
-  List<Map<String, dynamic>> _validateAndCleanItems(dynamic value) {
-    if (value == null || value is! List) return [];
-    
-    final items = <Map<String, dynamic>>[];
-    for (final item in value) {
-      if (item is Map<String, dynamic>) {
-        items.add({
-          'description': _validateAndCleanText(item['description']),
-          'quantity': _validateAndCleanNumber(item['quantity']),
-          'unitPrice': _validateAndCleanNumber(item['unitPrice']),
-          'totalPrice': _validateAndCleanNumber(item['totalPrice']),
-        });
-      }
-    }
-    return items;
-  }
-
-  bool _validateFieldPattern(String field, dynamic value) {
-    switch (field) {
-      case 'email':
-        return RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(value.toString());
-      case 'phone':
-        return RegExp(r'^[\d+\-\(\)\s]+$').hasMatch(value.toString());
-      case 'totalAmount':
-      case 'subtotal':
-      case 'tax':
-        return value is num && value > 0;
-      default:
-        return true;
-    }
-  }
-
+  /// Calculate overall confidence from field confidence
   ScanConfidence _calculateOverallConfidence(Map<String, double> fieldConfidence) {
     if (fieldConfidence.isEmpty) return ScanConfidence.unknown;
     
@@ -378,6 +320,7 @@ Format as a simple list, one suggestion per line.
     return ScanConfidence.low;
   }
 
+  /// Detect bill type from extracted data
   BillType _detectBillType(Map<String, dynamic> data) {
     // Simple bill type detection logic
     if (data['invoiceNumber'] != null) return BillType.salesInvoice;
@@ -385,6 +328,7 @@ Format as a simple list, one suggestion per line.
     return BillType.unknown;
   }
 
+  /// Detect languages from text
   List<String> _detectLanguages(String text) {
     // Simple language detection
     final languages = <String>[];
@@ -395,39 +339,6 @@ Format as a simple list, one suggestion per line.
       languages.add('en');
     }
     return languages.isEmpty ? ['en'] : languages;
-  }
-
-  Future<String> _callOpenAICompletion(String prompt) async {
-    try {
-      final response = await http.post(
-        Uri.parse('https://api.openai.com/v1/chat/completions'),
-        headers: {
-          'Authorization': 'Bearer $_openaiApiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'model': 'gpt-4',
-          'messages': [
-            {
-              'role': 'user',
-              'content': prompt,
-            },
-          ],
-          'max_tokens': 2048,
-          'temperature': 0.1,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        return responseData['choices'][0]['message']['content'] ?? '';
-      } else {
-        throw Exception('OpenAI API error: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('OpenAI Completion API Error: $e');
-      rethrow;
-    }
   }
 
   Map<String, dynamic> _parseAIResponse(String response) {
@@ -443,49 +354,4 @@ Format as a simple list, one suggestion per line.
       return {};
     }
   }
-
-  List<String> _parseSuggestions(String response) {
-    try {
-      final lines = response.split('\n');
-      return lines
-          .where((line) => line.trim().isNotEmpty)
-          .map((line) => line.trim())
-          .take(5)
-          .toList();
-    } catch (e) {
-      debugPrint('Suggestions Parsing Error: $e');
-      return [];
-    }
-  }
-
-  EnhancedScanResult _createErrorResult(String errorMessage) {
-    return EnhancedScanResult(
-      rawText: '',
-      confidence: ScanConfidence.unknown,
-      processedAt: DateTime.now(),
-      ocrProvider: 'Error',
-      detectedBillType: null,
-      extractedFields: {},
-      detectedLanguages: [],
-      processingTimeMs: 0,
-      errorMessage: errorMessage,
-      aiExtractedData: {},
-      fieldConfidence: {},
-      aiSuggestions: ['Error occurred during processing'],
-      fieldMappings: {},
-      isDataValidated: false,
-      aiModelVersion: 'Error',
-      processingMetadata: {'error': errorMessage},
-    );
-  }
-}
-
-class OCRResult {
-  final String rawText;
-  final double processingTimeMs;
-
-  OCRResult({
-    required this.rawText,
-    required this.processingTimeMs,
-  });
 } 

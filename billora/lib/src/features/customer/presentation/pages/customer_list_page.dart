@@ -50,7 +50,18 @@ class _CustomerListPageState extends State<CustomerListPage>
   @override
   void initState() {
     super.initState();
-    context.read<CustomerCubit>().fetchCustomers();
+    // Only fetch customers if not already loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final customerState = context.read<CustomerCubit>().state;
+        customerState.when(
+          loaded: (_) => null, // Already loaded
+          initial: () => context.read<CustomerCubit>().fetchCustomers(),
+          loading: () => null, // Already loading
+          error: (_) => context.read<CustomerCubit>().fetchCustomers(),
+        );
+      }
+    });
     
     _bannerController = AnimationController(
       duration: const Duration(seconds: 4),
@@ -80,6 +91,12 @@ class _CustomerListPageState extends State<CustomerListPage>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Remove duplicate data fetching to prevent infinite loading
+  }
+
+  @override
   void dispose() {
     _bannerController.dispose();
     _floatingIconsController.dispose();
@@ -92,158 +109,251 @@ class _CustomerListPageState extends State<CustomerListPage>
     return AppScaffold(
       currentTabIndex: 1, // Customer tab index
       pageTitle: 'Customer Management',
-      body: Stack(
-        children: [
-          _buildFloatingIcons(),
-          SafeArea(
-            child: Column(
-              children: [
-                // Hero Banner
-                _buildHeroBanner(),
-                // Search Bar
-                _buildSearchBar(),
-                // Customer List
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(25),
-                        topRight: Radius.circular(25),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              const Color(0xFFB794F6).withValues(alpha: 0.08),
+              Colors.white,
+              const Color(0xFF8B5FBF).withValues(alpha: 0.12),
+              const Color(0xFF7C3AED).withValues(alpha: 0.06),
+            ],
+            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+          ),
+        ),
+        child: Stack(
+          children: [
+            _buildFloatingIcons(),
+            SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Hero Banner
+                    _buildHeroBanner(),
+                    // Search Bar
+                    _buildSearchBar(),
+                    // Customer List
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(25),
+                          topRight: Radius.circular(25),
+                        ),
                       ),
-                    ),
-                    child: BlocBuilder<CustomerCubit, CustomerState>(
-                      builder: (context, state) {
-                        return state.when(
-                          initial: () => const Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF667EEA),
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          // Refresh data
+                          context.read<CustomerCubit>().fetchCustomers();
+                        },
+                        color: const Color(0xFF667EEA),
+                        backgroundColor: Colors.white,
+                        child: BlocBuilder<CustomerCubit, CustomerState>(
+                          builder: (context, state) {
+                            return state.when(
+                              initial: () => SizedBox(
+                                height: 200,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF667EEA),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Initializing...',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Setting up your customer list',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ),
-                          loading: () => const Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF667EEA),
-                              ),
-                            ),
-                          ),
-                          loaded: (customers) {
-                            final filteredCustomers = customers.where((customer) {
-                              final searchLower = _searchTerm.toLowerCase();
-                              return searchLower.isEmpty ||
-                                  customer.name.toLowerCase().contains(searchLower) ||
-                                  (customer.email?.toLowerCase().contains(searchLower) ?? false) ||
-                                  (customer.phone?.toLowerCase().contains(searchLower) ?? false);
-                            }).toList();
-
-                            if (filteredCustomers.isEmpty) {
-                              return Center(
-                                child: Container(
-                                  margin: const EdgeInsets.all(32),
-                                  padding: const EdgeInsets.all(32),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha((0.1 * 255).round()),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.people_outline,
-                                        size: 64,
-                                        color: Colors.grey[400],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'No customers found',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Try adjusting your search',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[500],
-                                        ),
-                                      ),
-                                    ],
+                                                          loading: () => SizedBox(
+                              height: 200,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF667EEA),
                                   ),
                                 ),
-                              );
-                            }
+                              ),
+                            ),
+                              loaded: (customers) {
+                                final filteredCustomers = customers.where((customer) {
+                                  final searchLower = _searchTerm.toLowerCase();
+                                  return searchLower.isEmpty ||
+                                      customer.name.toLowerCase().contains(searchLower) ||
+                                      (customer.email?.toLowerCase().contains(searchLower) ?? false) ||
+                                      (customer.phone?.toLowerCase().contains(searchLower) ?? false);
+                                }).toList();
 
-                            final startIndex = _currentPage * _itemsPerPage;
-                            final endIndex = math.min(startIndex + _itemsPerPage, filteredCustomers.length);
-                            final paginatedCustomers = filteredCustomers.sublist(startIndex, endIndex);
+                                if (filteredCustomers.isEmpty) {
+                                  return SizedBox(
+                                    height: 300,
+                                    child: Center(
+                                      child: Container(
+                                        margin: const EdgeInsets.all(32),
+                                        padding: const EdgeInsets.all(32),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withAlpha((0.1 * 255).round()),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.people_outline,
+                                              size: 64,
+                                              color: Colors.grey[400],
+                                            ),
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              'No customers found',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Try adjusting your search or add new customers',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[500],
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
 
-                            return Column(
-                              children: [
-                                Expanded(
-                                  child: ListView.builder(
-                                    itemCount: paginatedCustomers.length,
-                                    itemBuilder: (context, index) {
-                                      final customer = paginatedCustomers[index];
-                                      return _buildCustomerCard(customer);
-                                    },
+                                final startIndex = _currentPage * _itemsPerPage;
+                                final endIndex = math.min(startIndex + _itemsPerPage, filteredCustomers.length);
+                                final paginatedCustomers = filteredCustomers.sublist(startIndex, endIndex);
+
+                                return Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.only(
+                                        top: 20,
+                                        left: 16,
+                                        right: 16,
+                                        bottom: 8,
+                                      ),
+                                      child: Column(
+                                        children: paginatedCustomers.map((customer) => _buildCustomerCard(customer)).toList(),
+                                      ),
+                                    ),
+                                    _buildPagination(filteredCustomers.length),
+                                    // Increased bottom padding for floating tabbar and FAB
+                                    const SizedBox(height: 150),
+                                  ],
+                                );
+                              },
+                              error: (message) => SizedBox(
+                                height: 300,
+                                child: Center(
+                                  child: Container(
+                                    margin: const EdgeInsets.all(32),
+                                    padding: const EdgeInsets.all(32),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withAlpha((0.1 * 255).round()),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          size: 64,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'Error loading customers',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          message,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[500],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 24),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            context.read<CustomerCubit>().fetchCustomers();
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF667EEA),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                              vertical: 12,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text('Retry'),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                                _buildPagination(filteredCustomers.length),
-                              ],
+                              ),
                             );
                           },
-                          error: (message) => Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 64,
-                                  color: Colors.red[400],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Error loading customers',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  message,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -564,6 +674,7 @@ class _CustomerListPageState extends State<CustomerListPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Previous button
           IconButton(
             onPressed: _currentPage > 0
                 ? () => setState(() => _currentPage--)
@@ -578,7 +689,10 @@ class _CustomerListPageState extends State<CustomerListPage>
                   : Colors.grey[500],
             ),
           ),
+          
           const SizedBox(width: 8),
+          
+          // Page numbers
           ...List.generate(
             math.min(5, totalPages),
             (index) {
@@ -594,7 +708,7 @@ class _CustomerListPageState extends State<CustomerListPage>
                   pageNumber = _currentPage - 2 + index;
                 }
               }
-
+              
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: TextButton(
@@ -616,7 +730,10 @@ class _CustomerListPageState extends State<CustomerListPage>
               );
             },
           ),
+          
           const SizedBox(width: 8),
+          
+          // Next button
           IconButton(
             onPressed: _currentPage < totalPages - 1
                 ? () => setState(() => _currentPage++)
@@ -637,14 +754,15 @@ class _CustomerListPageState extends State<CustomerListPage>
   }
 
   void _showDeleteDialog(Customer customer) {
+    final customerCubit = context.read<CustomerCubit>();
     showDialog(
       context: context,
-      builder: (context) => DeleteDialog(
+      builder: (dialogContext) => DeleteDialog(
         title: 'Delete Customer',
         message: 'Are you sure you want to delete this customer? This action cannot be undone.',
         itemName: customer.name,
         onDelete: () {
-          context.read<CustomerCubit>().deleteCustomer(customer.id);
+          customerCubit.deleteCustomer(customer.id);
         },
       ),
     );
@@ -721,10 +839,14 @@ class _CustomerListPageState extends State<CustomerListPage>
   }
 
   void _openForm([Customer? customer]) {
+    final customerCubit = context.read<CustomerCubit>();
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CustomerFormPage(customer: customer),
+        builder: (context) => BlocProvider<CustomerCubit>.value(
+          value: customerCubit,
+          child: CustomerFormPage(customer: customer),
+        ),
       ),
     );
   }
