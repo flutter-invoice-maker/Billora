@@ -1226,8 +1226,9 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                             children: [
                               // Template Selection
                               Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
+                                child: Container(
+                                  height: 100, // Fixed height for both cards
+                                  decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
                                         const Color(0xFF8B5FBF).withValues(alpha: 0.1),
@@ -1236,7 +1237,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                      borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
                                       color: const Color(0xFF8B5FBF).withValues(alpha: 0.3),
                                     ),
@@ -1246,39 +1247,44 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                     borderRadius: BorderRadius.circular(16),
                                     child: Padding(
                                       padding: const EdgeInsets.all(16),
-                                    child: Column(
+                                      child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Row(
-                                      children: [
-                                        Icon(
+                                            children: [
+                                              Icon(
                                                 Icons.description,
                                                 color: const Color(0xFF8B5FBF),
                                                 size: 24,
                                               ),
                                               const SizedBox(width: 8),
-                                        Text(
-                                          'Template',
-                                          style: TextStyle(
+                                              Text(
+                                                'Template',
+                                                style: TextStyle(
                                                   fontSize: 16,
-                                            fontWeight: FontWeight.w600,
+                                                  fontWeight: FontWeight.w600,
                                                   color: const Color(0xFF8B5FBF),
-                                          ),
-                                        ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                           const SizedBox(height: 8),
-                                          Text(
-                                            _templates.firstWhere(
-                                              (t) => t['id'] == (_templateId ?? _templates.first['id']),
-                                              orElse: () => _templates.first,
-                                            )['name'] ?? 'Select template',
-                                            style: TextStyle(
-                                              color: const Color(0xFF8B5FBF).withValues(alpha: 0.8),
-                                              fontSize: 14,
+                                          Expanded(
+                                            child: Text(
+                                              _templates.firstWhere(
+                                                (t) => t['id'] == (_templateId ?? _templates.first['id']),
+                                                orElse: () => _templates.first,
+                                              )['name'] ?? 'Select template',
+                                              style: TextStyle(
+                                                color: const Color(0xFF8B5FBF).withValues(alpha: 0.8),
+                                                fontSize: 14,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
                                             ),
                                           ),
-                                      ],
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -1289,8 +1295,9 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
 
                               // Tags Selection
                               Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
+                                child: Container(
+                                  height: 100, // Fixed height for both cards
+                                  decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
                                         const Color(0xFF7C3AED).withValues(alpha: 0.1),
@@ -1299,7 +1306,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                      borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
                                       color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
                                     ),
@@ -1309,36 +1316,41 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                     borderRadius: BorderRadius.circular(16),
                                     child: Padding(
                                       padding: const EdgeInsets.all(16),
-                                    child: Column(
+                                      child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Row(
-                                      children: [
-                                        Icon(
+                                            children: [
+                                              Icon(
                                                 Icons.label,
                                                 color: const Color(0xFF7C3AED),
                                                 size: 24,
                                               ),
                                               const SizedBox(width: 8),
-                                        Text(
-                                          'Tags',
-                                          style: TextStyle(
+                                              Text(
+                                                'Tags',
+                                                style: TextStyle(
                                                   fontSize: 16,
-                                            fontWeight: FontWeight.w600,
+                                                  fontWeight: FontWeight.w600,
                                                   color: const Color(0xFF7C3AED),
-                                          ),
-                                        ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                           const SizedBox(height: 8),
-                                        Text(
-                                            _tags.isEmpty ? 'Add tags' : '${_tags.length} tag${_tags.length == 1 ? '' : 's'} selected',
-                                          style: TextStyle(
-                                              color: const Color(0xFF7C3AED).withValues(alpha: 0.8),
-                                              fontSize: 14,
+                                          Expanded(
+                                            child: Text(
+                                              _tags.isEmpty ? 'Add tags' : '${_tags.length} tag${_tags.length == 1 ? '' : 's'} selected',
+                                              style: TextStyle(
+                                                color: const Color(0xFF7C3AED).withValues(alpha: 0.8),
+                                                fontSize: 14,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
                                       ),
                                     ),
                                   ),

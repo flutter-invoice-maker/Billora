@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/enhanced_scanned_bill.dart';
-import 'scan_library_page.dart';
 import '../../domain/entities/scan_library_item.dart';
 import '../../../customer/presentation/pages/customer_form_page.dart';
 import '../../../product/presentation/pages/product_form_page.dart';
+import '../../../customer/presentation/cubit/customer_cubit.dart';
+import '../../../../core/di/injection_container.dart';
 
 class EnhancedAIDataCorrectionPage extends StatefulWidget {
   final EnhancedScannedBill scannedBill;
@@ -668,14 +670,17 @@ class _EnhancedAIDataCorrectionPageState extends State<EnhancedAIDataCorrectionP
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CustomerFormPage(
-          prefill: {
-            'name': (ai?['customerName'] ?? ai?['storeName'] ?? updatedBill.storeName)?.toString() ?? '',
-            'email': ai?['email']?.toString() ?? '',
-            'phone': ai?['phone']?.toString() ?? (updatedBill.phone ?? ''),
-            'address': ai?['address']?.toString() ?? (updatedBill.address ?? ''),
-          },
-          forceCreate: true,
+        builder: (context) => BlocProvider<CustomerCubit>.value(
+          value: sl<CustomerCubit>(),
+          child: CustomerFormPage(
+            prefill: {
+              'name': (ai?['customerName'] ?? ai?['storeName'] ?? updatedBill.storeName)?.toString() ?? '',
+              'email': ai?['email']?.toString() ?? '',
+              'phone': ai?['phone']?.toString() ?? (updatedBill.phone ?? ''),
+              'address': ai?['address']?.toString() ?? (updatedBill.address ?? ''),
+            },
+            forceCreate: true,
+          ),
         ),
       ),
     );
@@ -731,12 +736,15 @@ class _EnhancedAIDataCorrectionPageState extends State<EnhancedAIDataCorrectionP
         lastModifiedAt: DateTime.now(),
         isProcessed: true,
       );
+      
       if (!mounted) return;
-      await Navigator.push(
+      
+      // Use named route instead of direct instantiation
+      // Pass the item as arguments to be handled by the route
+      Navigator.pushNamed(
         context,
-        MaterialPageRoute(
-          builder: (context) => ScanLibraryPage(initialItems: [item]),
-        ),
+        '/scan-library',
+        arguments: {'initialItems': [item]},
       );
     } catch (e) {
       if (!mounted) return;

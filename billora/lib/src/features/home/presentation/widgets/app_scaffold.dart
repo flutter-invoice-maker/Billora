@@ -46,8 +46,28 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ensure we have a ScaffoldMessenger in the widget tree
+    final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
+    
+    return Builder(
+      builder: (context) {
+        // If no ScaffoldMessenger exists, create one
+        if (scaffoldMessenger == null) {
+          return ScaffoldMessenger(
+            child: _buildScaffold(context),
+          );
+        }
+        
+        // If ScaffoldMessenger exists, use it directly
+        return _buildScaffold(context);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
-      extendBody: true, // This is crucial for floating effect
+      extendBody: false, // Keep false to prevent FAB from being pushed up
+      resizeToAvoidBottomInset: false, // Prevent resizing when keyboard appears
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
@@ -85,7 +105,7 @@ class AppScaffold extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 30), // Move FAB down a bit to reduce overlap
         child: _buildDefaultFAB(context),
       ),
-      floatingActionButtonLocation: floatingActionButtonLocation ?? FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       // Remove bottomNavigationBar since we're using positioned tabbar
     );
   }

@@ -8,6 +8,7 @@ import '../widgets/product_card.dart';
 import 'product_form_page.dart';
 import 'package:billora/src/core/utils/app_strings.dart';
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
+import 'package:billora/src/core/utils/snackbar_helper.dart';
 
 class ProductCatalogPage extends StatefulWidget {
   const ProductCatalogPage({super.key});
@@ -39,7 +40,18 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
   @override
   void initState() {
     super.initState();
-    context.read<ProductCubit>().fetchProducts();
+    // Only fetch products if not already loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final productState = context.read<ProductCubit>().state;
+        productState.when(
+          loaded: (_) => null, // Already loaded
+          initial: () => context.read<ProductCubit>().fetchProducts(),
+          loading: () => null, // Already loading
+          error: (_) => context.read<ProductCubit>().fetchProducts(),
+        );
+      }
+    });
     
     _bannerController = AnimationController(
       duration: const Duration(seconds: 4),
@@ -62,11 +74,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<ProductCubit>().fetchProducts();
-      }
-    });
+    // Remove duplicate data fetching to prevent infinite loading
   }
 
   Widget _buildFloatingIcons() {
@@ -692,12 +700,9 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
     
     // If a product was created/updated, show success message
     if (result != null && result is Product && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Product "${result.name}" ${product != null ? 'updated' : 'created'} successfully!'),
-          backgroundColor: const Color(0xFF10B981),
-          duration: const Duration(seconds: 2),
-        ),
+      SnackBarHelper.showSuccess(
+        context,
+        message: 'Product "${result.name}" ${product != null ? 'updated' : 'created'} successfully!',
       );
     }
   }

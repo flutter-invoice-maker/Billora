@@ -48,10 +48,10 @@ exports.analyzeInvoice = functions.firestore
         classification: aiResult.classification,
         confidence: aiResult.confidence,
         model_info: {
-          provider: 'hugging_face',
-          model_id: 'mistralai/Mistral-7B-Instruct-v0.2',
+          provider: 'openai',
+          model_id: 'gpt-3.5-turbo',
           version: '1.0',
-          metadata_json_url: 'https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2'
+          api_endpoint: 'https://api.openai.com/v1/chat/completions'
         },
         raw_response: aiResult.raw_response
       });
@@ -80,14 +80,14 @@ exports.analyzeInvoice = functions.firestore
   });
 
 /**
- * Perform AI analysis using Hugging Face API
+ * Perform AI analysis using ChatGPT API
  */
 async function performAIAnalysis(invoiceData) {
-  const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
-  const MODEL_ENDPOINT = 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2';
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  const MODEL_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
   
-  if (!HUGGING_FACE_API_KEY) {
-    throw new Error('HUGGING_FACE_API_KEY not configured');
+  if (!OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured');
   }
 
   // Prepare items text
@@ -119,16 +119,23 @@ Format response as JSON:
     const response = await fetch(MODEL_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${HUGGING_FACE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 500,
-          temperature: 0.7,
-          return_full_text: false
-        }
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an AI assistant specialized in invoice analysis and business intelligence. Be concise and professional in your responses. Return only valid JSON.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
       })
     });
 
@@ -137,7 +144,7 @@ Format response as JSON:
     }
 
     const data = await response.json();
-    const generatedText = data[0]?.generated_text || '';
+    const generatedText = data.choices[0]?.message?.content || '';
 
     // Parse AI response
     const aiResult = parseAIResponse(generatedText);
@@ -167,13 +174,13 @@ function parseAIResponse(response) {
       const jsonData = JSON.parse(jsonMatch[0]);
       return {
         summary: jsonData.summary,
-        suggested_tags: Array.isArray(jsonData.suggested_tags) ? jsonData.suggested_tags : [],
+        suggested_tags: jsonData.suggested_tags || [],
         classification: jsonData.classification,
         confidence: jsonData.confidence || 0.8
       };
     }
-
-    // Fallback parsing if JSON not found
+    
+    // Fallback parsing if JSON extraction fails
     const lines = response.split('\n');
     const result = {
       summary: '',
@@ -181,25 +188,24 @@ function parseAIResponse(response) {
       classification: 'General',
       confidence: 0.8
     };
-
+    
     for (const line of lines) {
-      if (line.includes('summary:') || line.includes('Summary:')) {
+      if (line.toLowerCase().includes('summary') && line.includes(':')) {
         result.summary = line.split(':')[1]?.trim() || '';
-      } else if (line.includes('tags:') || line.includes('Tags:')) {
+      } else if (line.toLowerCase().includes('tag') && line.includes(':')) {
         const tagsText = line.split(':')[1]?.trim() || '';
         result.suggested_tags = tagsText.split(',').map(tag => tag.trim()).filter(tag => tag);
-      } else if (line.includes('classification:') || line.includes('Classification:')) {
+      } else if (line.toLowerCase().includes('classification') && line.includes(':')) {
         result.classification = line.split(':')[1]?.trim() || 'General';
       }
     }
-
+    
     return result;
-
   } catch (error) {
     console.error('Error parsing AI response:', error);
     return {
       summary: 'Invoice analysis completed',
-      suggested_tags: [],
+      suggested_tags: ['General', 'Business', 'Invoice'],
       classification: 'General',
       confidence: 0.8
     };

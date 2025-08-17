@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/scan_library_item.dart';
+import 'scan_library_edit_page.dart';
 
 class ScanLibraryDetailPage extends StatelessWidget {
   final ScanLibraryItem scanItem;
@@ -18,7 +19,12 @@ class ScanLibraryDetailPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              // TODO: Navigate to edit page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ScanLibraryEditPage(scanItem: scanItem),
+                ),
+              );
             },
             tooltip: 'Edit',
           ),

@@ -1,21 +1,22 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:printing/printing.dart';
 import '../cubit/invoice_cubit.dart';
 import '../cubit/invoice_state.dart';
 import '../../domain/entities/invoice.dart';
 import 'invoice_form_page.dart';
+import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
 import 'package:billora/src/core/utils/app_strings.dart';
+import 'package:billora/src/core/utils/snackbar_helper.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/invoice_preview_widget.dart';
-import 'package:printing/printing.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
-import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
+import 'package:flutter/services.dart';
 import 'package:billora/src/core/widgets/delete_dialog.dart';
 
 class InvoiceListPage extends StatefulWidget {
@@ -65,7 +66,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
   @override
   void initState() {
     super.initState();
-    context.read<InvoiceCubit>().fetchInvoices();
+    // Only fetch if not already loading or loaded
+    final currentState = context.read<InvoiceCubit>().state;
+    currentState.when(
+      initial: () => context.read<InvoiceCubit>().fetchInvoices(),
+      loading: () => null, // Already loading
+      loaded: (_) => null, // Already loaded
+      error: (_) => context.read<InvoiceCubit>().fetchInvoices(), // Retry on error
+    );
     
     _bannerController = AnimationController(
       duration: const Duration(seconds: 4),
@@ -107,9 +115,16 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Only fetch if not already loaded or loading
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<InvoiceCubit>().fetchInvoices();
+        final currentState = context.read<InvoiceCubit>().state;
+        currentState.when(
+          initial: () => context.read<InvoiceCubit>().fetchInvoices(),
+          loading: () => null, // Already loading
+          loaded: (_) => null, // Already loaded
+          error: (_) => context.read<InvoiceCubit>().fetchInvoices(), // Retry on error
+        );
       }
     });
   }
@@ -206,12 +221,31 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                           return state.when(
                             initial: () => SizedBox(
                               height: 200,
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFF667EEA),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFF667EEA),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Initializing...',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Setting up your invoice list',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             loading: () => SizedBox(
@@ -1513,60 +1547,39 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
               title: Text(AppStrings.downloadPdf),
               subtitle: Text(AppStrings.saveToDevice),
               onTap: () async {
-                Navigator.pop(context);
-                final scaffold = ScaffoldMessenger.of(context);
-                final pdfReadyText = AppStrings.pdfReady;
-                final failedToGenerateText = AppStrings.failedToGeneratePdf;
+                if (!context.mounted) return;
+                final currentContext = context;
+                Navigator.pop(currentContext);
                 
-                scaffold.showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(AppStrings.generatingPdf),
-                      ],
-                    ),
+                // Show loading dialog
+                if (currentContext.mounted) {
+                  SnackBarHelper.showInfo(
+                    currentContext,
+                    message: AppStrings.generatingPdf,
                     duration: const Duration(seconds: 1),
-                  ),
-                );
+                  );
+                }
                 
                 try {
                   final pdfData = await cubit.generatePdf(invoice);
                   await Printing.layoutPdf(onLayout: (format) async => pdfData);
                   
-                  if (!mounted) return;
-                  scaffold.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Text(pdfReadyText),
-                        ],
-                      ),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 2),
-                    ),
+                  if (!currentContext.mounted) return;
+                  
+                  // Show success dialog
+                  SnackBarHelper.showSuccess(
+                    currentContext,
+                    message: AppStrings.pdfReady,
+                    duration: const Duration(seconds: 2),
                   );
                 } catch (e) {
-                  if (!mounted) return;
-                  scaffold.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.error, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('$failedToGenerateText: ${e.toString()}')),
-                        ],
-                      ),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 4),
-                    ),
+                  if (!currentContext.mounted) return;
+                  
+                  // Show error dialog
+                  SnackBarHelper.showError(
+                    currentContext,
+                    message: '${AppStrings.failedToGeneratePdf}: ${e.toString()}',
+                    duration: const Duration(seconds: 4),
                   );
                 }
               },
@@ -1579,28 +1592,18 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                 title: Text(AppStrings.createShareableLink),
                 subtitle: Text(AppStrings.uploadAndGetLink),
                 onTap: () async {
-                  Navigator.pop(context);
-                  final scaffold = ScaffoldMessenger.of(context);
-                  final creatingLinkText = AppStrings.creatingLink;
-                  final linkCreatedText = AppStrings.linkCreated;
-                  final failedToCreateText = AppStrings.failedToCreateLink;
+                  if (!context.mounted) return;
+                  final currentContext = context;
+                  Navigator.pop(currentContext);
                   
-                  scaffold.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          ),
-                          const SizedBox(width: 16),
-                          Text(creatingLinkText),
-                        ],
-                      ),
+                  // Show loading dialog
+                  if (currentContext.mounted) {
+                    SnackBarHelper.showInfo(
+                      currentContext,
+                      message: AppStrings.creatingLink,
                       duration: const Duration(seconds: 2),
-                    ),
-                  );
+                    );
+                  }
                   
                   try {
                     final pdfData = await cubit.generatePdf(invoice);
@@ -1610,35 +1613,24 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                       invoiceId: invoice.id,
                       pdfData: pdfData,
                     );
-                    if (!mounted) return;
                     await Clipboard.setData(ClipboardData(text: url));
-                    scaffold.showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(linkCreatedText)),
-                          ],
-                        ),
-                        backgroundColor: Colors.green,
-                        duration: const Duration(seconds: 4),
-                      ),
+                    
+                    if (!currentContext.mounted) return;
+                    
+                    // Show success dialog
+                    SnackBarHelper.showSuccess(
+                      currentContext,
+                      message: AppStrings.linkCreated,
+                      duration: const Duration(seconds: 4),
                     );
                   } catch (e) {
-                    if (!mounted) return;
-                    scaffold.showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(Icons.error, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text('$failedToCreateText: ${e.toString()}')),
-                          ],
-                        ),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 4),
-                      ),
+                    if (!currentContext.mounted) return;
+                    
+                    // Show error dialog
+                    SnackBarHelper.showError(
+                      currentContext,
+                      message: '${AppStrings.failedToCreateLink}: ${e.toString()}',
+                      duration: const Duration(seconds: 4),
                     );
                   }
                 },
@@ -1652,7 +1644,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
               enabled: !kIsWeb,
               
               onTap: kIsWeb ? null : () async {
-                final scaffold = ScaffoldMessenger.of(context);
+                if (!context.mounted) return;
                 final sendInvoiceText = AppStrings.sendInvoice;
                 final emailText = AppStrings.email;
                 final cancelText = AppStrings.invoiceCancel;
@@ -1662,8 +1654,9 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                 final failedToSendText = AppStrings.failedToSendEmail;
                 
                 final controller = TextEditingController();
+                final currentContext = context;
                 final email = await showDialog<String>(
-                  context: context,
+                  context: currentContext,
                   builder: (context) => AlertDialog(
                     title: Text(sendInvoiceText),
                     content: TextField(
@@ -1689,22 +1682,14 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                 
                 if (email == null || email.isEmpty) return;
                 
-                scaffold.showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(sendingEmailText),
-                      ],
-                    ),
+                // Show loading dialog
+                if (currentContext.mounted) {
+                  SnackBarHelper.showInfo(
+                    currentContext,
+                    message: sendingEmailText,
                     duration: const Duration(seconds: 2),
-                  ),
-                );
+                  );
+                }
                 
                 try {
                   final pdfData = await cubit.generatePdf(invoice);
@@ -1716,34 +1701,22 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                     fileName: 'invoice_${invoice.id}.pdf',
                   );
                   
-                  if (!mounted) return;
-                  scaffold.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('$emailSentText $email')),
-                        ],
-                      ),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 4),
-                    ),
+                  if (!currentContext.mounted) return;
+                  
+                  // Show success dialog
+                  SnackBarHelper.showSuccess(
+                    currentContext,
+                    message: '$emailSentText $email',
+                    duration: const Duration(seconds: 4),
                   );
                 } catch (e) {
-                  if (!mounted) return;
-                  scaffold.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.error, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('$failedToSendText: ${e.toString()}')),
-                        ],
-                      ),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 4),
-                    ),
+                  if (!currentContext.mounted) return;
+                  
+                  // Show error dialog
+                  SnackBarHelper.showError(
+                    currentContext,
+                    message: '$failedToSendText: ${e.toString()}',
+                    duration: const Duration(seconds: 4),
                   );
                 }
               },

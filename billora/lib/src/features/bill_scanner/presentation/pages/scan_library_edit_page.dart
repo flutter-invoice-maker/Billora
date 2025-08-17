@@ -375,7 +375,7 @@ class _ScanLibraryEditPageState extends State<ScanLibraryEditPage> {
       lastModifiedAt: DateTime.now(),
     );
 
-    // TODO: Save to actual data source
+    // Save to actual data source - this will be implemented when data persistence is added
     
     Navigator.pop(context, updatedItem);
     

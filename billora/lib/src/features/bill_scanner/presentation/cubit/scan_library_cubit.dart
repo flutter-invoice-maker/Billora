@@ -1,9 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/entities/scan_library_item.dart';
 import '../../domain/usecases/scan_library_usecases.dart';
 
 part 'scan_library_state.dart';
+part 'scan_library_cubit.freezed.dart';
 
 class ScanLibraryCubit extends Cubit<ScanLibraryState> {
   final GetScanItemsUseCase getScanItemsUseCase;
@@ -18,15 +19,15 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
     required this.updateScanItemUseCase,
     required this.deleteScanItemUseCase,
     required this.getScanItemByIdUseCase,
-  }) : super(ScanLibraryInitial());
+  }) : super(const ScanLibraryState.initial());
 
   Future<void> loadScanItems() async {
-    emit(ScanLibraryLoading());
+    emit(const ScanLibraryState.loading());
     try {
       final items = await getScanItemsUseCase();
-      emit(ScanLibraryLoaded(items));
+      emit(ScanLibraryState.loaded(items));
     } catch (e) {
-      emit(ScanLibraryError(e.toString()));
+      emit(ScanLibraryState.error(e.toString()));
     }
   }
 
@@ -34,9 +35,9 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
     try {
       await saveScanItemUseCase(item);
       await loadScanItems(); // Reload to get updated list
-      emit(ScanLibraryItemSaved(item));
+      emit(ScanLibraryState.itemSaved(item));
     } catch (e) {
-      emit(ScanLibraryError(e.toString()));
+      emit(ScanLibraryState.error(e.toString()));
     }
   }
 
@@ -44,9 +45,9 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
     try {
       await updateScanItemUseCase(item);
       await loadScanItems(); // Reload to get updated list
-      emit(ScanLibraryItemUpdated(item));
+      emit(ScanLibraryState.itemUpdated(item));
     } catch (e) {
-      emit(ScanLibraryError(e.toString()));
+      emit(ScanLibraryState.error(e.toString()));
     }
   }
 
@@ -54,9 +55,9 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
     try {
       await deleteScanItemUseCase(id);
       await loadScanItems(); // Reload to get updated list
-      emit(ScanLibraryItemDeleted(id));
+      emit(ScanLibraryState.itemDeleted(id));
     } catch (e) {
-      emit(ScanLibraryError(e.toString()));
+      emit(ScanLibraryState.error(e.toString()));
     }
   }
 
@@ -64,7 +65,7 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
     try {
       return await getScanItemByIdUseCase(id);
     } catch (e) {
-      emit(ScanLibraryError(e.toString()));
+      emit(ScanLibraryState.error(e.toString()));
       return null;
     }
   }

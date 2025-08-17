@@ -12,6 +12,7 @@
 import 'package:billora/src/core/di/injection_container.dart' as _i107;
 import 'package:billora/src/core/services/ai_service.dart' as _i17;
 import 'package:billora/src/core/services/email_service.dart' as _i971;
+import 'package:billora/src/core/services/enhanced_ai_service.dart' as _i206;
 import 'package:billora/src/core/services/firebase_email_service.dart' as _i365;
 import 'package:billora/src/core/services/image_upload_service.dart' as _i957;
 import 'package:billora/src/core/services/pdf_service.dart' as _i5;
@@ -112,6 +113,7 @@ extension GetItInjectableX on _i174.GetIt {
     final firebaseModule = _$FirebaseModule();
     gh.factory<_i17.AIService>(() => _i17.AIService());
     gh.factory<_i971.EmailService>(() => _i971.EmailService());
+    gh.factory<_i206.EnhancedAIService>(() => _i206.EnhancedAIService());
     gh.factory<_i5.PdfService>(() => _i5.PdfService());
     gh.factory<_i314.QRService>(() => _i314.QRService());
     gh.factory<_i577.CalculateSuggestionScoreUseCase>(

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/enhanced_scanned_bill.dart';
 import '../../domain/entities/bill_line_item.dart';
-import 'scan_library_page.dart';
 import '../../domain/entities/scan_library_item.dart';
 import '../../../customer/presentation/pages/customer_form_page.dart';
 import '../../../product/presentation/pages/product_form_page.dart';
@@ -637,34 +636,45 @@ class _EnhancedDataCorrectionPageState extends State<EnhancedDataCorrectionPage>
     final ai = updatedBill.scanResult['aiExtractedData'] as Map<String, dynamic>?;
     final customerName = (ai?['customerName'] ?? ai?['storeName'] ?? updatedBill.storeName)?.toString() ?? '';
     
-    final customerCubit = sl<CustomerCubit>();
+    try {
+      final customerCubit = sl<CustomerCubit>();
 
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BlocProvider<CustomerCubit>.value(
-          value: customerCubit,
-          child: CustomerFormPage(
-            prefill: {
-              'name': customerName,
-              'email': ai?['email']?.toString() ?? '',
-              'phone': ai?['phone']?.toString() ?? (updatedBill.phone ?? ''),
-              'address': ai?['address']?.toString() ?? (updatedBill.address ?? ''),
-            },
-            forceCreate: true,
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider<CustomerCubit>.value(
+            value: customerCubit,
+            child: CustomerFormPage(
+              prefill: {
+                'name': customerName,
+                'email': ai?['email']?.toString() ?? '',
+                'phone': ai?['phone']?.toString() ?? (updatedBill.phone ?? ''),
+                'address': ai?['address']?.toString() ?? (updatedBill.address ?? ''),
+              },
+              forceCreate: true,
+            ),
           ),
         ),
-      ),
-    );
-
-    if (!mounted) return;
-    if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Customer "${result.name}" created successfully!'),
-          backgroundColor: Colors.green,
-        ),
       );
+
+      if (!mounted) return;
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Customer "${result.name}" created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating customer: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -673,48 +683,59 @@ class _EnhancedDataCorrectionPageState extends State<EnhancedDataCorrectionPage>
     final ai = updatedBill.scanResult['aiExtractedData'] as Map<String, dynamic>?;
     final productName = ai?['productName']?.toString() ?? updatedBill.storeName;
 
-    final productCubit = sl<ProductCubit>();
+    try {
+      final productCubit = sl<ProductCubit>();
 
-    // Build prefill from line items if available
-    Map<String, dynamic> prefill = {
-      'name': productName,
-      'description': null,
-      'price': ai?['unitPrice']?.toString() ?? ai?['totalPrice']?.toString() ?? updatedBill.totalAmount.toString(),
-      'category': ai?['category']?.toString() ?? 'professional_business',
-      'tax': ai?['tax']?.toString() ?? '0',
-      'inventory': '1',
-      'isService': false,
-      'companyOrShopName': updatedBill.storeName,
-    };
+      // Build prefill from line items if available
+      Map<String, dynamic> prefill = {
+        'name': productName,
+        'description': null,
+        'price': ai?['unitPrice']?.toString() ?? ai?['totalPrice']?.toString() ?? updatedBill.totalAmount.toString(),
+        'category': ai?['category']?.toString() ?? 'professional_business',
+        'tax': ai?['tax']?.toString() ?? '0',
+        'inventory': '1',
+        'isService': false,
+        'companyOrShopName': updatedBill.storeName,
+      };
 
-    final items = ai?['lineItems'];
-    if (items is List && items.isNotEmpty && items.first is Map) {
-      final first = Map<String, dynamic>.from(items.first as Map);
-      prefill['name'] = (first['description']?.toString() ?? prefill['name']);
-      prefill['price'] = (first['unitPrice']?.toString() ?? first['totalPrice']?.toString() ?? prefill['price']);
-    }
+      final items = ai?['lineItems'];
+      if (items is List && items.isNotEmpty && items.first is Map) {
+        final first = Map<String, dynamic>.from(items.first as Map);
+        prefill['name'] = (first['description']?.toString() ?? prefill['name']);
+        prefill['price'] = (first['unitPrice']?.toString() ?? first['totalPrice']?.toString() ?? prefill['price']);
+      }
 
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BlocProvider<ProductCubit>.value(
-          value: productCubit,
-          child: ProductFormPage(
-            prefill: prefill,
-            forceCreate: true,
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider<ProductCubit>.value(
+            value: productCubit,
+            child: ProductFormPage(
+              prefill: prefill,
+              forceCreate: true,
+            ),
           ),
         ),
-      ),
-    );
-
-    if (!mounted) return;
-    if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Product "${result.name}" created successfully!'),
-          backgroundColor: Colors.green,
-        ),
       );
+
+      if (!mounted) return;
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product "${result.name}" created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating product: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -734,12 +755,15 @@ class _EnhancedDataCorrectionPageState extends State<EnhancedDataCorrectionPage>
         lastModifiedAt: DateTime.now(),
         isProcessed: true,
       );
+      
       if (!mounted) return;
-      await Navigator.push(
+      
+      // Use named route instead of direct instantiation
+      // Pass the item as arguments to be handled by the route
+      Navigator.pushNamed(
         context,
-        MaterialPageRoute(
-          builder: (context) => ScanLibraryPage(initialItems: [item]),
-        ),
+        '/scan-library',
+        arguments: {'initialItems': [item]},
       );
     } catch (e) {
       if (!mounted) return;

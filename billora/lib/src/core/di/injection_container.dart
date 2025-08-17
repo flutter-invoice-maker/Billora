@@ -54,16 +54,10 @@ import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 
 // Bill Scanner imports
-// import 'package:billora/src/features/bill_scanner/domain/repositories/bill_scanner_repository.dart';
-// import 'package:billora/src/features/bill_scanner/data/repositories/bill_scanner_repository_impl.dart';
-// import 'package:billora/src/features/bill_scanner/data/datasources/ocr_datasource.dart';
-// import 'package:billora/src/features/bill_scanner/data/datasources/free_ocr_api_datasource.dart';
-// import 'package:billora/src/features/bill_scanner/data/datasources/image_processing_datasource.dart';
-// import 'package:billora/src/features/bill_scanner/domain/usecases/scan_bill_usecase.dart';
-// import 'package:billora/src/features/bill_scanner/domain/usecases/extract_bill_data_usecase.dart';
-// import 'package:billora/src/features/bill_scanner/domain/usecases/validate_bill_data_usecase.dart';
-// import 'package:billora/src/features/bill_scanner/domain/usecases/process_with_regex_usecase.dart';
-// import 'package:billora/src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
+import 'package:billora/src/features/bill_scanner/domain/repositories/scan_library_repository.dart';
+import 'package:billora/src/features/bill_scanner/data/repositories/scan_library_repository_impl.dart';
+import 'package:billora/src/features/bill_scanner/domain/usecases/scan_library_usecases.dart';
+import 'package:billora/src/features/bill_scanner/presentation/cubit/scan_library_cubit.dart';
 
 // Week 7 - Suggestions & Tags imports
 import 'package:uuid/uuid.dart';
@@ -98,10 +92,6 @@ import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_us
 import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/generate_qr_code_usecase.dart';
 
-import 'package:billora/src/features/bill_scanner/domain/repositories/scan_library_repository.dart';
-import 'package:billora/src/features/bill_scanner/data/repositories/scan_library_repository_impl.dart';
-import 'package:billora/src/features/bill_scanner/domain/usecases/scan_library_usecases.dart';
-import 'package:billora/src/features/bill_scanner/presentation/cubit/scan_library_cubit.dart';
 
 final sl = GetIt.instance;
 

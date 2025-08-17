@@ -53,7 +53,7 @@ class _OnboardingPageState extends State<OnboardingPage>
     _pageController = PageController();
     
     _textAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     
@@ -67,11 +67,11 @@ class _OnboardingPageState extends State<OnboardingPage>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _textAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
     ));
     
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
+      begin: const Offset(0.3, 0.0), // Changed from vertical to horizontal slide
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _textAnimationController,
@@ -131,6 +131,8 @@ class _OnboardingPageState extends State<OnboardingPage>
   @override
   Widget build(BuildContext context) {
     final currentSlide = _slides[_currentPage];
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 700;
     
     return Scaffold(
       body: AnimatedBuilder(
@@ -158,23 +160,23 @@ class _OnboardingPageState extends State<OnboardingPage>
             child: SafeArea(
               child: Column(
                 children: [
-                  // Top section with skip button
-                  _buildTopSection(),
+                  // Top section with skip button - reduced height
+                  _buildTopSection(isSmallScreen),
                   
-                  // Main content
+                  // Main content - adjusted flex to fit screen
                   Expanded(
                     child: PageView.builder(
                       controller: _pageController,
                       onPageChanged: _onPageChanged,
                       itemCount: _totalPages,
                       itemBuilder: (context, index) {
-                        return _buildSlide(_slides[index], index);
+                        return _buildSlide(_slides[index], index, isSmallScreen);
                       },
                     ),
                   ),
                   
-                  // Bottom navigation
-                  _buildBottomNavigation(),
+                  // Bottom navigation - reduced height
+                  _buildBottomNavigation(isSmallScreen),
                 ],
               ),
             ),
@@ -184,9 +186,10 @@ class _OnboardingPageState extends State<OnboardingPage>
     );
   }
 
-  Widget _buildTopSection() {
+  Widget _buildTopSection(bool isSmallScreen) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: isSmallScreen ? 4 : 8),
+      height: isSmallScreen ? 60 : 80, // Reduced height
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -200,21 +203,21 @@ class _OnboardingPageState extends State<OnboardingPage>
                       'Skip',
                       style: TextStyle(
                         color: _slides[_currentPage].primaryColor.withValues(alpha: 0.7),
-                        fontSize: 16,
+                        fontSize: isSmallScreen ? 14 : 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 )
-              : const SizedBox(width: 80), // Placeholder to maintain spacing
+              : SizedBox(width: isSmallScreen ? 60 : 80), // Placeholder to maintain spacing
           
-          // Center - Logo
+          // Center - Logo - reduced size
           FadeTransition(
             opacity: _fadeAnimation,
             child: Image.asset(
               'assets/icons/logo.png',
-              height: 90,
-              width: 90,
+              height: isSmallScreen ? 60 : 70, // Reduced size
+              width: isSmallScreen ? 60 : 70,
               fit: BoxFit.contain,
             ),
           ),
@@ -228,17 +231,17 @@ class _OnboardingPageState extends State<OnboardingPage>
                       child: Icon(
                         Icons.arrow_forward_rounded,
                         color: _slides[_currentPage].primaryColor,
-                        size: 24,
+                        size: isSmallScreen ? 20 : 24,
                     ),
                   ),
                 )
-              : const SizedBox(width: 80), // Placeholder to maintain spacing
+              : SizedBox(width: isSmallScreen ? 60 : 80), // Placeholder to maintain spacing
         ],
       ),
     );
   }
 
-  Widget _buildSlide(OnboardingSlide slide, int index) {
+  Widget _buildSlide(OnboardingSlide slide, int index, bool isSmallScreen) {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
@@ -247,11 +250,11 @@ class _OnboardingPageState extends State<OnboardingPage>
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             children: [
-              const SizedBox(height: 10),
+              SizedBox(height: isSmallScreen ? 5 : 10),
               
-              // Animated image container
+              // Animated image container - reduced flex
               Expanded(
-                flex: 3,
+                flex: isSmallScreen ? 2 : 3, // Reduced flex for smaller screens
                 child: Center(
                   child: AnimatedImageContainer(
                     imagePath: slide.imagePlaceholder,
@@ -274,70 +277,69 @@ class _OnboardingPageState extends State<OnboardingPage>
                 ),
               ),
               
-              // Text content
+              // Text content - adjusted flex and removed scroll
               Expanded(
-                flex: 2,
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Title
-                      Text(
-                        slide.title,
+                flex: isSmallScreen ? 2 : 2,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Title - reduced font size
+                    Text(
+                      slide.title,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 24 : 28, // Reduced font size
+                        fontWeight: FontWeight.bold,
+                        color: slide.primaryColor,
+                        height: 1.2,
+                        letterSpacing: -0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    
+                    SizedBox(height: isSmallScreen ? 8 : 12),
+                    
+                    // Subtitle
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: isSmallScreen ? 6 : 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          colors: [
+                            slide.secondaryColor.withValues(alpha: 0.1),
+                            slide.primaryColor.withValues(alpha: 0.05),
+                          ],
+                        ),
+                      ),
+                      child: Text(
+                        slide.subtitle,
                         style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                          fontSize: isSmallScreen ? 14 : 16,
+                          fontWeight: FontWeight.w600,
                           color: slide.primaryColor,
-                          height: 1.2,
-                          letterSpacing: -0.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      
-                      const SizedBox(height: 12),
-                      
-                      // Subtitle
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: LinearGradient(
-                            colors: [
-                              slide.secondaryColor.withValues(alpha: 0.1),
-                              slide.primaryColor.withValues(alpha: 0.05),
-                            ],
-                          ),
+                    ),
+                    
+                    SizedBox(height: isSmallScreen ? 12 : 16),
+                    
+                    // Description - reduced font size and padding
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16),
+                      child: Text(
+                        slide.description,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 13 : 15, // Reduced font size
+                          color: const Color(0xFF64748B),
+                          height: 1.5, // Reduced line height
+                          letterSpacing: 0.1,
                         ),
-                        child: Text(
-                          slide.subtitle,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: slide.primaryColor,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: isSmallScreen ? 4 : 5, // Limit lines for small screens
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Description
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          slide.description,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: const Color(0xFF64748B),
-                            height: 1.6,
-                            letterSpacing: 0.1,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -347,65 +349,61 @@ class _OnboardingPageState extends State<OnboardingPage>
     );
   }
 
-  Widget _buildBottomNavigation() {
+  Widget _buildBottomNavigation(bool isSmallScreen) {
     final currentSlide = _slides[_currentPage];
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: isSmallScreen ? 12.0 : 16.0),
+      height: isSmallScreen ? 60 : 80, // Reduced height
       child: _currentPage == _totalPages - 1
           ? Center(
-              child: ElevatedButton(
-                onPressed: _nextPage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                ).copyWith(
-                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                ),
-                child: Ink(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        currentSlide.primaryColor,
-                        currentSlide.secondaryColor,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: currentSlide.primaryColor.withValues(alpha: 0.4),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      currentSlide.primaryColor,
+                      currentSlide.secondaryColor,
                     ],
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Get Started',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.rocket_launch_rounded,
-                          size: 20,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: currentSlide.primaryColor.withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _nextPage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 30 : 40, vertical: isSmallScreen ? 12 : 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 16 : 18,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: isSmallScreen ? 6 : 8),
+                      Icon(
+                        Icons.rocket_launch_rounded,
+                        size: isSmallScreen ? 18 : 20,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
               ),

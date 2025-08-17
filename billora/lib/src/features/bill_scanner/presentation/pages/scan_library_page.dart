@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/scan_library_item.dart';
 import '../cubit/scan_library_cubit.dart';
 import 'scan_library_detail_page.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 
 class ScanLibraryPage extends StatefulWidget {
   final List<ScanLibraryItem>? initialItems;
@@ -20,7 +21,41 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
   @override
   void initState() {
     super.initState();
-    _loadScanLibrary();
+    // Load scan library when widget is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadScanLibrary();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Remove duplicate data loading to prevent infinite loading
+    // Check if we have route arguments with initial items
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args['initialItems'] != null) {
+      final initialItems = args['initialItems'] as List<ScanLibraryItem>;
+      if (initialItems.isNotEmpty) {
+        // Save initial items to the library
+        _saveInitialItems(initialItems);
+      }
+    }
+  }
+
+  Future<void> _saveInitialItems(List<ScanLibraryItem> items) async {
+    try {
+      final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+      for (final item in items) {
+        cubit.saveScanItem(item);
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.showError(
+          context,
+          message: 'Error saving initial items: $e',
+        );
+      }
+    }
   }
 
   @override
@@ -30,17 +65,29 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
   }
 
   Future<void> _loadScanLibrary() async {
-    final cubit = context.read<ScanLibraryCubit>();
+    if (!mounted) return;
     
-    // If we have initial items, save them first
-    if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
-      for (final item in widget.initialItems!) {
-        await cubit.saveScanItem(item);
+    try {
+      // Use BlocProvider.of to get the cubit safely
+      final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+      
+      // If we have initial items, save them first
+      if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
+        for (final item in widget.initialItems!) {
+          cubit.saveScanItem(item);
+        }
+      }
+      
+      // Then load all items
+      cubit.loadScanItems();
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.showError(
+          context,
+          message: 'Error loading scan library: $e',
+        );
       }
     }
-    
-    // Then load all items
-    await cubit.loadScanItems();
   }
 
   List<ScanLibraryItem> _filterItems(List<ScanLibraryItem> items) {
@@ -65,7 +112,17 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => context.read<ScanLibraryCubit>().loadScanItems(),
+            onPressed: () {
+              try {
+                final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+                cubit.loadScanItems();
+              } catch (e) {
+                SnackBarHelper.showError(
+                  context,
+                  message: 'Error refreshing: $e',
+                );
+              }
+            },
             tooltip: 'Refresh',
           ),
         ],
@@ -85,70 +142,89 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
           children: [
             _buildSearchAndFilterSection(),
             Expanded(
-              child: BlocConsumer<ScanLibraryCubit, ScanLibraryState>(
-                listener: (context, state) {
-                  if (state is ScanLibraryItemSaved) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Scan saved successfully: ${state.item.fileName}'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } else if (state is ScanLibraryItemUpdated) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Scan updated successfully: ${state.item.fileName}'),
-                        backgroundColor: Colors.blue,
-                      ),
-                    );
-                  } else if (state is ScanLibraryItemDeleted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Scan deleted successfully'),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  } else if (state is ScanLibraryError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error: ${state.message}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                builder: (context, state) {
-                  if (state is ScanLibraryLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is ScanLibraryLoaded) {
-                    final filteredItems = _filterItems(state.items);
-                    if (filteredItems.isEmpty) {
-                      return _buildEmptyState();
-                    }
-                    return _buildScanItemsList(filteredItems);
-                  } else if (state is ScanLibraryError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error, size: 64, color: Colors.red.shade300),
-                          const SizedBox(height: 16),
-                          Text('Error: ${state.message}'),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () => context.read<ScanLibraryCubit>().loadScanItems(),
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return _buildEmptyState();
-                },
-              ),
+              child: _buildContent(),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return BlocConsumer<ScanLibraryCubit, ScanLibraryState>(
+      listener: (context, state) {
+        if (state is ScanLibraryItemSaved) {
+          SnackBarHelper.showSuccess(
+            context,
+            message: 'Scan saved successfully: ${state.item.fileName}',
+          );
+        } else if (state is ScanLibraryItemUpdated) {
+          SnackBarHelper.showInfo(
+            context,
+            message: 'Scan updated successfully: ${state.item.fileName}',
+          );
+        } else if (state is ScanLibraryItemDeleted) {
+          SnackBarHelper.showWarning(
+            context,
+            message: 'Scan deleted successfully',
+          );
+        } else if (state is ScanLibraryError) {
+          SnackBarHelper.showError(
+            context,
+            message: 'Error: ${state.message}',
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is ScanLibraryLoading) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (state is ScanLibraryLoaded) {
+          final items = _filterItems(state.items);
+          return _buildScanItemsList(items);
+        } else if (state is ScanLibraryError) {
+          return _buildErrorState(state.message);
+        } else {
+          return const Center(
+            child: Text('No scans found'),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error, size: 64, color: Colors.red.shade300),
+          const SizedBox(height: 16),
+          Text(
+            'Error',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              _loadScanLibrary();
+            },
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -193,24 +269,6 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.library_books, size: 72, color: Colors.blue.shade300),
-            const SizedBox(height: 12),
-            const Text('No scans yet'),
-            const SizedBox(height: 6),
-            const Text('Scanned files will appear here'),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildScanItemsList(List<ScanLibraryItem> items) {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
@@ -221,23 +279,38 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.receipt_long, color: Colors.blue),
-            title: Text(item.fileName),
-            subtitle: Text('${item.scannedBill.storeName} • ${item.totalAmountString()} • ${_formatDate(item.createdAt)}'),
+            title: Text(
+              item.fileName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              '${item.scannedBill.storeName} • ${item.totalAmountString()} • ${_formatDate(item.createdAt)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             onTap: () => _openDetail(item),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  tooltip: 'Rename',
-                  onPressed: () => _promptRename(item),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  tooltip: 'Delete',
-                  onPressed: () => _promptDelete(item),
-                ),
-              ],
+            trailing: SizedBox(
+              width: 80, // Fixed width to prevent overflow
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    tooltip: 'Rename',
+                    onPressed: () => _promptRename(item),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 20),
+                    tooltip: 'Delete',
+                    onPressed: () => _promptDelete(item),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -265,11 +338,19 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
       ),
     );
     if (newName != null && newName.isNotEmpty && mounted) {
-      final updatedItem = item.copyWith(
-        fileName: newName,
-        lastModifiedAt: DateTime.now(),
-      );
-      context.read<ScanLibraryCubit>().updateScanItem(updatedItem);
+      try {
+        final updatedItem = item.copyWith(
+          fileName: newName,
+          lastModifiedAt: DateTime.now(),
+        );
+        final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+        cubit.updateScanItem(updatedItem);
+      } catch (e) {
+        SnackBarHelper.showError(
+          context,
+          message: 'Error updating scan: $e',
+        );
+      }
     }
   }
 
@@ -290,7 +371,15 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
       ),
     );
     if (confirmed == true && mounted) {
-      context.read<ScanLibraryCubit>().deleteScanItem(item.id);
+      try {
+        final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+        cubit.deleteScanItem(item.id);
+      } catch (e) {
+        SnackBarHelper.showError(
+          context,
+          message: 'Error deleting scan: $e',
+        );
+      }
     }
   }
 
