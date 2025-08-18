@@ -10,10 +10,12 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:billora/src/core/di/injection_container.dart' as _i107;
+import 'package:billora/src/core/services/ai_chat_service.dart' as _i378;
 import 'package:billora/src/core/services/ai_service.dart' as _i17;
 import 'package:billora/src/core/services/email_service.dart' as _i971;
 import 'package:billora/src/core/services/enhanced_ai_service.dart' as _i206;
 import 'package:billora/src/core/services/firebase_email_service.dart' as _i365;
+import 'package:billora/src/core/services/huggingface_ai_service.dart' as _i20;
 import 'package:billora/src/core/services/image_upload_service.dart' as _i957;
 import 'package:billora/src/core/services/pdf_service.dart' as _i5;
 import 'package:billora/src/core/services/qr_service.dart' as _i314;
@@ -40,12 +42,16 @@ import 'package:billora/src/features/auth/domain/usecases/update_profile_usecase
     as _i866;
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart'
     as _i232;
+import 'package:billora/src/features/customer/domain/repositories/customer_repository.dart'
+    as _i843;
 import 'package:billora/src/features/dashboard/domain/repositories/dashboard_repository.dart'
     as _i256;
 import 'package:billora/src/features/dashboard/domain/usecases/export_invoice_report_usecase.dart'
     as _i423;
 import 'package:billora/src/features/dashboard/domain/usecases/get_invoice_stats_usecase.dart'
     as _i873;
+import 'package:billora/src/features/invoice/domain/repositories/invoice_repository.dart'
+    as _i364;
 import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart'
     as _i980;
 import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart'
@@ -113,7 +119,6 @@ extension GetItInjectableX on _i174.GetIt {
     final firebaseModule = _$FirebaseModule();
     gh.factory<_i17.AIService>(() => _i17.AIService());
     gh.factory<_i971.EmailService>(() => _i971.EmailService());
-    gh.factory<_i206.EnhancedAIService>(() => _i206.EnhancedAIService());
     gh.factory<_i5.PdfService>(() => _i5.PdfService());
     gh.factory<_i314.QRService>(() => _i314.QRService());
     gh.factory<_i577.CalculateSuggestionScoreUseCase>(
@@ -144,6 +149,22 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i706.Uuid>(),
       ),
     );
+    gh.factory<_i206.EnhancedAIService>(
+      () => _i206.EnhancedAIService(
+        invoiceRepository: gh<_i364.InvoiceRepository>(),
+        customerRepository: gh<_i843.CustomerRepository>(),
+        productRepository: gh<_i667.ProductRepository>(),
+        firebaseAuth: gh<_i59.FirebaseAuth>(),
+      ),
+    );
+    gh.factory<_i20.HuggingFaceAIService>(
+      () => _i20.HuggingFaceAIService(
+        invoiceRepository: gh<_i364.InvoiceRepository>(),
+        customerRepository: gh<_i843.CustomerRepository>(),
+        productRepository: gh<_i667.ProductRepository>(),
+        firebaseAuth: gh<_i59.FirebaseAuth>(),
+      ),
+    );
     gh.factory<_i18.TagsRepository>(
       () => _i625.TagsRepositoryImpl(gh<_i897.TagsRemoteDataSource>()),
     );
@@ -155,6 +176,15 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i750.UpdateProductInventoryUseCase>(
       () => _i750.UpdateProductInventoryUseCase(gh<_i667.ProductRepository>()),
+    );
+    gh.factory<_i980.ClassifyInvoiceUseCase>(
+      () => _i980.ClassifyInvoiceUseCase(gh<_i20.HuggingFaceAIService>()),
+    );
+    gh.factory<_i760.GenerateSummaryUseCase>(
+      () => _i760.GenerateSummaryUseCase(gh<_i20.HuggingFaceAIService>()),
+    );
+    gh.factory<_i261.SuggestTagsUseCase>(
+      () => _i261.SuggestTagsUseCase(gh<_i20.HuggingFaceAIService>()),
     );
     gh.lazySingleton<_i910.AuthRemoteDataSource>(
       () => _i910.AuthRemoteDataSourceImpl(
@@ -171,17 +201,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i888.SendInvoiceEmailUseCase>(
       () => _i888.SendInvoiceEmailUseCase(gh<_i971.EmailService>()),
     );
-    gh.factory<_i980.ClassifyInvoiceUseCase>(
-      () => _i980.ClassifyInvoiceUseCase(gh<_i17.AIService>()),
-    );
-    gh.factory<_i760.GenerateSummaryUseCase>(
-      () => _i760.GenerateSummaryUseCase(gh<_i17.AIService>()),
-    );
-    gh.factory<_i261.SuggestTagsUseCase>(
-      () => _i261.SuggestTagsUseCase(gh<_i17.AIService>()),
-    );
     gh.factory<_i486.GenerateQRCodeUseCase>(
       () => _i486.GenerateQRCodeUseCase(gh<_i314.QRService>()),
+    );
+    gh.factory<_i378.AIChatService>(
+      () => _i378.AIChatService(
+        aiService: gh<_i20.HuggingFaceAIService>(),
+        invoiceRepository: gh<_i364.InvoiceRepository>(),
+        customerRepository: gh<_i843.CustomerRepository>(),
+        productRepository: gh<_i667.ProductRepository>(),
+        firebaseAuth: gh<_i59.FirebaseAuth>(),
+      ),
     );
     gh.factory<_i957.ImageUploadService>(
       () => _i957.ImageUploadService(

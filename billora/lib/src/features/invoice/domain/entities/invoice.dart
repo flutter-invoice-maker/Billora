@@ -100,4 +100,31 @@ class Invoice {
       qrCodeHash: qrCodeHash ?? this.qrCodeHash,
     );
   }
+
+  /// Convert Invoice to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'customerId': customerId,
+      'customerName': customerName,
+      'items': items.map((item) => item.toJson()).toList(),
+      'subtotal': subtotal,
+      'tax': tax,
+      'total': total,
+      'status': status.name,
+      'createdAt': createdAt.toIso8601String(),
+      'dueDate': dueDate?.toIso8601String(),
+      'paidAt': paidAt?.toIso8601String(),
+      'note': note,
+      'templateId': templateId,
+      'tags': tags,
+      'searchKeywords': searchKeywords,
+      'aiClassification': aiClassification,
+      'aiSummary': aiSummary,
+      'aiSuggestedTags': aiSuggestedTags,
+      'aiStatus': aiStatus,
+      'qrCodeData': qrCodeData,
+      'qrCodeHash': qrCodeHash,
+    };
+  }
 } 

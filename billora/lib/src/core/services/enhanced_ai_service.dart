@@ -1,121 +1,254 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:injectable/injectable.dart';
-import '../../features/bill_scanner/domain/entities/enhanced_scan_result.dart';
+import 'package:billora/src/features/invoice/domain/entities/invoice.dart';
+import 'package:billora/src/features/invoice/domain/repositories/invoice_repository.dart';
+import 'package:billora/src/features/customer/domain/repositories/customer_repository.dart';
+import 'package:billora/src/features/product/domain/repositories/product_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 @injectable
 class EnhancedAIService {
-  String get _openaiApiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
-  static const String _openaiEndpoint = 'https://api.openai.com/v1/chat/completions';
-  static const String _defaultModel = 'gpt-4';
+  /// Get OpenAI API key from environment
+  String get _apiKey {
+    final envKey = dotenv.env['OPENAI_API_KEY'] ?? '';
+    return envKey;
+  }
 
-  /// Enhanced bill scanning with AI processing
-  Future<EnhancedScanResult> processBillImage(String imagePath) async {
+  static const String _openaiEndpoint = 'https://api.openai.com/v1/chat/completions';
+  static const String _defaultModel = 'gpt-3.5-turbo';
+
+  final InvoiceRepository _invoiceRepository;
+  final CustomerRepository _customerRepository;
+  final ProductRepository _productRepository;
+  final FirebaseAuth _firebaseAuth;
+
+  @factoryMethod
+  EnhancedAIService({
+    required InvoiceRepository invoiceRepository,
+    required CustomerRepository customerRepository,
+    required ProductRepository productRepository,
+    required FirebaseAuth firebaseAuth,
+  })  : _invoiceRepository = invoiceRepository,
+        _customerRepository = customerRepository,
+        _productRepository = productRepository,
+        _firebaseAuth = firebaseAuth;
+
+  String? get _currentUserId => _firebaseAuth.currentUser?.uid;
+
+  bool get _isValidApiKey {
+    if (_apiKey.isEmpty) return false;
+    if (!_apiKey.startsWith('sk-')) return false;
+    if (_apiKey.length < 20) return false;
+    return true;
+  }
+
+  /// Analyze business data and provide insights based on user's actual data
+  Future<String> analyzeBusinessData(String query) async {
     try {
-      // Step 1: OCR Processing using ChatGPT Vision API
-      final ocrResult = await _performOCRWithChatGPT(imagePath);
+      if (_currentUserId == null) {
+        return 'Please log in to access your business data.';
+      }
+
+      if (!_isValidApiKey) {
+        return 'OpenAI API key is not configured or invalid. Please check your configuration.';
+      }
+
+      // Gather all relevant business data
+      final businessData = await _gatherBusinessData();
       
-      // Step 2: AI Data Extraction
-      final aiExtractedData = await _extractDataWithAI(ocrResult);
+      // Create comprehensive prompt with actual data
+      final prompt = _createBusinessAnalysisPrompt(query, businessData);
       
-      // Step 3: Data Validation and Enhancement
-      final validatedData = await _validateAndEnhanceData(aiExtractedData, ocrResult);
+      // Call AI with real data
+      final response = await _callChatGPT(prompt);
       
-      // Step 4: Field Confidence Calculation
-      final fieldConfidence = _calculateFieldConfidence(validatedData, ocrResult);
-      
-      // Step 5: Generate AI Suggestions
-      final aiSuggestions = await _generateAISuggestions(validatedData, ocrResult);
-      
-      // Step 6: Create Field Mappings
-      final fieldMappings = _createFieldMappings(validatedData);
-      
-      return EnhancedScanResult(
-        rawText: ocrResult,
-        confidence: _calculateOverallConfidence(fieldConfidence),
-        processedAt: DateTime.now(),
-        ocrProvider: 'ChatGPT Vision API',
-        detectedBillType: _detectBillType(validatedData),
-        extractedFields: validatedData,
-        detectedLanguages: _detectLanguages(ocrResult),
-        processingTimeMs: 0,
-        errorMessage: null,
-        aiExtractedData: validatedData,
-        fieldConfidence: fieldConfidence,
-        aiSuggestions: aiSuggestions,
-        fieldMappings: fieldMappings,
-        isDataValidated: true,
-        aiModelVersion: _defaultModel,
-        processingMetadata: {
-          'ocr_engine': 'ChatGPT Vision',
-          'ai_model': _defaultModel,
-          'processing_steps': ['OCR', 'AI Extraction', 'Validation', 'Enhancement'],
-          'confidence_threshold': 0.7,
-        },
-      );
+      return response ?? 'I\'m having trouble analyzing your data right now. Please try again.';
     } catch (e) {
-      debugPrint('Enhanced AI processing error: $e');
-      rethrow;
+      debugPrint('Business data analysis error: $e');
+      return 'Sorry, I encountered an error while analyzing your business data. Please try again.';
     }
   }
 
-  /// Call ChatGPT Vision API for OCR
-  Future<String> _performOCRWithChatGPT(String imagePath) async {
+  /// Gather all business data for the current user
+  Future<Map<String, dynamic>> _gatherBusinessData() async {
     try {
-      // Convert image to base64
-      final imageFile = File(imagePath);
-      final imageBytes = await imageFile.readAsBytes();
-      final base64Image = base64Encode(imageBytes);
-
-      final response = await http.post(
-        Uri.parse('https://api.openai.com/v1/chat/completions'),
-        headers: {
-          'Authorization': 'Bearer $_openaiApiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'model': 'gpt-4-vision-preview',
-          'messages': [
-            {
-              'role': 'user',
-              'content': [
-                {
-                  'type': 'text',
-                  'text': 'Extract all text from this invoice/bill image. Return only the raw text without any formatting or interpretation.',
-                },
-                {
-                  'type': 'image_url',
-                  'image_url': {
-                    'url': 'data:image/jpeg;base64,$base64Image',
-                  },
-                },
-              ],
-            },
-          ],
-          'max_tokens': 4096,
-        }),
+      final Map<String, dynamic> data = {};
+      
+      // Get invoices
+      final invoiceResult = await _invoiceRepository.getInvoices();
+      invoiceResult.fold(
+        (failure) => data['invoices'] = [],
+        (invoices) => data['invoices'] = invoices.map((i) => i.toJson()).toList(),
       );
+      
+      // Get customers
+      final customerResult = await _customerRepository.getCustomers();
+      customerResult.fold(
+        (failure) => data['customers'] = [],
+        (customers) => data['customers'] = customers.map((c) => c.toJson()).toList(),
+      );
+      
+      // Get products
+      final productResult = await _productRepository.getProducts();
+      productResult.fold(
+        (failure) => data['products'] = [],
+        (products) => data['products'] = products.map((p) => p.toJson()).toList(),
+      );
+      
+      return data;
+    } catch (e) {
+      debugPrint('Error gathering business data: $e');
+      return {};
+    }
+  }
 
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        return responseData['choices'][0]['message']['content'] ?? '';
-      } else {
-        throw Exception('ChatGPT Vision API error: ${response.statusCode}');
+  /// Create comprehensive prompt for business analysis
+  String _createBusinessAnalysisPrompt(String query, Map<String, dynamic> businessData) {
+    final invoices = businessData['invoices'] as List? ?? [];
+    final customers = businessData['customers'] as List? ?? [];
+    final products = businessData['products'] as List? ?? [];
+    
+    return '''
+You are an AI business analyst assistant. Analyze the following business data and answer the user's question: "$query"
+
+BUSINESS DATA:
+Invoices: ${invoices.length} total invoices
+- Recent invoices: ${invoices.take(5).map((i) => '${i['customerName'] ?? 'Unknown'}: \$${i['total']?.toStringAsFixed(2) ?? '0.00'}').join(', ')}
+
+Customers: ${customers.length} total customers
+- Customer names: ${customers.take(5).map((c) => c['name'] ?? 'Unknown').join(', ')}
+
+Products: ${products.length} total products
+- Product names: ${products.take(5).map((p) => p['name'] ?? 'Unknown').join(', ')}
+
+INSTRUCTIONS:
+1. Analyze the actual data provided above
+2. Provide specific insights based on the real business data
+3. Give actionable recommendations
+4. Use actual numbers and names from the data
+5. If data is insufficient, acknowledge it and suggest what additional data would be helpful
+6. Be specific and avoid generic responses
+
+Please provide a comprehensive analysis and answer to: "$query"
+''';
+  }
+
+  /// Suggest tags for invoice based on content analysis
+  Future<List<String>> suggestTags(Invoice invoice) async {
+    try {
+      // Prepare invoice data for analysis
+      final itemsText = invoice.items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
+      final total = invoice.total.toStringAsFixed(2);
+      final note = invoice.note ?? '';
+
+      // Create prompt for ChatGPT
+      final prompt = '''
+Analyze the following invoice content and suggest relevant tags for categorization.
+
+Invoice details:
+- Customer: ${invoice.customerName}
+- Items: $itemsText
+- Total: \$$total
+- Note: $note
+
+Please suggest 3-5 relevant tags separated by commas. Return only the tags, no additional text.
+Example format: tag1, tag2, tag3, tag4
+''';
+
+      // Call ChatGPT API
+      final response = await _callChatGPT(prompt);
+      
+      if (response != null) {
+        // Parse response to extract tags
+        final tags = _parseTagsFromResponse(response);
+        return tags;
       }
     } catch (e) {
-      debugPrint('ChatGPT Vision API Error: $e');
-      rethrow;
+      debugPrint('Error suggesting tags: $e');
     }
+    
+    return ['General', 'Business', 'Invoice'];
   }
 
-  /// Extract structured data using ChatGPT
-  Future<Map<String, dynamic>> _extractDataWithAI(String rawText) async {
+  /// Classify invoice based on content
+  Future<String> classifyInvoice(Invoice invoice) async {
+    try {
+      // Prepare invoice data for analysis
+      final itemsText = invoice.items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
+      final total = invoice.total.toStringAsFixed(2);
+
+      // Create prompt for ChatGPT
+      final prompt = '''
+Classify this invoice based on its content and context.
+
+Invoice: 
+- Customer: ${invoice.customerName}
+- Items: $itemsText
+- Total: \$$total
+
+Classify into one of these categories: [Food & Beverage, Electronics, Services, Clothing, Software, Hardware, General]
+
+Provide only the category name, no additional text.
+''';
+
+      // Call ChatGPT API
+      final response = await _callChatGPT(prompt);
+      
+      if (response != null) {
+        // Parse response to get classification
+        final classification = _parseClassificationFromResponse(response);
+        return classification;
+      }
+    } catch (e) {
+      debugPrint('Error classifying invoice: $e');
+    }
+    
+    return 'General';
+  }
+
+  /// Generate summary for invoice
+  Future<String> generateSummary(Invoice invoice) async {
+    try {
+      // Prepare invoice data for analysis
+      final itemsText = invoice.items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
+      final total = invoice.total.toStringAsFixed(2);
+
+      // Create prompt for ChatGPT
+      final prompt = '''
+Create a brief summary of this invoice for quick reference.
+
+Invoice: 
+- Customer: ${invoice.customerName}
+- Items: $itemsText
+- Total: \$$total
+
+Format: 'Invoice Type - Customer Name - Number of Items'
+Keep summary under 50 characters. Return only the summary, no additional text.
+''';
+
+      // Call ChatGPT API
+      final response = await _callChatGPT(prompt);
+      
+      if (response != null) {
+        // Parse response to get summary
+        final summary = _parseSummaryFromResponse(response, 50);
+        return summary;
+      }
+    } catch (e) {
+      debugPrint('Error generating summary: $e');
+    }
+    
+    return 'Invoice summary generated';
+  }
+
+  /// Extract structured data from invoice text using AI
+  Future<Map<String, dynamic>> extractInvoiceData(String rawText) async {
     try {
       final prompt = '''
-Analyze this invoice/bill text and extract structured data in JSON format:
+Extract structured data from this invoice text:
 
 Text: $rawText
 
@@ -155,203 +288,185 @@ Return only valid JSON, no additional text.
     }
   }
 
-  /// Call ChatGPT API for text completion
-  Future<String> _callChatGPT(String prompt) async {
+  /// Call ChatGPT API with prompt
+  Future<String?> _callChatGPT(String prompt) async {
     try {
+      if (_apiKey.isEmpty) {
+        debugPrint('❌ OpenAI API key not configured or empty');
+        return null;
+      }
+
+      if (!_isValidApiKey) {
+        debugPrint('❌ OpenAI API key format is invalid');
+        return null;
+      }
+
+      debugPrint('🔑 Using API key: ${_apiKey.substring(0, 7)}...');
+      debugPrint('🤖 Using model: $_defaultModel');
+
+      // Try with primary model first
+      String? response = await _tryModel(_defaultModel, prompt);
+      
+      // If primary model fails, try with fallback model
+      if (response == null) {
+        debugPrint('⚠️ Primary model failed, trying fallback model...');
+        response = await _tryModel('gpt-3.5-turbo-16k', prompt);
+      }
+      
+      // If both models fail, try with basic model
+      if (response == null) {
+        debugPrint('⚠️ Fallback model failed, trying basic model...');
+        response = await _tryModel('gpt-3.5-turbo', prompt);
+      }
+      
+      return response;
+    } catch (e) {
+      debugPrint('❌ Error calling ChatGPT API: $e');
+      return 'Network error occurred. Please check your internet connection.';
+    }
+  }
+
+  /// Try calling API with specific model
+  Future<String?> _tryModel(String model, String prompt) async {
+    try {
+      final requestBody = {
+        'model': model,
+        'messages': [
+          {
+            'role': 'system',
+            'content': 'You are an AI assistant specialized in invoice analysis and business intelligence. Be concise and professional in your responses.'
+          },
+          {
+            'role': 'user',
+            'content': prompt
+          }
+        ],
+        'max_tokens': 1000,
+        'temperature': 0.7,
+      };
+
+      debugPrint('📤 Sending request to OpenAI API with model: $model...');
       final response = await http.post(
         Uri.parse(_openaiEndpoint),
         headers: {
-          'Authorization': 'Bearer $_openaiApiKey',
+          'Authorization': 'Bearer $_apiKey',
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'model': _defaultModel,
-          'messages': [
-            {
-              'role': 'system',
-              'content': 'You are an AI assistant specialized in invoice analysis and data extraction. Return only valid JSON responses.'
-            },
-            {
-              'role': 'user',
-              'content': prompt
-            }
-          ],
-          'max_tokens': 2048,
-          'temperature': 0.3,
-        }),
+        body: json.encode(requestBody),
       );
 
+      debugPrint('📥 Response status: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        debugPrint('✅ API call successful with model: $model');
         return responseData['choices'][0]['message']['content'] ?? '';
       } else {
-        throw Exception('ChatGPT API error: ${response.statusCode}');
+        debugPrint('❌ ChatGPT API error with model $model: ${response.statusCode} - ${response.body}');
+        
+        // Handle specific error cases
+        if (response.statusCode == 401) {
+          return 'Authentication failed. Please check your OpenAI API key.';
+        } else if (response.statusCode == 404) {
+          return 'Model $model not found. Please check your OpenAI subscription.';
+        } else if (response.statusCode == 429) {
+          // Quota exceeded - try to provide helpful information
+          return 'OpenAI API quota exceeded. This usually means:\n\n1. You\'ve reached your monthly usage limit\n2. Your billing plan needs to be updated\n3. You need to add payment method\n\nPlease check your OpenAI billing at: https://platform.openai.com/account/billing';
+        } else if (response.statusCode == 402) {
+          return 'Payment required. Please check your OpenAI billing and payment method.';
+        } else if (response.statusCode == 500) {
+          return 'OpenAI server error. Please try again later.';
+        } else {
+          return 'API error occurred (Status: ${response.statusCode}). Please try again.';
+        }
       }
     } catch (e) {
-      debugPrint('ChatGPT API Error: $e');
-      rethrow;
+      debugPrint('❌ Error calling ChatGPT API with model $model: $e');
+      return null;
     }
   }
 
-  /// Validate and enhance extracted data
-  Future<Map<String, dynamic>> _validateAndEnhanceData(
-    Map<String, dynamic> extractedData, 
-    String rawText
-  ) async {
+  /// Parse AI response for data extraction
+  Map<String, dynamic> _parseAIResponse(String? response) {
+    if (response == null || response.isEmpty) return {};
+    
     try {
-      final validatedData = Map<String, dynamic>.from(extractedData);
+      // Clean response and extract JSON
+      final cleanResponse = response.trim();
+      final jsonStart = cleanResponse.indexOf('{');
+      final jsonEnd = cleanResponse.lastIndexOf('}');
       
-      // Validate required fields
-      if (validatedData['storeName'] == null || validatedData['storeName'].toString().isEmpty) {
-        validatedData['storeName'] = 'Unknown Store';
+      if (jsonStart != -1 && jsonEnd != -1) {
+        final jsonString = cleanResponse.substring(jsonStart, jsonEnd + 1);
+        return json.decode(jsonString) as Map<String, dynamic>;
       }
-      
-      if (validatedData['totalAmount'] == null) {
-        validatedData['totalAmount'] = 0.0;
-      }
-      
-      if (validatedData['currency'] == null || validatedData['currency'].toString().isEmpty) {
-        validatedData['currency'] = 'USD';
-      }
-      
-      if (validatedData['items'] == null) {
-        validatedData['items'] = [];
-      }
-      
-      // Enhance with additional context from raw text
-      if (validatedData['date'] == null) {
-        validatedData['date'] = DateTime.now().toIso8601String();
-      }
-      
-      return validatedData;
     } catch (e) {
-      debugPrint('Data validation error: $e');
-      return extractedData;
+      debugPrint('Error parsing AI response: $e');
     }
+    
+    return {};
   }
 
-  /// Calculate confidence for each field
-  Map<String, double> _calculateFieldConfidence(
-    Map<String, dynamic> validatedData, 
-    String rawText
-  ) {
-    final confidence = <String, double>{};
-    
-    // Calculate confidence based on data quality
-    confidence['storeName'] = validatedData['storeName'] != null && 
-        validatedData['storeName'].toString().isNotEmpty ? 0.9 : 0.3;
-    
-    confidence['totalAmount'] = validatedData['totalAmount'] != null && 
-        validatedData['totalAmount'] > 0 ? 0.95 : 0.2;
-    
-    confidence['items'] = validatedData['items'] != null && 
-        (validatedData['items'] as List).isNotEmpty ? 0.85 : 0.4;
-    
-    confidence['date'] = validatedData['date'] != null ? 0.8 : 0.3;
-    
-    return confidence;
-  }
-
-  /// Generate AI suggestions for data improvement
-  Future<List<String>> _generateAISuggestions(
-    Map<String, dynamic> validatedData, 
-    String rawText
-  ) async {
+  /// Parse tags from ChatGPT response
+  List<String> _parseTagsFromResponse(String response) {
     try {
-      final prompt = '''
-Based on this extracted invoice data, suggest improvements or additional information that could be captured:
-
-Extracted Data: ${json.encode(validatedData)}
-Raw Text: $rawText
-
-Provide 3-5 suggestions for improving data quality or capturing additional fields.
-Return only the suggestions, one per line.
-''';
-
-      final response = await _callChatGPT(prompt);
-      return response.split('\n')
-          .where((line) => line.trim().isNotEmpty)
+      // Clean response and split by comma
+      final cleanResponse = response.trim().replaceAll('\n', '');
+      final tags = cleanResponse.split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
           .take(5)
           .toList();
+      
+      return tags.isNotEmpty ? tags : ['General', 'Business', 'Invoice'];
     } catch (e) {
-      debugPrint('AI suggestions error: $e');
-      return [
-        'Verify extracted amounts match raw text',
-        'Check for missing tax information',
-        'Validate item descriptions'
-      ];
+      debugPrint('Error parsing tags: $e');
+      return ['General', 'Business', 'Invoice'];
     }
   }
 
-  /// Create field mappings for UI
-  Map<String, String> _createFieldMappings(Map<String, dynamic> validatedData) {
-    return {
-      'storeName': 'Store Name',
-      'totalAmount': 'Total Amount',
-      'subtotal': 'Subtotal',
-      'tax': 'Tax',
-      'currency': 'Currency',
-      'invoiceNumber': 'Invoice Number',
-      'date': 'Date',
-      'phone': 'Phone',
-      'email': 'Email',
-      'address': 'Address',
-      'items': 'Items',
-      'customerName': 'Customer Name',
-      'paymentMethod': 'Payment Method',
-      'dueDate': 'Due Date',
-    };
-  }
-
-  /// Get service status
-  bool get isAvailable => _openaiApiKey.isNotEmpty;
-
-  /// Get current model
-  String get currentModel => _defaultModel;
-
-  /// Calculate overall confidence from field confidence
-  ScanConfidence _calculateOverallConfidence(Map<String, double> fieldConfidence) {
-    if (fieldConfidence.isEmpty) return ScanConfidence.unknown;
-    
-    final averageConfidence = fieldConfidence.values.reduce((a, b) => a + b) / fieldConfidence.length;
-    
-    if (averageConfidence >= 0.8) return ScanConfidence.high;
-    if (averageConfidence >= 0.6) return ScanConfidence.medium;
-    return ScanConfidence.low;
-  }
-
-  /// Detect bill type from extracted data
-  BillType _detectBillType(Map<String, dynamic> data) {
-    // Simple bill type detection logic
-    if (data['invoiceNumber'] != null) return BillType.salesInvoice;
-    if (data['paymentMethod'] != null) return BillType.paymentReceipt;
-    return BillType.unknown;
-  }
-
-  /// Detect languages from text
-  List<String> _detectLanguages(String text) {
-    // Simple language detection
-    final languages = <String>[];
-    if (RegExp(r'[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]').hasMatch(text)) {
-      languages.add('vi');
-    }
-    if (RegExp(r'[a-zA-Z]').hasMatch(text)) {
-      languages.add('en');
-    }
-    return languages.isEmpty ? ['en'] : languages;
-  }
-
-  Map<String, dynamic> _parseAIResponse(String response) {
+  /// Parse classification from ChatGPT response
+  String _parseClassificationFromResponse(String response) {
     try {
-      // Try to extract JSON from response
-      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(response);
-      if (jsonMatch != null) {
-        return json.decode(jsonMatch.group(0)!);
+      final cleanResponse = response.trim().toLowerCase();
+      final validCategories = [
+        'food & beverage', 'electronics', 'services', 'clothing', 
+        'software', 'hardware', 'general'
+      ];
+      
+      for (final category in validCategories) {
+        if (cleanResponse.contains(category)) {
+          return category.split(' ').map((word) => 
+            word.substring(0, 1).toUpperCase() + word.substring(1)
+          ).join(' ');
+        }
       }
-      return {};
+      
+      return 'General';
     } catch (e) {
-      debugPrint('AI Response Parsing Error: $e');
-      return {};
+      debugPrint('Error parsing classification: $e');
+      return 'General';
     }
   }
+
+  /// Parse summary from ChatGPT response
+  String _parseSummaryFromResponse(String response, int maxLength) {
+    try {
+      final cleanResponse = response.trim();
+      if (cleanResponse.length <= maxLength) {
+        return cleanResponse;
+      }
+      
+      return '${cleanResponse.substring(0, maxLength - 3)}...';
+    } catch (e) {
+      debugPrint('Error parsing summary: $e');
+      return 'Invoice analysis completed';
+    }
+  }
+
+  /// Get AI service status
+  bool get isAvailable => _apiKey.isNotEmpty;
+
+  /// Get current model being used
+  String get currentModel => _defaultModel;
 } 

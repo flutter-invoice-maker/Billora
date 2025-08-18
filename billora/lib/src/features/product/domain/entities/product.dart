@@ -48,4 +48,20 @@ class Product {
       extraFields: extraFields ?? this.extraFields,
     );
   }
+
+  /// Convert Product to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'price': price,
+      'category': category,
+      'tax': tax,
+      'inventory': inventory,
+      'isService': isService,
+      'companyOrShopName': companyOrShopName,
+      'extraFields': extraFields,
+    };
+  }
 } 

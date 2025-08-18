@@ -48,4 +48,20 @@ class InvoiceItem {
       extraFields: extraFields ?? this.extraFields,
     );
   }
+
+  /// Convert InvoiceItem to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'quantity': quantity,
+      'unitPrice': unitPrice,
+      'tax': tax,
+      'total': total,
+      'productId': productId,
+      'companyOrShopName': companyOrShopName,
+      'extraFields': extraFields,
+    };
+  }
 } 
