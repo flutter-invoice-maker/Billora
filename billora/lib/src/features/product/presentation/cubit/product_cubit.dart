@@ -30,8 +30,9 @@ class ProductCubit extends Cubit<ProductState> {
   }) : super(const ProductState.initial());
 
   Future<void> fetchProducts() async {
-    debugPrint('🔄 ProductCubit: Starting fetchProducts');
     if (isClosed) return;
+    
+    debugPrint('🔄 ProductCubit: Starting fetchProducts');
     emit(const ProductState.loading());
     final result = await getProductsUseCase();
     if (isClosed) return;
@@ -48,8 +49,9 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> addProduct(Product product) async {
-    debugPrint('🔄 ProductCubit: Starting addProduct with ID: ${product.id}');
     if (isClosed) return;
+    
+    debugPrint('🔄 ProductCubit: Starting addProduct with ID: ${product.id}');
     emit(const ProductState.loading());
     final result = await createProductUseCase(product);
     if (isClosed) return;
@@ -99,8 +101,9 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> updateProductInventory(String productId, int quantity) async {
-    debugPrint('🔄 ProductCubit: Starting inventory update for product $productId to $quantity');
     if (isClosed) return;
+    
+    debugPrint('🔄 ProductCubit: Starting inventory update for product $productId to $quantity');
     final result = await updateProductInventoryUseCase(productId, quantity);
     if (isClosed) return;
     result.fold(

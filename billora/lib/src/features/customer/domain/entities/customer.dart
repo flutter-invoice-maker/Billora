@@ -28,4 +28,15 @@ class Customer {
       address: address ?? this.address,
     );
   }
+
+  /// Convert Customer to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'address': address,
+    };
+  }
 } 

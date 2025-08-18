@@ -47,7 +47,12 @@ void main() async {
   // Load environment variables (ignore errors on web if asset not bundled)
   try {
     await dotenv.load(fileName: ".env");
-  } catch (_) {}
+    debugPrint('✅ .env file loaded successfully');
+    debugPrint('🔑 API Key loaded: ${dotenv.env['OPENAI_API_KEY']?.substring(0, 7) ?? 'NOT_FOUND'}...');
+  } catch (e) {
+    debugPrint('❌ Failed to load .env file: $e');
+    debugPrint('⚠️ Make sure .env file exists in project root with OPENAI_API_KEY');
+  }
   
   // Initialize Firebase safely across platforms
   if (Firebase.apps.isEmpty) {

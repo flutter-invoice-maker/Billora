@@ -86,6 +86,7 @@ class AppScaffold extends StatelessWidget {
             invoiceId: invoiceId,
             primaryColor: Theme.of(context).primaryColor,
             isVisible: true,
+            currentTabIndex: currentTabIndex,
           ),
           // Floating tabbar positioned at bottom
           Positioned(

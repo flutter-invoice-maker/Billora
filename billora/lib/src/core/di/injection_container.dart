@@ -85,7 +85,8 @@ import 'package:billora/src/features/dashboard/domain/usecases/export_invoice_re
 import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
 // Week 9 - AI & QR Code Dependencies
-import 'package:billora/src/core/services/ai_service.dart';
+import 'package:billora/src/core/services/huggingface_ai_service.dart';
+import 'package:billora/src/core/services/ai_chat_service.dart';
 import 'package:billora/src/core/services/qr_service.dart';
 import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart';
@@ -462,20 +463,34 @@ Future<void> configureDependencies() async {
   }
 
   // Week 9 - AI & QR Code Dependencies
-  if (!sl.isRegistered<AIService>()) {
-    sl.registerLazySingleton<AIService>(() => AIService());
+  if (!sl.isRegistered<HuggingFaceAIService>()) {
+    sl.registerLazySingleton<HuggingFaceAIService>(() => HuggingFaceAIService(
+      invoiceRepository: sl<InvoiceRepository>(),
+      customerRepository: sl<CustomerRepository>(),
+      productRepository: sl<ProductRepository>(),
+      firebaseAuth: sl<FirebaseAuth>(),
+    ));
+  }
+  if (!sl.isRegistered<AIChatService>()) {
+    sl.registerLazySingleton<AIChatService>(() => AIChatService(
+      aiService: sl<HuggingFaceAIService>(),
+      invoiceRepository: sl<InvoiceRepository>(),
+      customerRepository: sl<CustomerRepository>(),
+      productRepository: sl<ProductRepository>(),
+      firebaseAuth: sl<FirebaseAuth>(),
+    ));
   }
   if (!sl.isRegistered<QRService>()) {
     sl.registerLazySingleton<QRService>(() => QRService());
   }
   if (!sl.isRegistered<SuggestTagsUseCase>()) {
-    sl.registerLazySingleton<SuggestTagsUseCase>(() => SuggestTagsUseCase(sl()));
+    sl.registerLazySingleton<SuggestTagsUseCase>(() => SuggestTagsUseCase(sl<HuggingFaceAIService>()));
   }
   if (!sl.isRegistered<ClassifyInvoiceUseCase>()) {
-    sl.registerLazySingleton<ClassifyInvoiceUseCase>(() => ClassifyInvoiceUseCase(sl()));
+    sl.registerLazySingleton<ClassifyInvoiceUseCase>(() => ClassifyInvoiceUseCase(sl<HuggingFaceAIService>()));
   }
   if (!sl.isRegistered<GenerateSummaryUseCase>()) {
-    sl.registerLazySingleton<GenerateSummaryUseCase>(() => GenerateSummaryUseCase(sl()));
+    sl.registerLazySingleton<GenerateSummaryUseCase>(() => GenerateSummaryUseCase(sl<HuggingFaceAIService>()));
   }
   if (!sl.isRegistered<GenerateQRCodeUseCase>()) {
     sl.registerLazySingleton<GenerateQRCodeUseCase>(() => GenerateQRCodeUseCase(sl()));
