@@ -20,11 +20,6 @@ class AppTheme {
             fontWeight: FontWeight.w600,
           ),
         ),
-        bottomAppBarTheme: const BottomAppBarTheme(
-          color: Colors.white,
-          elevation: 8,
-          shape: CircularNotchedRectangle(),
-        ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
