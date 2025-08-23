@@ -47,9 +47,9 @@ flutter pub get
 echo "🧹 Cleaning previous builds..."
 flutter clean
 
-# Build web app
+# Build web app (removed --web-renderer flag)
 echo "🔨 Building Flutter web app..."
-flutter build web --release --web-renderer html
+flutter build web --release
 
 # Verify build output
 if [ -d "build/web" ]; then
