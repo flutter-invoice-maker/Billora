@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,22 +18,130 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Billora - Your Business Command Center. Transform the way you manage your business with our comprehensive invoice and customer management platform.">
+  <meta name="keywords" content="invoice management, customer management, business analytics, bill scanner, business software">
+  <meta name="author" content="Billora Team">
   <meta name="google-signin-client_id" content="1018575120402-nf5o2f072rscc9s1qd8llerjc945pqr8.apps.googleusercontent.com">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://billora.vercel.app/">
+  <meta property="og:title" content="Billora - Business Management Platform">
+  <meta property="og:description" content="Transform the way you manage your business with our comprehensive invoice and customer management platform.">
+  <meta property="og:image" content="https://billora.vercel.app/icons/Icon-512.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://billora.vercel.app/">
+  <meta property="twitter:title" content="Billora - Business Management Platform">
+  <meta property="twitter:description" content="Transform the way you manage your business with our comprehensive invoice and customer management platform.">
+  <meta property="twitter:image" content="https://billora.vercel.app/icons/Icon-512.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="billora">
+  <meta name="apple-mobile-web-app-title" content="Billora">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="shortcut icon" type="image/png" href="favicon.png"/>
 
-  <title>billora</title>
+  <title>Billora - Business Management Platform</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Preload critical resources -->
+  <link rel="preload" href="flutter_bootstrap.js" as="script">
+  
+  <!-- Loading indicator styles -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: white;
+    }
+    
+    .loading-container {
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    
+    .loading-subtitle {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
+    }
+  </style>
 </head>
 <body>
+  <!-- Loading indicator -->
+  <div class="loading-container">
+    <div class="logo">📊</div>
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading Billora...</div>
+    <div class="loading-subtitle">Your Business Command Center</div>
+  </div>
+
+  <!-- Flutter bootstrap script -->
   <script src="flutter_bootstrap.js" async></script>
+  
+  <!-- Error handling -->
+  <script>
+    // Handle Flutter loading errors
+    window.addEventListener('error', function(e) {
+      console.error('Flutter loading error:', e);
+      document.querySelector('.loading-container').innerHTML = `
+        <div class="logo">⚠️</div>
+        <div class="loading-text">Loading Error</div>
+        <div class="loading-subtitle">Please refresh the page</div>
+        <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; border: none; border-radius: 8px; background: white; color: #667eea; cursor: pointer;">Refresh</button>
+      `;
+    });
+    
+    // Hide loading indicator when Flutter is ready
+    window.addEventListener('flutter-first-frame', function() {
+      document.querySelector('.loading-container').style.display = 'none';
+    });
+  </script>
 </body>
 </html>

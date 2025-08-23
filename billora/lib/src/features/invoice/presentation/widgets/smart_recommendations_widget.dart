@@ -119,6 +119,11 @@ class _SmartRecommendationsWidgetState extends State<SmartRecommendationsWidget>
                                 category: 'General',
                                 tax: item.tax,
                                 inventory: 100,
+                                companyOrShopName: null,
+                                companyAddress: null,
+                                companyPhone: null,
+                                companyEmail: null,
+                                companyWebsite: null,
                               );
                               widget.onProductSelected(product);
                             },

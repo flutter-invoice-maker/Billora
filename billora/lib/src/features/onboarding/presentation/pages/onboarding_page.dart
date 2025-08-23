@@ -158,181 +158,174 @@ class _OnboardingPageState extends State<OnboardingPage>
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Column(
-                children: [
-                  // Enhanced header
-                  Container(
-                    height: screenHeight * 0.12,
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 48.0 : 24.0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedBuilder(
-                          animation: _logoAnimationController,
-                          builder: (context, child) {
-                            return Transform.rotate(
-                              angle: _logoRotation.value,
-                              child: Transform.scale(
-                                scale: _logoScale.value,
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Image.asset(
-                                    'assets/icons/logo.png',
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          Icons.auto_awesome,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Billora',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: isTablet ? 22 : 20,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
+              child: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: screenHeight - MediaQuery.of(context).padding.top,
                   ),
-                  
-                  // Enhanced content area
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (i) => setState(() => _currentPage = i),
-                      itemCount: _slides.length,
-                      itemBuilder: (context, index) => _OnboardCard(
-                        data: _slides[index],
-                        isTablet: isTablet,
-                        pageIndex: index,
-                      ),
-                    ),
-                  ),
-                  
-                  // Enhanced bottom section
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 48.0 : 24.0,
-                      vertical: 24.0,
-                    ),
+                  child: IntrinsicHeight(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Enhanced page indicators
-                        SizedBox(
-                          height: 32,
+                        // Enhanced header
+                        Container(
+                          height: screenHeight * 0.12,
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 48.0 : 24.0,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(_slides.length, (i) {
-                              final active = i == _currentPage;
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 400),
-                                curve: Curves.easeInOutCubic,
-                                margin: const EdgeInsets.symmetric(horizontal: 8),
-                                height: active ? 8 : 6,
-                                width: active ? 40 : 6,
-                                decoration: BoxDecoration(
-                                  color: active 
-                                      ? _slides[_currentPage].accentColor
-                                      : Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(4),
-                                  boxShadow: active ? [
-                                    BoxShadow(
-                                      color: _slides[_currentPage].accentColor.withValues(alpha: 0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
+                            children: [
+                              AnimatedBuilder(
+                                animation: _logoAnimationController,
+                                builder: (context, child) {
+                                  return Transform.rotate(
+                                    angle: _logoRotation.value,
+                                    child: Transform.scale(
+                                      scale: _logoScale.value,
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Image.asset(
+                                          'assets/icons/logo.png',
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.black,
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(
+                                                Icons.auto_awesome,
+                                                color: Colors.white,
+                                                size: 20,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
                                     ),
-                                  ] : null,
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Billora',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: isTablet ? 22 : 20,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
                                 ),
-                              );
-                            }),
+                              ),
+                            ],
                           ),
                         ),
                         
-                        const SizedBox(height: 32),
-                        
-                        // Enhanced next button
-                        SizedBox(
-                          width: double.infinity,
-                          height: isTablet ? 64 : 56,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _nextPage,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    _currentPage == _slides.length - 1 
-                                        ? 'Start Your Journey' 
-                                        : 'Continue',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: isTablet ? 18 : 16,
-                                      letterSpacing: -0.2,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    _currentPage == _slides.length - 1
-                                        ? Icons.rocket_launch
-                                        : Icons.arrow_forward,
-                                    size: isTablet ? 20 : 18,
-                                  ),
-                                ],
-                              ),
+                        // Enhanced content area
+                        Expanded(
+                          child: PageView.builder(
+                            controller: _pageController,
+                            onPageChanged: (i) => setState(() => _currentPage = i),
+                            itemCount: _slides.length,
+                            itemBuilder: (context, index) => _OnboardCard(
+                              data: _slides[index],
+                              isTablet: isTablet,
+                              pageIndex: index,
                             ),
                           ),
                         ),
                         
-                        const SizedBox(height: 16),
+                        // Enhanced bottom section
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 48.0 : 24.0,
+                            vertical: 24.0,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Enhanced page indicators
+                              SizedBox(
+                                height: 32,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(_slides.length, (i) {
+                                    final active = i == _currentPage;
+                                    return AnimatedContainer(
+                                      duration: const Duration(milliseconds: 400),
+                                      curve: Curves.easeInOutCubic,
+                                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                                      height: active ? 8 : 6,
+                                      width: active ? 40 : 6,
+                                      decoration: BoxDecoration(
+                                        color: active 
+                                            ? _slides[_currentPage].accentColor
+                                            : Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(4),
+                                        boxShadow: active ? [
+                                          BoxShadow(
+                                            color: _slides[_currentPage].accentColor.withValues(alpha: 0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ] : null,
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 32),
+                              
+                              // Enhanced next button
+                              SizedBox(
+                                width: double.infinity,
+                                height: isTablet ? 64 : 56,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: _nextPage,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _currentPage < _slides.length - 1 ? 'Next' : 'Get Started',
+                                      style: TextStyle(
+                                        fontSize: isTablet ? 18 : 16,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),

@@ -14,20 +14,22 @@ import 'src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'src/features/home/presentation/pages/home_page.dart';
 import 'src/features/onboarding/presentation/pages/onboarding_page.dart';
 
-import 'package:billora/src/features/product/domain/usecases/create_product_usecase.dart';
-import 'package:billora/src/features/product/domain/usecases/delete_product_usecase.dart';
-import 'package:billora/src/features/product/domain/usecases/get_categories_usecase.dart';
-import 'package:billora/src/features/product/domain/usecases/get_products_usecase.dart';
-import 'package:billora/src/features/product/domain/usecases/search_products_usecase.dart';
-import 'package:billora/src/features/product/domain/usecases/update_product_usecase.dart';
-import 'package:billora/src/features/product/domain/usecases/update_product_inventory_usecase.dart';
+
+
+
+
+
+
+
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/features/product/presentation/pages/product_catalog_page.dart';
+import 'package:billora/src/features/product/presentation/pages/product_form_page.dart';
 import 'src/features/invoice/presentation/pages/invoice_list_page.dart';
 import 'src/features/invoice/presentation/pages/invoice_form_page.dart';
 import 'src/features/invoice/presentation/cubit/invoice_cubit.dart';
 import 'src/features/bill_scanner/presentation/pages/image_upload_page.dart';
 import 'src/features/bill_scanner/presentation/pages/enhanced_image_upload_page.dart';
+import 'src/features/bill_scanner/presentation/pages/qr_scanner_page.dart';
 // import 'src/features/bill_scanner/presentation/cubit/bill_scanner_cubit.dart';
 import 'src/features/suggestions/presentation/pages/suggestions_demo_page.dart';
 import 'src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
@@ -40,6 +42,11 @@ import 'src/features/bill_scanner/presentation/cubit/scan_library_cubit.dart';
 import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart';
+import 'src/core/theme/app_theme.dart';
+import 'src/features/customer/presentation/pages/customer_form_page.dart';
+import 'src/features/auth/presentation/widgets/profile_form.dart';
+import 'src/features/auth/presentation/cubit/auth_state.dart';
+import 'src/features/invoice/presentation/pages/invoice_template_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,9 +91,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Billora',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: AppTheme.lightTheme,
 
       home: const OnboardingPage(),
       routes: {
@@ -107,45 +112,41 @@ class _MyAppState extends State<MyApp> {
               child: HomePage(),
             ),
         '/customers': (context) => MultiBlocProvider(
-              providers: [
-                BlocProvider.value(value: sl<AuthCubit>()),
-                BlocProvider<CustomerCubit>(
-                  create: (context) => CustomerCubit(
-                    getCustomersUseCase: sl(),
-                    createCustomerUseCase: sl(),
-                    updateCustomerUseCase: sl(),
-                    deleteCustomerUseCase: sl(),
-                    searchCustomersUseCase: sl(),
-                  )..fetchCustomers(),
-                ),
-              ],
-              child: const CustomerListPage(),
-            ),
+          providers: [
+            BlocProvider.value(value: sl<AuthCubit>()),
+            BlocProvider.value(value: sl<CustomerCubit>()),
+          ],
+          child: const CustomerListPage(),
+        ),
+        '/customer-form': (context) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: sl<AuthCubit>()),
+            BlocProvider.value(value: sl<CustomerCubit>()),
+          ],
+          child: const CustomerFormPage(),
+        ),
         '/products': (context) => MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: sl<AuthCubit>()),
-                BlocProvider<ProductCubit>(
-                  create: (_) => ProductCubit(
-                    getProductsUseCase: sl<GetProductsUseCase>(),
-                    createProductUseCase: sl<CreateProductUseCase>(),
-                    updateProductUseCase: sl<UpdateProductUseCase>(),
-                    deleteProductUseCase: sl<DeleteProductUseCase>(),
-                    searchProductsUseCase: sl<SearchProductsUseCase>(),
-                    getCategoriesUseCase: sl<GetCategoriesUseCase>(),
-                    updateProductInventoryUseCase: sl<UpdateProductInventoryUseCase>(),
-                  ),
-                ),
+                BlocProvider.value(value: sl<ProductCubit>()),
               ],
               child: const ProductCatalogPage(),
+            ),
+        '/product-form': (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: sl<AuthCubit>()),
+                BlocProvider.value(value: sl<ProductCubit>()),
+              ],
+              child: const ProductFormPage(),
             ),
         '/invoices': (context) => MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: sl<AuthCubit>()),
-                BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()..fetchInvoices()),
-                BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
-                BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
-                BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
-                BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+                BlocProvider.value(value: sl<InvoiceCubit>()),
+                BlocProvider.value(value: sl<CustomerCubit>()),
+                BlocProvider.value(value: sl<ProductCubit>()),
+                BlocProvider.value(value: sl<SuggestionsCubit>()),
+                BlocProvider.value(value: sl<TagsCubit>()),
                 // Add AI UseCase providers
                 Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
                 Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
@@ -156,17 +157,18 @@ class _MyAppState extends State<MyApp> {
         '/invoice-form': (context) => MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: sl<AuthCubit>()),
-                BlocProvider<InvoiceCubit>(create: (_) => sl<InvoiceCubit>()),
-                BlocProvider<CustomerCubit>(create: (_) => sl<CustomerCubit>()..fetchCustomers()),
-                BlocProvider<ProductCubit>(create: (_) => sl<ProductCubit>()..fetchProducts()),
-                BlocProvider<SuggestionsCubit>(create: (_) => sl<SuggestionsCubit>()),
-                BlocProvider<TagsCubit>(create: (_) => sl<TagsCubit>()),
+                BlocProvider.value(value: sl<InvoiceCubit>()),
+                BlocProvider.value(value: sl<CustomerCubit>()),
+                BlocProvider.value(value: sl<ProductCubit>()),
+                BlocProvider.value(value: sl<SuggestionsCubit>()),
+                BlocProvider.value(value: sl<TagsCubit>()),
                 Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
                 Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
                 Provider<ClassifyInvoiceUseCase>(create: (_) => sl<ClassifyInvoiceUseCase>()),
               ],
               child: const InvoiceFormPage(),
             ),
+        '/invoice-template': (context) => const InvoiceTemplatePage(),
         // '/bill-scanner': (context) => BlocProvider(
         //       create: (context) => sl<BillScannerCubit>(),
         //       child: const BillScannerHubPage(),
@@ -178,6 +180,10 @@ class _MyAppState extends State<MyApp> {
         '/enhanced-bill-scanner': (context) => BlocProvider.value(
               value: sl<AuthCubit>(),
               child: const EnhancedImageUploadPage(),
+            ),
+        '/qr-scanner': (context) => BlocProvider.value(
+              value: sl<AuthCubit>(),
+              child: const QRScannerPage(),
             ),
         '/scan-library': (context) => MultiBlocProvider(
               providers: [
@@ -208,7 +214,36 @@ class _MyAppState extends State<MyApp> {
               ],
               child: const DashboardPage(),
             ),
+        '/profile': (context) => BlocProvider.value(
+              value: sl<AuthCubit>(),
+              child: ProfilePage(),
+            ),
       },
+    );
+  }
+}
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+  @override
+  Widget build(BuildContext context) {
+    // Ensure we refresh the auth state when opening profile
+    context.read<AuthCubit>().getCurrentUser();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: SafeArea(
+        child: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            return state.maybeWhen(
+              authenticated: (user) => SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: ProfileForm(user: user),
+              ),
+              orElse: () => const Center(child: Text('Please log in')),
+            );
+          },
+        ),
+      ),
     );
   }
 }

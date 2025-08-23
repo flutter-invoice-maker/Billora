@@ -8,6 +8,10 @@ class Product {
   final int inventory;
   final bool isService;
   final String? companyOrShopName;
+  final String? companyAddress;
+  final String? companyPhone;
+  final String? companyEmail;
+  final String? companyWebsite;
   final Map<String, dynamic> extraFields;
 
   Product({
@@ -20,6 +24,10 @@ class Product {
     required this.inventory,
     this.isService = false,
     this.companyOrShopName,
+    this.companyAddress,
+    this.companyPhone,
+    this.companyEmail,
+    this.companyWebsite,
     this.extraFields = const {},
   });
 
@@ -33,6 +41,10 @@ class Product {
     int? inventory,
     bool? isService,
     String? companyOrShopName,
+    String? companyAddress,
+    String? companyPhone,
+    String? companyEmail,
+    String? companyWebsite,
     Map<String, dynamic>? extraFields,
   }) {
     return Product(
@@ -45,6 +57,10 @@ class Product {
       inventory: inventory ?? this.inventory,
       isService: isService ?? this.isService,
       companyOrShopName: companyOrShopName ?? this.companyOrShopName,
+      companyAddress: companyAddress ?? this.companyAddress,
+      companyPhone: companyPhone ?? this.companyPhone,
+      companyEmail: companyEmail ?? this.companyEmail,
+      companyWebsite: companyWebsite ?? this.companyWebsite,
       extraFields: extraFields ?? this.extraFields,
     );
   }
@@ -61,6 +77,10 @@ class Product {
       'inventory': inventory,
       'isService': isService,
       'companyOrShopName': companyOrShopName,
+      'companyAddress': companyAddress,
+      'companyPhone': companyPhone,
+      'companyEmail': companyEmail,
+      'companyWebsite': companyWebsite,
       'extraFields': extraFields,
     };
   }

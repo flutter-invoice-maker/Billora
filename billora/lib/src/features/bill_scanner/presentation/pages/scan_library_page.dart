@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/scan_library_item.dart';
@@ -16,28 +18,33 @@ class ScanLibraryPage extends StatefulWidget {
 class _ScanLibraryPageState extends State<ScanLibraryPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedFilter = 'all';
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = <String>{};
 
   @override
   void initState() {
     super.initState();
-    // Load scan library when widget is mounted
+    
+    // Load scan library after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadScanLibrary();
+      if (mounted) {
+        _loadScanLibrary();
+      }
     });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Remove duplicate data loading to prevent infinite loading
-    // Check if we have route arguments with initial items
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (args != null && args['initialItems'] != null) {
       final initialItems = args['initialItems'] as List<ScanLibraryItem>;
       if (initialItems.isNotEmpty) {
-        // Save initial items to the library
-        _saveInitialItems(initialItems);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _saveInitialItems(initialItems);
+          }
+        });
       }
     }
   }
@@ -45,8 +52,20 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
   Future<void> _saveInitialItems(List<ScanLibraryItem> items) async {
     try {
       final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+      
+      // Save each item individually
       for (final item in items) {
-        cubit.saveScanItem(item);
+        await cubit.saveScanItem(item);
+      }
+      
+      // After saving all items, refresh the display
+      await cubit.loadScanItems();
+      
+      if (mounted) {
+        SnackBarHelper.showSuccess(
+          context,
+          message: '${items.length} scan(s) saved successfully',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -66,20 +85,18 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
 
   Future<void> _loadScanLibrary() async {
     if (!mounted) return;
-    
     try {
-      // Use BlocProvider.of to get the cubit safely
       final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
       
-      // If we have initial items, save them first
+      // Handle initial items if provided
       if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
         for (final item in widget.initialItems!) {
-          cubit.saveScanItem(item);
+          await cubit.saveScanItem(item);
         }
       }
       
-      // Then load all items
-      cubit.loadScanItems();
+      // Load all scan items
+      await cubit.loadScanItems();
     } catch (e) {
       if (mounted) {
         SnackBarHelper.showError(
@@ -90,62 +107,175 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
     }
   }
 
+  void _refreshData() {
+    _loadScanLibrary();
+  }
+
   List<ScanLibraryItem> _filterItems(List<ScanLibraryItem> items) {
     return items.where((item) {
-      final matchesSearch = item.fileName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.scannedBill.storeName.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesFilter = _selectedFilter == 'all' ||
-          (_selectedFilter == 'processed' && item.isProcessed) ||
-          (_selectedFilter == 'pending' && !item.isProcessed);
-      return matchesSearch && matchesFilter;
+      final q = _searchQuery.toLowerCase();
+      return item.fileName.toLowerCase().contains(q) ||
+          item.scannedBill.storeName.toLowerCase().contains(q);
     }).toList();
+  }
+
+  void _toggleSelect(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+      if (_selectedIds.isEmpty) {
+        _selectionMode = false;
+      }
+    });
+  }
+
+  void _enterSelection(String id) {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds.add(id);
+    });
+  }
+
+  void _exitSelection() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan Library'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              try {
-                final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
-                cubit.loadScanItems();
-              } catch (e) {
-                SnackBarHelper.showError(
-                  context,
-                  message: 'Error refreshing: $e',
-                );
-              }
-            },
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade50,
-              Colors.white,
-            ],
-          ),
-        ),
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: _buildAppBar(),
+      body: SafeArea(
         child: Column(
           children: [
-            _buildSearchAndFilterSection(),
-            Expanded(
-              child: _buildContent(),
-            ),
+            _buildSearchBar(),
+            Expanded(child: _buildContent()),
           ],
         ),
+      ),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xFFF8F9FA),
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A1A1A), size: 20),
+        tooltip: 'Back',
+      ),
+      title: Text(
+        _selectionMode ? '${_selectedIds.length} selected' : 'Scan Library',
+        style: const TextStyle(
+          color: Color(0xFF1A1A1A),
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
+        ),
+      ),
+      centerTitle: true,
+      actions: [
+        if (_selectionMode)
+          Row(
+            children: [
+              IconButton(
+                onPressed: () async {
+                  if (_selectedIds.isEmpty) return;
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Delete selected?'),
+                      content: Text('Delete ${_selectedIds.length} item(s)?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && mounted) {
+                    final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+                    for (final id in _selectedIds.toList()) {
+                      await cubit.deleteScanItem(id);
+                    }
+                    _exitSelection();
+                  }
+                },
+                icon: const Icon(Icons.delete_outline, color: Color(0xFFB91C1C)),
+                tooltip: 'Delete',
+              ),
+              IconButton(
+                onPressed: _exitSelection,
+                icon: const Icon(Icons.close, color: Color(0xFF1A1A1A), size: 22),
+                tooltip: 'Cancel selection',
+              ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  try {
+                    final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+                    cubit.loadScanItems();
+                  } catch (e) {
+                    SnackBarHelper.showError(context, message: 'Error refreshing: $e');
+                  }
+                },
+                icon: const Icon(Icons.refresh, color: Color(0xFF1A1A1A), size: 20),
+                tooltip: 'Refresh',
+              ),
+              IconButton(
+                onPressed: () {
+                  try {
+                    final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+                    cubit.loadScanItems();
+                  } catch (e) {
+                    SnackBarHelper.showError(context, message: 'Error refreshing: $e');
+                  }
+                },
+                icon: const Icon(Icons.notifications_none, color: Color(0xFF1A1A1A), size: 20),
+                tooltip: 'Notifications',
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search scans...',
+          prefixIcon: const Icon(Icons.search),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+        ),
+        onChanged: (v) => setState(() => _searchQuery = v),
       ),
     );
   }
@@ -154,42 +284,129 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
     return BlocConsumer<ScanLibraryCubit, ScanLibraryState>(
       listener: (context, state) {
         if (state is ScanLibraryItemSaved) {
-          SnackBarHelper.showSuccess(
-            context,
-            message: 'Scan saved successfully: ${state.item.fileName}',
-          );
+          SnackBarHelper.showSuccess(context, message: 'Scan saved successfully: ${state.item.fileName}');
+          // Refresh the data to ensure the new item appears
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _refreshData();
+            }
+          });
         } else if (state is ScanLibraryItemUpdated) {
-          SnackBarHelper.showInfo(
-            context,
-            message: 'Scan updated successfully: ${state.item.fileName}',
-          );
+          SnackBarHelper.showInfo(context, message: 'Scan updated successfully: ${state.item.fileName}');
         } else if (state is ScanLibraryItemDeleted) {
-          SnackBarHelper.showWarning(
-            context,
-            message: 'Scan deleted successfully',
-          );
+          SnackBarHelper.showWarning(context, message: 'Scan deleted successfully');
         } else if (state is ScanLibraryError) {
-          SnackBarHelper.showError(
-            context,
-            message: 'Error: ${state.message}',
-          );
+          SnackBarHelper.showError(context, message: 'Error: ${state.message}');
         }
       },
       builder: (context, state) {
         if (state is ScanLibraryLoading) {
           return const Center(
-            child: CircularProgressIndicator(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading scans...'),
+              ],
+            ),
           );
         } else if (state is ScanLibraryLoaded) {
           final items = _filterItems(state.items);
-          return _buildScanItemsList(items);
+          if (items.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.document_scanner_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No scans found',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start scanning documents to see them here',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return _buildGrid(items);
         } else if (state is ScanLibraryError) {
           return _buildErrorState(state.message);
-        } else {
-          return const Center(
-            child: Text('No scans found'),
-          );
         }
+        
+        // Initial state - show loading
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Initializing...'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGrid(List<ScanLibraryItem> items) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double maxCardWidth = 200; // target max width per card
+// minimum width per card
+        final double screenWidth = constraints.maxWidth;
+        int crossAxisCount = (screenWidth / maxCardWidth).floor().clamp(1, 6);
+        // ensure at least 2 columns on phones in landscape-wide cases
+        if (screenWidth > 480 && crossAxisCount < 2) crossAxisCount = 2;
+        final double cardWidth = (screenWidth - (12 * (crossAxisCount - 1)) - 24) / crossAxisCount; // 12 spacing + 12*2 outer padding
+        final double aspectRatio = (cardWidth / 320).clamp(0.55, 0.7); // tune height relative to width
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: GridView.builder(
+            padding: const EdgeInsets.only(top: 8, bottom: 16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: aspectRatio,
+            ),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              final selected = _selectedIds.contains(item.id);
+              return _ScanCard(
+                item: item,
+                showCheckbox: _selectionMode,
+                selected: selected,
+                onLongPress: () => _enterSelection(item.id),
+                onTap: () {
+                  if (_selectionMode) {
+                    _toggleSelect(item.id);
+                  } else {
+                    _openDetail(item);
+                  }
+                },
+                onChanged: (val) => _toggleSelect(item.id),
+              );
+            },
+          ),
+        );
       },
     );
   }
@@ -201,186 +418,17 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
         children: [
           Icon(Icons.error, size: 64, color: Colors.red.shade300),
           const SizedBox(height: 16),
-          Text(
-            'Error',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          const Text('Error', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14),
-            ),
+            child: Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14)),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              _loadScanLibrary();
-            },
-            child: const Text('Retry'),
-          ),
+          ElevatedButton(onPressed: _loadScanLibrary, child: const Text('Retry')),
         ],
       ),
     );
-  }
-
-  Widget _buildSearchAndFilterSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search by file name or store name...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            onChanged: (value) => setState(() => _searchQuery = value),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildFilterChip('all', 'All'),
-              const SizedBox(width: 8),
-              _buildFilterChip('processed', 'Processed'),
-              const SizedBox(width: 8),
-              _buildFilterChip('pending', 'Pending'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String value, String label) {
-    final bool selected = _selectedFilter == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => setState(() => _selectedFilter = value),
-    );
-  }
-
-  Widget _buildScanItemsList(List<ScanLibraryItem> items) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.receipt_long, color: Colors.blue),
-            title: Text(
-              item.fileName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text(
-              '${item.scannedBill.storeName} • ${item.totalAmountString()} • ${_formatDate(item.createdAt)}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            onTap: () => _openDetail(item),
-            trailing: SizedBox(
-              width: 80, // Fixed width to prevent overflow
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    tooltip: 'Rename',
-                    onPressed: () => _promptRename(item),
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, size: 20),
-                    tooltip: 'Delete',
-                    onPressed: () => _promptDelete(item),
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _promptRename(ScanLibraryItem item) async {
-    final controller = TextEditingController(text: item.fileName);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename file'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'File name',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (newName != null && newName.isNotEmpty && mounted) {
-      try {
-        final updatedItem = item.copyWith(
-          fileName: newName,
-          lastModifiedAt: DateTime.now(),
-        );
-        final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
-        cubit.updateScanItem(updatedItem);
-      } catch (e) {
-        SnackBarHelper.showError(
-          context,
-          message: 'Error updating scan: $e',
-        );
-      }
-    }
-  }
-
-  Future<void> _promptDelete(ScanLibraryItem item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete scan'),
-        content: Text('Are you sure you want to delete "${item.fileName}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && mounted) {
-      try {
-        final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
-        cubit.deleteScanItem(item.id);
-      } catch (e) {
-        SnackBarHelper.showError(
-          context,
-          message: 'Error deleting scan: $e',
-        );
-      }
-    }
   }
 
   void _openDetail(ScanLibraryItem item) {
@@ -391,6 +439,173 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
       ),
     );
   }
+}
 
-  String _formatDate(DateTime dt) => '${dt.day}/${dt.month}/${dt.year}';
+class _ScanCard extends StatelessWidget {
+  final ScanLibraryItem item;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final bool showCheckbox;
+  final bool selected;
+  final ValueChanged<bool?> onChanged;
+  const _ScanCard({required this.item, required this.onTap, required this.onLongPress, required this.showCheckbox, required this.selected, required this.onChanged});
+
+  String _statusLabel() {
+    final status = item.metadata['status']?.toString().toLowerCase();
+    if (status == 'rejected') return 'Rejected';
+    if (status == 'draft') return 'Draft';
+    return item.isProcessed ? 'Completed' : 'Pending';
+  }
+
+  Color _statusColor() {
+    final status = _statusLabel();
+    switch (status) {
+      case 'Completed':
+        return const Color(0xFF3B82F6);
+      case 'Pending':
+        return const Color(0xFF10B981);
+      case 'Rejected':
+        return const Color(0xFFEF4444);
+      default:
+        return const Color(0xFF9CA3AF);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = _statusLabel();
+    final statusColor = _statusColor();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (showCheckbox)
+                      Checkbox(value: selected, onChanged: onChanged)
+                    else
+                      const SizedBox(width: 0, height: 0),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 92,
+                    width: double.infinity,
+                    child: _buildThumbnail(item.imagePath),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  item.fileName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDate(item.createdAt),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      '\$${item.scannedBill.totalAmount.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF2563EB), fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: onTap,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      foregroundColor: const Color(0xFF1F2937),
+                      backgroundColor: const Color(0xFFF8FAFC),
+                    ),
+                    child: const Text(
+                      'View Details',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime dt) => '${dt.month}/${dt.day}/${dt.year}';
+
+  Widget _buildThumbnail(String path) {
+    final isUrl = path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:image');
+    final placeholder = Container(
+      color: const Color(0xFFF3F4F6),
+      child: const Center(child: Icon(Icons.image, color: Color(0xFF9CA3AF))),
+    );
+
+    if (kIsWeb) {
+      if (isUrl) {
+        return Image.network(path, fit: BoxFit.cover, errorBuilder: (_, __, ___) => placeholder);
+      }
+      return placeholder;
+    }
+
+    if (isUrl) {
+      return Image.network(path, fit: BoxFit.cover, errorBuilder: (_, __, ___) => placeholder);
+    }
+    try {
+      return Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => placeholder);
+    } catch (_) {
+      return placeholder;
+    }
+  }
 } 

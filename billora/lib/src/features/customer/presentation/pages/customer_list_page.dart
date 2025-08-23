@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:math' as math;
-import 'dart:async';
 import '../cubit/customer_cubit.dart';
 import '../cubit/customer_state.dart';
 import '../../domain/entities/customer.dart';
@@ -19,37 +17,28 @@ class CustomerListPage extends StatefulWidget {
 class _CustomerListPageState extends State<CustomerListPage>
     with TickerProviderStateMixin {
   String _searchTerm = '';
-  int _currentPage = 0;
-  final int _itemsPerPage = 5;
-  late AnimationController _bannerController;
-  late AnimationController _floatingIconsController;
-  late PageController _pageController;
-  int _currentBannerIndex = 0;
+  late AnimationController _listAnimationController;
+  late AnimationController _fadeController;
+  bool _isSelectionMode = false;
+  Set<String> _selectedCustomers = {};
+  final ScrollController _scrollController = ScrollController();
+  String _currentAlphabet = 'A';
+  final Map<String, GlobalKey> _alphabetKeys = {};
 
-  final List<Map<String, dynamic>> _bannerData = [
-    {
-      'title': 'Manage Your Customers',
-      'subtitle': 'Keep track of all your valuable customers',
-      'icon': Icons.people_alt_rounded,
-      'gradient': [const Color(0xFF667eea), const Color(0xFF764ba2)],
-    },
-    {
-      'title': 'Customer Insights',
-      'subtitle': 'Analyze customer data and relationships',
-      'icon': Icons.analytics_rounded,
-      'gradient': [const Color(0xFFF093FB), const Color(0xFFF5576C)],
-    },
-    {
-      'title': 'Build Relationships',
-      'subtitle': 'Strengthen connections with your clients',
-      'icon': Icons.handshake_rounded,
-      'gradient': [const Color(0xFF4facfe), const Color(0xFF00f2fe)],
-    },
+  // Alphabet list for iOS-style scrolling
+  final List<String> _alphabet = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
   ];
 
   @override
   void initState() {
     super.initState();
+    // Initialize keys for alphabet sections
+    for (String letter in _alphabet) {
+      _alphabetKeys[letter] = GlobalKey();
+    }
+
     // Only fetch customers if not already loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -63,414 +52,429 @@ class _CustomerListPageState extends State<CustomerListPage>
       }
     });
     
-    _bannerController = AnimationController(
-      duration: const Duration(seconds: 4),
+    _listAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
-    )..repeat();
+    );
     
-    _floatingIconsController = AnimationController(
-      duration: const Duration(seconds: 20),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
       vsync: this,
-    )..repeat();
+    );
     
-    _pageController = PageController();
-    
-    // Auto-slide banner
-    Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (mounted) {
-        setState(() {
-          _currentBannerIndex = (_currentBannerIndex + 1) % _bannerData.length;
-        });
-        _pageController.animateToPage(
-          _currentBannerIndex,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
+    _listAnimationController.forward();
+    _fadeController.forward();
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Remove duplicate data fetching to prevent infinite loading
+    // Listen to scroll changes to update current alphabet
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _bannerController.dispose();
-    _floatingIconsController.dispose();
-    _pageController.dispose();
+    _listAnimationController.dispose();
+    _fadeController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    // Find the current visible alphabet based on scroll position
+    final customers = context.read<CustomerCubit>().state.maybeWhen(
+      loaded: (customers) => customers.where((customer) {
+        final searchLower = _searchTerm.toLowerCase();
+        return searchLower.isEmpty ||
+            customer.name.toLowerCase().contains(searchLower) ||
+            (customer.email?.toLowerCase().contains(searchLower) ?? false) ||
+            (customer.phone?.toLowerCase().contains(searchLower) ?? false);
+      }).toList(),
+      orElse: () => <Customer>[],
+    );
+
+    if (customers.isEmpty) return;
+
+    final groupedCustomers = _groupCustomersByAlphabet(customers);
+    final sortedKeys = groupedCustomers.keys.toList()
+      ..sort((a, b) => a == '#' ? 1 : (b == '#' ? -1 : a.compareTo(b)));
+
+    // Calculate which alphabet section is currently visible
+    for (String letter in sortedKeys) {
+      final key = _alphabetKeys[letter];
+      if (key?.currentContext != null) {
+        final RenderBox box = key!.currentContext!.findRenderObject() as RenderBox;
+        final position = box.localToGlobal(Offset.zero);
+        
+        if (position.dy <= 200 && position.dy >= -100) {
+          if (_currentAlphabet != letter) {
+            setState(() {
+              _currentAlphabet = letter;
+            });
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedCustomers.clear();
+      }
+    });
+  }
+
+  void _selectAll(List<Customer> customers) {
+    setState(() {
+      if (_selectedCustomers.length == customers.length) {
+        _selectedCustomers.clear();
+      } else {
+        _selectedCustomers = customers.map((c) => c.id).toSet();
+      }
+    });
+  }
+
+  void _deleteSelectedCustomers() {
+    if (_selectedCustomers.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (dialogContext) => DeleteDialog(
+          title: 'Delete Customers',
+          message: 'Are you sure you want to delete ${_selectedCustomers.length} customer(s)? This action cannot be undone.',
+          itemName: '${_selectedCustomers.length} customers',
+          onDelete: () {
+            for (String id in _selectedCustomers) {
+              context.read<CustomerCubit>().deleteCustomer(id);
+            }
+            _selectedCustomers.clear();
+            _toggleSelectionMode();
+          },
+        ),
+      );
+    }
+  }
+
+  // Group customers by first letter
+  Map<String, List<Customer>> _groupCustomersByAlphabet(List<Customer> customers) {
+    final Map<String, List<Customer>> grouped = {};
+    
+    for (final customer in customers) {
+      final firstLetter = customer.name.isNotEmpty 
+          ? customer.name[0].toUpperCase() 
+          : '#';
+      final key = RegExp(r'[A-Z]').hasMatch(firstLetter) ? firstLetter : '#';
+      
+      if (!grouped.containsKey(key)) {
+        grouped[key] = [];
+      }
+      grouped[key]!.add(customer);
+    }
+    
+    // Sort each group
+    grouped.forEach((key, customers) {
+      customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    });
+    
+    return grouped;
+  }
+
+  void _scrollToAlphabet(String letter) {
+    final key = _alphabetKeys[letter];
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+      setState(() {
+        _currentAlphabet = letter;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      currentTabIndex: 1, // Customer tab index
-      pageTitle: 'Customer Management',
+      currentTabIndex: 1, // Customers tab
+      pageTitle: 'Customers',
+      headerBottom: _CustomerHeaderSearch(
+        onChanged: (value) {
+          setState(() {
+            _searchTerm = value;
+          });
+        },
+      ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              const Color(0xFFB794F6).withValues(alpha: 0.08),
-              Colors.white,
-              const Color(0xFF8B5FBF).withValues(alpha: 0.12),
-              const Color(0xFF7C3AED).withValues(alpha: 0.06),
-            ],
-            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-          ),
-        ),
-        child: Stack(
+        color: const Color(0xFFFAFAFA),
+        child: Column(
           children: [
-            _buildFloatingIcons(),
-            SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Hero Banner
-                    _buildHeroBanner(),
-                    // Search Bar
-                    _buildSearchBar(),
-                    // Customer List
-                    Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF8F9FA),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(25),
-                          topRight: Radius.circular(25),
-                        ),
-                      ),
-                      child: RefreshIndicator(
-                        onRefresh: () async {
-                          // Refresh data
-                          context.read<CustomerCubit>().fetchCustomers();
-                        },
-                        color: const Color(0xFF667EEA),
-                        backgroundColor: Colors.white,
-                        child: BlocBuilder<CustomerCubit, CustomerState>(
-                          builder: (context, state) {
-                            return state.when(
-                              initial: () => SizedBox(
-                                height: 200,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF667EEA),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Initializing...',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Setting up your customer list',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[500],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                                                          loading: () => SizedBox(
-                              height: 200,
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFF667EEA),
-                                  ),
-                                ),
-                              ),
-                            ),
-                              loaded: (customers) {
-                                final filteredCustomers = customers.where((customer) {
-                                  final searchLower = _searchTerm.toLowerCase();
-                                  return searchLower.isEmpty ||
-                                      customer.name.toLowerCase().contains(searchLower) ||
-                                      (customer.email?.toLowerCase().contains(searchLower) ?? false) ||
-                                      (customer.phone?.toLowerCase().contains(searchLower) ?? false);
-                                }).toList();
-
-                                if (filteredCustomers.isEmpty) {
-                                  return SizedBox(
-                                    height: 300,
-                                    child: Center(
-                                      child: Container(
-                                        margin: const EdgeInsets.all(32),
-                                        padding: const EdgeInsets.all(32),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(20),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withAlpha((0.1 * 255).round()),
-                                              blurRadius: 10,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.people_outline,
-                                              size: 64,
-                                              color: Colors.grey[400],
-                                            ),
-                                            const SizedBox(height: 16),
-                                            Text(
-                                              'No customers found',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Try adjusting your search or add new customers',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[500],
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                final startIndex = _currentPage * _itemsPerPage;
-                                final endIndex = math.min(startIndex + _itemsPerPage, filteredCustomers.length);
-                                final paginatedCustomers = filteredCustomers.sublist(startIndex, endIndex);
-
-                                return Column(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.only(
-                                        top: 20,
-                                        left: 16,
-                                        right: 16,
-                                        bottom: 8,
-                                      ),
-                                      child: Column(
-                                        children: paginatedCustomers.map((customer) => _buildCustomerCard(customer)).toList(),
-                                      ),
-                                    ),
-                                    _buildPagination(filteredCustomers.length),
-                                    // Increased bottom padding for floating tabbar and FAB
-                                    const SizedBox(height: 150),
-                                  ],
-                                );
-                              },
-                              error: (message) => SizedBox(
-                                height: 300,
-                                child: Center(
-                                  child: Container(
-                                    margin: const EdgeInsets.all(32),
-                                    padding: const EdgeInsets.all(32),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withAlpha((0.1 * 255).round()),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.error_outline,
-                                          size: 64,
-                                          color: Colors.grey[400],
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          'Error loading customers',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          message,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[500],
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 24),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            context.read<CustomerCubit>().fetchCustomers();
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF667EEA),
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                              vertical: 12,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                          ),
-                                          child: const Text('Retry'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroBanner() {
-    return Container(
-      height: 180,
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.2 * 255).round()),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentBannerIndex = index;
-                });
-              },
-              itemCount: _bannerData.length,
-              itemBuilder: (context, index) {
-                final banner = _bannerData[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: banner['gradient'],
+            // Selection toolbar
+            if (_isSelectionMode)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                height: _isSelectionMode ? 56 : 0,
+                color: Colors.white,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: Color(0xFFE5E5EA), width: 0.5),
                     ),
                   ),
-                  child: Stack(
+                  child: Row(
                     children: [
-                      _buildFloatingIcons(),
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha((0.2 * 255).round()),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    banner['icon'],
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        banner['title'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        banner['subtitle'],
-                                        style: TextStyle(
-                                          color: Colors.white.withAlpha((0.9 * 255).round()),
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                      GestureDetector(
+                        onTap: () => _selectAll(context.read<CustomerCubit>().state.maybeWhen(
+                          loaded: (customers) => customers.where((customer) {
+                            final searchLower = _searchTerm.toLowerCase();
+                            return searchLower.isEmpty ||
+                                customer.name.toLowerCase().contains(searchLower) ||
+                                (customer.email?.toLowerCase().contains(searchLower) ?? false) ||
+                                (customer.phone?.toLowerCase().contains(searchLower) ?? false);
+                          }).toList(),
+                          orElse: () => <Customer>[],
+                        )),
+                        child: Text(
+                          'Select All',
+                          style: TextStyle(
+                            color: const Color(0xFF007AFF),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${_selectedCustomers.length} selected',
+                        style: const TextStyle(
+                          color: Color(0xFF8E8E93),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      if (_selectedCustomers.isNotEmpty)
+                        GestureDetector(
+                          onTap: _deleteSelectedCustomers,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF3B30),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                          ],
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _toggleSelectionMode,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Color(0xFF8E8E93),
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-            // Page indicators
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _bannerData.length,
-                  (index) => Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _currentBannerIndex == index
-                          ? Colors.white
-                          : Colors.white.withAlpha((0.5 * 255).round()),
-                    ),
-                  ),
+                ),
+              ),
+
+            const SizedBox(height: 8),
+
+            // Customer List with Alphabet Scroll
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  context.read<CustomerCubit>().fetchCustomers();
+                },
+                color: const Color(0xFF007AFF),
+                backgroundColor: Colors.white,
+                child: BlocBuilder<CustomerCubit, CustomerState>(
+                  builder: (context, state) {
+                    return state.when(
+                      initial: () => const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.black, 
+                          ),
+                        ),
+                      ),
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.black, // Đổi từ Color(0xFF007AFF) sang Colors.black
+                          ),
+                        ),
+                      ),
+                      loaded: (customers) {
+                        final filteredCustomers = customers.where((customer) {
+                          final searchLower = _searchTerm.toLowerCase();
+                          return searchLower.isEmpty ||
+                              customer.name.toLowerCase().contains(searchLower) ||
+                              (customer.email?.toLowerCase().contains(searchLower) ?? false) ||
+                              (customer.phone?.toLowerCase().contains(searchLower) ?? false);
+                        }).toList();
+
+                        if (filteredCustomers.isEmpty) {
+                          return _buildEmptyState();
+                        }
+
+                        final groupedCustomers = _groupCustomersByAlphabet(filteredCustomers);
+                        final sortedKeys = groupedCustomers.keys.toList()
+                          ..sort((a, b) => a == '#' ? 1 : (b == '#' ? -1 : a.compareTo(b)));
+
+                        return Stack(
+                          children: [
+                            // Main list - Hide scrollbar
+                            ScrollConfiguration(
+                              behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                padding: const EdgeInsets.fromLTRB(20, 0, 40, 8),
+                                itemCount: sortedKeys.length,
+                                itemBuilder: (context, groupIndex) {
+                                  final letter = sortedKeys[groupIndex];
+                                  final customersInGroup = groupedCustomers[letter]!;
+                                  
+                                  return Column(
+                                    key: _alphabetKeys[letter],
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Alphabet header
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                        child: Text(
+                                          letter,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF8E8E93),
+                                          ),
+                                        ),
+                                      ),
+                                      // Customers in this group
+                                      ...customersInGroup.asMap().entries.map((entry) {
+                                        final customerIndex = entry.key;
+                                        final customer = entry.value;
+                                        return SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: const Offset(0, 0.3),
+                                            end: Offset.zero,
+                                          ).animate(CurvedAnimation(
+                                            parent: _listAnimationController,
+                                            curve: Interval(
+                                              customerIndex * 0.05,
+                                              1.0,
+                                              curve: Curves.easeOutQuart,
+                                            ),
+                                          )),
+                                          child: FadeTransition(
+                                            opacity: Tween<double>(
+                                              begin: 0.0,
+                                              end: 1.0,
+                                            ).animate(CurvedAnimation(
+                                              parent: _listAnimationController,
+                                              curve: Interval(
+                                                customerIndex * 0.05,
+                                                1.0,
+                                                curve: Curves.easeOutQuart,
+                                              ),
+                                            )),
+                                            child: _buildCustomerCard(customer, customerIndex),
+                                          ),
+                                        );
+                                      }),
+                                      const SizedBox(height: 8),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            
+                            // Alphabet scroll bar (iOS style)
+                            Positioned(
+                              right: 4,
+                              top: 50,
+                              bottom: 50,
+                              child: Container(
+                                width: 24,
+                                constraints: const BoxConstraints(
+                                  minHeight: 200,
+                                  maxHeight: double.infinity,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final availableHeight = constraints.maxHeight;
+                                    final itemHeight = availableHeight / _alphabet.length;
+                                    
+                                    return Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: _alphabet.map((letter) {
+                                        final isActive = _currentAlphabet == letter;
+                                        final hasCustomers = groupedCustomers.containsKey(letter);
+                                        
+                                        return GestureDetector(
+                                          onTap: hasCustomers ? () => _scrollToAlphabet(letter) : null,
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 200),
+                                            width: isActive ? 22 : 20,
+                                            height: itemHeight.clamp(16, 24),
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: isActive 
+                                                  ? const Color(0xFF007AFF).withValues(alpha: 0.1) 
+                                                  : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(11),
+                                            ),
+                                            child: AnimatedDefaultTextStyle(
+                                              duration: const Duration(milliseconds: 200),
+                                              style: TextStyle(
+                                                fontSize: isActive ? 14 : 11,
+                                                fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                                                color: hasCustomers 
+                                                    ? (isActive ? const Color(0xFF007AFF) : const Color(0xFF8E8E93))
+                                                    : const Color(0xFFE5E5EA),
+                                              ),
+                                              child: Text(
+                                                letter,
+                                                textAlign: TextAlign.center,
+                                                overflow: TextOverflow.visible,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      error: (message) => _buildErrorState(message),
+                    );
+                  },
                 ),
               ),
             ),
@@ -480,272 +484,298 @@ class _CustomerListPageState extends State<CustomerListPage>
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search customers...',
-          prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
-          ),
-          filled: true,
-          fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        onChanged: (value) {
+  Widget _buildCustomerCard(Customer customer, int index) {
+    final isSelected = _selectedCustomers.contains(customer.id);
+    
+    return GestureDetector(
+      onTap: () {
+        if (_isSelectionMode) {
           setState(() {
-            _searchTerm = value;
-            _currentPage = 0;
+            if (isSelected) {
+              _selectedCustomers.remove(customer.id);
+            } else {
+              _selectedCustomers.add(customer.id);
+            }
           });
-        },
+        } else {
+          _openForm(customer);
+        }
+      },
+      onLongPress: () {
+        if (!_isSelectionMode) {
+          _toggleSelectionMode();
+          setState(() {
+            _selectedCustomers.add(customer.id);
+          });
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFE3F2FD) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected 
+              ? Border.all(color: const Color(0xFF007AFF), width: 1)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Selection checkbox (only visible in selection mode)
+            if (_isSelectionMode) ...[
+              AnimatedScale(
+                duration: const Duration(milliseconds: 200),
+                scale: _isSelectionMode ? 1.0 : 0.0,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF007AFF) : Colors.transparent,
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: isSelected
+                      ? const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        )
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            
+            // Avatar
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _getAvatarColor(customer.name),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Center(
+                child: Text(
+                  _getInitials(customer.name),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            
+            const SizedBox(width: 12),
+            
+            // Customer Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    customer.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF000000),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  if (customer.email != null) ...[
+                    Text(
+                      customer.email!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF8E8E93),
+                        fontWeight: FontWeight.w400,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 1),
+                  ],
+                  if (customer.phone != null)
+                    Text(
+                      customer.phone!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF8E8E93),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            
+            // Status and Actions
+            if (!_isSelectionMode)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(index),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      _getStatusText(index),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _getCustomerType(index),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF8E8E93),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: () => _showOptionsMenu(customer),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.more_horiz,
+                        color: Color(0xFF8E8E93),
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCustomerCard(Customer customer) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.1 * 255).round()),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(40),
+            ),
+            child: const Icon(
+              Icons.people_outline,
+              size: 40,
+              color: Color(0xFF8E8E93),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'No customers found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF000000),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Try adjusting your search\nor add new customers',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF8E8E93),
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          radius: 25,
-          backgroundColor: const Color(0xFF667eea),
-          child: Text(
-            customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        title: Text(
-          customer.name,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (customer.email != null) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(
-                    Icons.email_outlined,
-                    size: 14,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      customer.email!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            if (customer.phone != null) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(
-                    Icons.phone_outlined,
-                    size: 14,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      customer.phone!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-        trailing: GestureDetector(
-          onTap: () => _showOptionsMenu(customer),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.more_vert,
-              color: Colors.grey,
-              size: 20,
-            ),
-          ),
-        ),
-        onTap: () => _openForm(customer),
-      ),
     );
   }
 
-  Widget _buildFloatingIcons() {
-    return AnimatedBuilder(
-      animation: _floatingIconsController,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            // Customer-themed floating icons
-            ...List.generate(8, (index) {
-              final icons = [
-                Icons.person_outline,
-                Icons.email_outlined,
-                Icons.phone_outlined,
-                Icons.location_on_outlined,
-                Icons.business_outlined,
-                Icons.contact_page_outlined,
-                Icons.group_outlined,
-                Icons.account_circle_outlined,
-              ];
-              
-              final double animationValue = _floatingIconsController.value;
-              final double offsetX = 50 + (index * 45) +
-                   math.sin((animationValue * 2 * math.pi) + (index * 0.8)) * 30;
-              final double offsetY = 50 + (index * 35) +
-                   math.cos((animationValue * 2 * math.pi) + (index * 0.6)) * 40;
-              
-              return Positioned(
-                left: offsetX % MediaQuery.of(context).size.width,
-                top: offsetY % (MediaQuery.of(context).size.height * 0.7),
-                child: Opacity(
-                  opacity: 0.15,
-                  child: Icon(
-                    icons[index],
-                    size: 24 + (index % 3) * 8,
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            }),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPagination(int totalItems) {
-    final totalPages = (totalItems / _itemsPerPage).ceil();
-    if (totalPages <= 1) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Row(
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Previous button
-          IconButton(
-            onPressed: _currentPage > 0
-                ? () => setState(() => _currentPage--)
-                : null,
-            icon: const Icon(Icons.chevron_left),
-            style: IconButton.styleFrom(
-              backgroundColor: _currentPage > 0
-                  ? Colors.white
-                  : Colors.grey[300],
-              foregroundColor: _currentPage > 0
-                  ? const Color(0xFF667eea)
-                  : Colors.grey[500],
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(40),
+            ),
+            child: const Icon(
+              Icons.error_outline,
+              size: 40,
+              color: Color(0xFF8E8E93),
             ),
           ),
-          
-          const SizedBox(width: 8),
-          
-          // Page numbers
-          ...List.generate(
-            math.min(5, totalPages),
-            (index) {
-              int pageNumber;
-              if (totalPages <= 5) {
-                pageNumber = index;
-              } else {
-                if (_currentPage <= 2) {
-                  pageNumber = index;
-                } else if (_currentPage >= totalPages - 3) {
-                  pageNumber = totalPages - 5 + index;
-                } else {
-                  pageNumber = _currentPage - 2 + index;
-                }
-              }
-              
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: TextButton(
-                  onPressed: () => setState(() => _currentPage = pageNumber),
-                  style: TextButton.styleFrom(
-                    backgroundColor: _currentPage == pageNumber
-                        ? const Color(0xFF667eea)
-                        : Colors.white,
-                    foregroundColor: _currentPage == pageNumber
-                        ? Colors.white
-                        : const Color(0xFF667eea),
-                    minimumSize: const Size(40, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text('${pageNumber + 1}'),
-                ),
-              );
-            },
+          const SizedBox(height: 24),
+          const Text(
+            'Error loading customers',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF000000),
+            ),
           ),
-          
-          const SizedBox(width: 8),
-          
-          // Next button
-          IconButton(
-            onPressed: _currentPage < totalPages - 1
-                ? () => setState(() => _currentPage++)
-                : null,
-            icon: const Icon(Icons.chevron_right),
-            style: IconButton.styleFrom(
-              backgroundColor: _currentPage < totalPages - 1
-                  ? Colors.white
-                  : Colors.grey[300],
-              foregroundColor: _currentPage < totalPages - 1
-                  ? const Color(0xFF667eea)
-                  : Colors.grey[500],
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF8E8E93),
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          GestureDetector(
+            onTap: () {
+              context.read<CustomerCubit>().fetchCustomers();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF007AFF),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Text(
+                'Retry',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ],
@@ -781,12 +811,12 @@ class _CustomerListPageState extends State<CustomerListPage>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 36,
+              height: 5,
+              margin: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+                color: const Color(0xFFE5E5EA),
+                borderRadius: BorderRadius.circular(3),
               ),
             ),
             ListTile(
@@ -794,17 +824,30 @@ class _CustomerListPageState extends State<CustomerListPage>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF007AFF).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
                   Icons.edit_outlined,
-                  color: Color(0xFF6366F1),
+                  color: Color(0xFF007AFF),
                   size: 20,
                 ),
               ),
-              title: const Text('Edit Customer'),
-              subtitle: const Text('Modify customer details'),
+              title: const Text(
+                'Edit Customer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF000000),
+                ),
+              ),
+              subtitle: const Text(
+                'Modify customer details',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _openForm(customer);
@@ -815,23 +858,36 @@ class _CustomerListPageState extends State<CustomerListPage>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
                   Icons.delete_outline,
-                  color: Colors.red,
+                  color: Color(0xFFFF3B30),
                   size: 20,
                 ),
               ),
-              title: const Text('Delete Customer'),
-              subtitle: const Text('Remove from database'),
+              title: const Text(
+                'Delete Customer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFFF3B30),
+                ),
+              ),
+              subtitle: const Text(
+                'Remove from database',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showDeleteDialog(customer);
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -846,6 +902,88 @@ class _CustomerListPageState extends State<CustomerListPage>
         builder: (context) => BlocProvider<CustomerCubit>.value(
           value: customerCubit,
           child: CustomerFormPage(customer: customer),
+        ),
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    List<String> names = name.split(' ');
+    String initials = '';
+    for (int i = 0; i < names.length && i < 2; i++) {
+      if (names[i].isNotEmpty) {
+        initials += names[i][0].toUpperCase();
+      }
+    }
+    return initials.isEmpty ? 'C' : initials;
+  }
+
+  Color _getAvatarColor(String name) {
+    final colors = [
+      const Color(0xFF007AFF),
+      const Color(0xFF34C759),
+      const Color(0xFFFF9500),
+      const Color(0xFFFF3B30),
+      const Color(0xFF5856D6),
+      const Color(0xFFAF52DE),
+    ];
+    return colors[name.hashCode % colors.length];
+  }
+
+  Color _getStatusColor(int index) {
+    final colors = [
+      const Color(0xFF34C759), // Green - Active
+      const Color(0xFF34C759), // Green - Active  
+      const Color(0xFF8E8E93), // Gray - Inactive
+      const Color(0xFF34C759), // Green - Active
+      const Color(0xFF34C759), // Green - Active
+    ];
+    return colors[index % colors.length];
+  }
+
+  String _getStatusText(int index) {
+    final statuses = ['Active', 'Active', 'Inactive', 'Active', 'Active'];
+    return statuses[index % statuses.length];
+  }
+
+  String _getCustomerType(int index) {
+    final types = ['VIP', 'Key Account', 'Small Business', 'Prospect', 'Partnership'];
+    return types[index % types.length];
+  }
+}
+
+class _CustomerHeaderSearch extends StatelessWidget implements PreferredSizeWidget {
+  final ValueChanged<String> onChanged;
+
+  const _CustomerHeaderSearch({required this.onChanged});
+
+  @override
+  Size get preferredSize => const Size.fromHeight(80);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
+        child: TextField(
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            hintText: 'Search customers...',
+            hintStyle: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+            ),
+            prefixIcon: const Icon(Icons.search, color: Colors.black54, size: 20),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         ),
       ),
     );

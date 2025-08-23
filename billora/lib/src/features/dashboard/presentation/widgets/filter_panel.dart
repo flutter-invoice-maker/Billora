@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:billora/src/features/dashboard/domain/entities/date_range.dart';
@@ -17,6 +18,8 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  bool _isInitialized = false;
+  bool _isApplying = false;
 
   @override
   void initState() {
@@ -45,17 +48,47 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
     
     _animationController.forward();
     
+    _initializeFilters();
+  }
+
+  void _initializeFilters() {
+    if (_isInitialized) return;
+    
     // Use post frame callback to ensure context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Load tags
-      context.read<TagsCubit>().getAllTags();
+      if (!mounted) return;
       
-      // Get current filters from cubit
-      final currentState = context.read<DashboardCubit>().state;
-      if (currentState is DashboardLoaded) {
+      try {
+        // Load tags only if not already loaded
+        final tagsCubit = context.read<TagsCubit>();
+        final tagsState = tagsCubit.state;
+        
+        // Check if tags are already loaded
+        if (tagsState is! TagsLoaded) {
+          tagsCubit.getAllTags();
+        }
+        
+        // Get current filters from dashboard cubit
+        final dashboardState = context.read<DashboardCubit>().state;
+        if (dashboardState is DashboardLoaded) {
+          setState(() {
+            _selectedDateRange = dashboardState.currentDateRange;
+            _selectedTags = List<String>.from(dashboardState.currentTagFilters);
+            _isInitialized = true;
+          });
+        } else {
+          setState(() {
+            _selectedDateRange = DateRange.thisMonth; // Default
+            _selectedTags = [];
+            _isInitialized = true;
+          });
+        }
+      } catch (e) {
+        developer.log('Error initializing filters - $e', name: 'FilterPanel');
         setState(() {
-          _selectedDateRange = currentState.currentDateRange;
-          _selectedTags = currentState.currentTagFilters;
+          _selectedDateRange = DateRange.thisMonth;
+          _selectedTags = [];
+          _isInitialized = true;
         });
       }
     });
@@ -121,16 +154,26 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
                         _buildHeader(),
                         const SizedBox(height: 24),
                         
-                        // Date Range Section
-                        _buildDateRangeSection(),
-                        const SizedBox(height: 24),
-                        
-                        // Tags Section
-                        _buildTagsSection(),
-                        const SizedBox(height: 32),
-                        
-                        // Action Buttons
-                        _buildActionButtons(),
+                        // Show loading indicator if not initialized
+                        if (!_isInitialized) ...[
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        ] else ...[
+                          // Date Range Section
+                          _buildDateRangeSection(),
+                          const SizedBox(height: 24),
+                          
+                          // Tags Section
+                          _buildTagsSection(),
+                          const SizedBox(height: 32),
+                          
+                          // Action Buttons
+                          _buildActionButtons(),
+                        ],
                       ],
                     ),
                   ),
@@ -189,7 +232,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
           ),
         ),
         IconButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isApplying ? null : () => Navigator.pop(context),
           icon: Icon(
             Icons.close,
             color: Colors.grey.shade600,
@@ -315,7 +358,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
-              onTap: () {
+              onTap: _isApplying ? null : () {
                 setState(() {
                   _selectedDateRange = isSelected ? null : dateRange;
                 });
@@ -363,6 +406,65 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
   Widget _buildTagSelector() {
     return BlocBuilder<TagsCubit, dynamic>(
       builder: (context, state) {
+        // Handle different states properly
+        if (state is TagsLoading) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.purple.shade400),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Loading tags...',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        if (state is TagsError) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red.shade400,
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Failed to load tags',
+                  style: TextStyle(
+                    color: Colors.red.shade600,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    context.read<TagsCubit>().getAllTags();
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+        
         if (state is TagsLoaded) {
           final tags = state.tags;
           if (tags.isEmpty) {
@@ -394,7 +496,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
             children: tags.map((tag) {
               final isSelected = _selectedTags.contains(tag.name);
               return GestureDetector(
-                onTap: () {
+                onTap: _isApplying ? null : () {
                   setState(() {
                     if (isSelected) {
                       _selectedTags.remove(tag.name);
@@ -455,28 +557,15 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
           );
         }
         
+        // Default/unknown state
         return Container(
           padding: const EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.purple.shade400),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Loading tags...',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          child: Text(
+            'Unable to load tags',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
           ),
         );
       },
@@ -488,7 +577,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () {
+            onPressed: _isApplying ? null : () {
               setState(() {
                 _selectedDateRange = null;
                 _selectedTags.clear();
@@ -514,7 +603,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
         Expanded(
           flex: 2,
           child: ElevatedButton(
-            onPressed: _applyFilters,
+            onPressed: _isApplying ? null : _applyFilters,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: Colors.purple.shade600,
@@ -525,33 +614,87 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
               ),
               shadowColor: Colors.purple.withValues(alpha: 0.3),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.check, size: 18),
-                const SizedBox(width: 8),
-                const Text(
-                  'Apply Filters',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
+            child: _isApplying
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('Applying...'),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check, size: 18),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Apply Filters',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ],
     );
   }
 
-  void _applyFilters() {
-    if (_selectedDateRange != null) {
-      context.read<DashboardCubit>().loadDashboardStats(
-        dateRange: _selectedDateRange!,
-        tagFilters: _selectedTags,
+  void _applyFilters() async {
+    if (_isApplying) return;
+    
+    setState(() {
+      _isApplying = true;
+    });
+
+    try {
+      // Apply filters with proper null handling
+      final dateRange = _selectedDateRange ?? DateRange.thisMonth;
+      final tagFilters = List<String>.from(_selectedTags);
+      
+      developer.log(
+        'Applying filters - DateRange: ${dateRange.label}, Tags: ${tagFilters.length}',
+        name: 'FilterPanel',
       );
+      
+      // Apply filters to dashboard cubit
+      await context.read<DashboardCubit>().loadDashboardStats(
+        dateRange: dateRange,
+        tagFilters: tagFilters,
+      );
+      
+      // Wait a moment to show the loading state
+      await Future.delayed(const Duration(milliseconds: 300));
+      
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      developer.log('Error applying filters - $e', name: 'FilterPanel');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to apply filters: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isApplying = false;
+        });
+      }
     }
-    Navigator.pop(context);
   }
 }

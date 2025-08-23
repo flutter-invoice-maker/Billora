@@ -8,6 +8,10 @@ class InvoiceItem {
   final double total;
   final String productId;
   final String? companyOrShopName;
+  final String? companyAddress;
+  final String? companyPhone;
+  final String? companyEmail;
+  final String? companyWebsite;
   final Map<String, dynamic> extraFields;
 
   InvoiceItem({
@@ -20,6 +24,10 @@ class InvoiceItem {
     required this.total,
     required this.productId,
     this.companyOrShopName,
+    this.companyAddress,
+    this.companyPhone,
+    this.companyEmail,
+    this.companyWebsite,
     this.extraFields = const {},
   });
 
@@ -33,6 +41,10 @@ class InvoiceItem {
     double? total,
     String? productId,
     String? companyOrShopName,
+    String? companyAddress,
+    String? companyPhone,
+    String? companyEmail,
+    String? companyWebsite,
     Map<String, dynamic>? extraFields,
   }) {
     return InvoiceItem(
@@ -45,6 +57,10 @@ class InvoiceItem {
       total: total ?? this.total,
       productId: productId ?? this.productId,
       companyOrShopName: companyOrShopName ?? this.companyOrShopName,
+      companyAddress: companyAddress ?? this.companyAddress,
+      companyPhone: companyPhone ?? this.companyPhone,
+      companyEmail: companyEmail ?? this.companyEmail,
+      companyWebsite: companyWebsite ?? this.companyWebsite,
       extraFields: extraFields ?? this.extraFields,
     );
   }
@@ -61,6 +77,10 @@ class InvoiceItem {
       'total': total,
       'productId': productId,
       'companyOrShopName': companyOrShopName,
+      'companyAddress': companyAddress,
+      'companyPhone': companyPhone,
+      'companyEmail': companyEmail,
+      'companyWebsite': companyWebsite,
       'extraFields': extraFields,
     };
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:billora/src/features/invoice/domain/entities/invoice.dart';
-import 'package:billora/src/core/services/qr_service.dart';
 
 class QRCodeWidget extends StatelessWidget {
   final Invoice invoice;
@@ -39,7 +38,7 @@ class QRCodeWidget extends StatelessWidget {
       child: ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.circular(12),
         child: QrImageView(
-          data: _generateQRData(),
+          data: _generateSimpleQRData(),
           version: QrVersions.auto,
           size: size,
           dataModuleStyle: QrDataModuleStyle(
@@ -58,30 +57,9 @@ class QRCodeWidget extends StatelessWidget {
     );
   }
 
-  String _generateQRData() {
-    try {
-      // Generate QR data using the usecase
-      final qrService = QRService();
-      final qrData = qrService.generateInvoiceSummaryQRData(invoice);
-      return qrData.toString();
-    } catch (e) {
-      // Fallback to simple invoice data
-      return _generateFallbackQRData();
-    }
-  }
-
-  String _generateFallbackQRData() {
-    // Create a simple JSON structure for QR code
-    final qrData = {
-      'invoice_id': invoice.id,
-      'total_amount': invoice.total,
-      'customer_name': invoice.customerName,
-      'date': invoice.createdAt.toIso8601String(),
-      'company_name': 'Billora',
-      'type': 'invoice',
-    };
-    
-    return qrData.toString();
+  String _generateSimpleQRData() {
+    // Chỉ chứa ID hóa đơn đơn giản, thống nhất với PDF service
+    return 'invoice:${invoice.id}';
   }
 
   ImageProvider? _getEmbeddedImage() {
@@ -177,7 +155,7 @@ class CompactQRCodeWidget extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: QrImageView(
-          data: _generateCompactQRData(),
+          data: _generateSimpleQRData(),
           version: QrVersions.auto,
           size: size,
           dataModuleStyle: QrDataModuleStyle(
@@ -192,14 +170,8 @@ class CompactQRCodeWidget extends StatelessWidget {
     );
   }
 
-  String _generateCompactQRData() {
-    // Generate minimal QR data for compact display
-    final qrData = {
-      'id': invoice.id,
-      'amt': invoice.total,
-      'date': invoice.createdAt.millisecondsSinceEpoch,
-    };
-    
-    return qrData.toString();
+  String _generateSimpleQRData() {
+    // Chỉ chứa ID hóa đơn đơn giản, thống nhất với PDF service
+    return 'invoice:${invoice.id}';
   }
 } 

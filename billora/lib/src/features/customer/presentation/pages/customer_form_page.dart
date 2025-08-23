@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/customer/domain/entities/customer.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
-// Removed unused imports: import 'package:billora/src/core/widgets/custom_text_field.dart';
-// Removed unused imports: import 'package:billora/src/core/widgets/custom_button.dart';
 import 'dart:math' as math;
-import 'package:billora/src/core/utils/app_strings.dart';
 
 class CustomerFormPage extends StatefulWidget {
   final Customer? customer;
@@ -24,7 +21,14 @@ class _CustomerFormPageState extends State<CustomerFormPage>
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
-  late AnimationController _floatingIconsController;
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+
+  // Focus nodes for better UX
+  final FocusNode _nameFocus = FocusNode();
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _phoneFocus = FocusNode();
+  final FocusNode _addressFocus = FocusNode();
 
   String generateId() => DateTime.now().millisecondsSinceEpoch.toString() + 
       math.Random().nextInt(10000).toString();
@@ -37,10 +41,18 @@ class _CustomerFormPageState extends State<CustomerFormPage>
     _phoneController = TextEditingController(text: widget.customer?.phone ?? widget.prefill?['phone'] ?? '');
     _addressController = TextEditingController(text: widget.customer?.address ?? widget.prefill?['address'] ?? '');
     
-    _floatingIconsController = AnimationController(
-      duration: const Duration(seconds: 20),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
       vsync: this,
-    )..repeat();
+    );
+    
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _fadeController.forward();
+    _slideController.forward();
   }
 
   @override
@@ -49,10 +61,14 @@ class _CustomerFormPageState extends State<CustomerFormPage>
     _emailController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
-    _floatingIconsController.dispose();
+    _fadeController.dispose();
+    _slideController.dispose();
+    _nameFocus.dispose();
+    _emailFocus.dispose();
+    _phoneFocus.dispose();
+    _addressFocus.dispose();
     super.dispose();
   }
-
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
@@ -77,249 +93,254 @@ class _CustomerFormPageState extends State<CustomerFormPage>
 
   @override
   Widget build(BuildContext context) {
+    final isEdit = widget.customer != null;
+    
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade50,
-              Colors.white,
-            ],
+      backgroundColor: const Color(0xFFFAFAFA),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+            size: 20,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          isEdit ? 'Edit Profile' : 'New Contact',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha((0.2 * 255).round()), // Fixed withOpacity
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_rounded,
-                          color: Color(0xFF2D3748), // Thay đổi từ Colors.white thành màu đậm
+        centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: _submit,
+            child: Text(
+              isEdit ? 'Update' : 'Save',
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: FadeTransition(
+        opacity: _fadeController,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: _slideController,
+            curve: Curves.easeOutCubic,
+          )),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Profile Picture Section
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            color: Colors.grey,
+                            size: 50,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () {
+                            // Handle photo change
+                          },
+                          child: const Text(
+                            'Change Photo',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Form Fields
+                  _buildMinimalTextField(
+                    controller: _nameController,
+                    focusNode: _nameFocus,
+                    label: 'Name',
+                    validator: (value) => value == null || value.isEmpty 
+                        ? 'Name is required' 
+                        : null,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_emailFocus),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  _buildMinimalTextField(
+                    controller: _emailController,
+                    focusNode: _emailFocus,
+                    label: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) => value != null && 
+                        value.isNotEmpty && 
+                        !value.contains('@') 
+                        ? 'Invalid email address' 
+                        : null,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_phoneFocus),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  _buildMinimalTextField(
+                    controller: _phoneController,
+                    focusNode: _phoneFocus,
+                    label: 'Phone',
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_addressFocus),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  _buildMinimalTextField(
+                    controller: _addressController,
+                    focusNode: _addressFocus,
+                    label: 'Address',
+                    maxLines: 2,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submit(),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Action Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
                       child: Text(
-                        widget.customer == null 
-                            ? AppStrings.customerAddTitle 
-                            : AppStrings.customerEditTitle,
+                        isEdit ? 'Update Contact' : 'Add Contact',
                         style: const TextStyle(
-                          color: Color(0xFF2D3748), // Thay đổi từ Colors.white thành màu đậm
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              
-              // Form Container
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
-                    ),
                   ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Form Title
-                          Center(
-                            child: Container(
-                              width: 60,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          
-                          // Customer Icon
-                          Center(
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                ),
-                                borderRadius: BorderRadius.circular(40),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF667eea).withAlpha((0.3 * 255).round()), // Fixed withOpacity
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.person_add_rounded,
-                                color: Colors.white,
-                                size: 40,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          
-                          // Name Field
-                          _buildCustomTextField(
-                            controller: _nameController,
-                            label: AppStrings.customerName,
-                            icon: Icons.person_outline,
-                            validator: (value) => value == null || value.isEmpty 
-                                ? AppStrings.customerNameRequired 
-                                : null,
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          // Email Field
-                          _buildCustomTextField(
-                            controller: _emailController,
-                            label: AppStrings.customerEmail,
-                            icon: Icons.email_outlined,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) => value != null && 
-                                value.isNotEmpty && 
-                                !value.contains('@') 
-                                ? AppStrings.customerEmailInvalid 
-                                : null,
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          // Phone Field
-                          _buildCustomTextField(
-                            controller: _phoneController,
-                            label: AppStrings.customerPhone,
-                            icon: Icons.phone_outlined,
-                            keyboardType: TextInputType.phone,
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          // Address Field
-                          _buildCustomTextField(
-                            controller: _addressController,
-                            label: AppStrings.customerAddress,
-                            icon: Icons.location_on_outlined,
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 40),
-                          
-                          // Submit Button
-                          Container(
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF667eea).withAlpha((0.4 * 255).round()), // Fixed withOpacity
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text(
-                                widget.customer == null 
-                                    ? AppStrings.customerAddButton 
-                                    : AppStrings.customerUpdateButton,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                  
+                  const SizedBox(height: 20),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCustomTextField({
+  Widget _buildMinimalTextField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
-    required IconData icon,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     int maxLines = 1,
+    TextInputAction? textInputAction,
+    void Function(String)? onSubmitted,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        validator: validator,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 20,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Label
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
             ),
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          labelStyle: TextStyle(color: Colors.grey[600]),
         ),
-      ),
+        
+        // Text Field
+        AnimatedBuilder(
+          animation: focusNode,
+          builder: (context, child) {
+            final isFocused = focusNode.hasFocus;
+            
+            return Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isFocused ? Colors.black : Colors.grey[300]!,
+                  width: isFocused ? 2 : 1,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                keyboardType: keyboardType,
+                validator: validator,
+                maxLines: maxLines,
+                textInputAction: textInputAction,
+                onFieldSubmitted: onSubmitted,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                ),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                  hintText: 'Enter ${label.toLowerCase()}',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
