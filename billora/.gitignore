@@ -43,7 +43,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Web related
+# Web related - ignore build artifacts but keep source
 web/flutter_bootstrap.js
 web/main.dart.js
 web/assets/
@@ -70,3 +70,6 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+# Keep build script for Vercel
+!build.sh

@@ -1,8 +1,13 @@
 {
   "builds": [
     {
-      "src": "index.html",
-      "use": "@vercel/static"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build/web",
+        "buildCommand": "chmod +x build.sh && ./build.sh",
+        "installCommand": "echo 'Flutter dependencies will be installed by build script'"
+      }
     }
   ],
   "routes": [

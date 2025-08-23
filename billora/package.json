@@ -5,6 +5,7 @@
   "main": "index.html",
   "scripts": {
     "build": "flutter build web --release",
+    "vercel-build": "flutter build web --release",
     "dev": "flutter run -d chrome --web-port=3000",
     "clean": "flutter clean",
     "get": "flutter pub get",
