@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import '../../data/datasources/enhanced_free_ocr_datasource.dart';
 import '../../data/repositories/bill_scanner_repository_impl.dart';
@@ -8,7 +7,6 @@ import '../../domain/entities/scanned_bill.dart';
 import '../../domain/entities/bill_line_item.dart';
 import '../../domain/entities/scan_result.dart';
 import 'data_correction_page.dart';
-// import 'bill_preview_page.dart';  // Temporarily disabled
 
 class ImageUploadPage extends StatefulWidget {
   const ImageUploadPage({super.key});
@@ -87,25 +85,136 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
             // Upload Options
             Column(
               children: [
-                _buildUploadOption(
-                  icon: Icons.camera_alt,
-                  title: 'Chụp Ảnh Mới',
-                  subtitle: 'Sử dụng camera để chụp hóa đơn',
-                  onTap: _takePhoto,
+                // Image Upload Option
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.blue.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.image,
+                        size: 48,
+                        color: Colors.blue.shade600,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Chọn ảnh từ thư viện',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Chọn ảnh hóa đơn có sẵn từ thiết bị',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _pickFromGallery,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue.shade600,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text(
+                            'Chọn ảnh',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                
                 const SizedBox(height: 16),
-                _buildUploadOption(
-                  icon: Icons.photo_library,
-                  title: 'Chọn từ Thư viện',
-                  subtitle: 'Chọn ảnh có sẵn từ thư viện',
-                  onTap: _pickFromGallery,
-                ),
-                const SizedBox(height: 16),
-                _buildUploadOption(
-                  icon: Icons.folder_open,
-                  title: 'Chọn File',
-                  subtitle: 'Chọn file ảnh từ thiết bị',
-                  onTap: _pickFile,
+                
+                // QR Scanner Option
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.qr_code_scanner,
+                        size: 48,
+                        color: Colors.green.shade600,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Quét QR Code',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Quét QR code để chỉnh sửa hóa đơn có sẵn',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.pushNamed(context, '/qr-scanner'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade600,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.qr_code_scanner),
+                          label: const Text(
+                            'Quét QR Code',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -260,98 +369,6 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
     );
   }
 
-  Widget _buildUploadOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: Colors.blue.shade600,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.grey.shade400,
-                  size: 16,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _takePhoto() async {
-    try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 90,
-      );
-      if (image != null && mounted) {
-        setState(() {
-          _selectedImagePath = image.path;
-        });
-      }
-    } catch (e) {
-      if (mounted) _showErrorDialog('Lỗi chụp ảnh: $e');
-    }
-  }
-
   Future<void> _pickFromGallery() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -367,29 +384,6 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
       }
     } catch (e) {
       if (mounted) _showErrorDialog('Lỗi chọn ảnh: $e');
-    }
-  }
-
-  Future<void> _pickFile() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-        allowCompression: true,
-      );
-      
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        if (file.path != null) {
-          setState(() {
-            _selectedImagePath = file.path;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorDialog('Lỗi chọn file: $e');
-      }
     }
   }
 
@@ -464,7 +458,7 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
         scanDate: DateTime.now(),
         scanResult: ScanResult(
           rawText: text,
-          confidence: ScanConfidence.unknown,
+          confidence: ScanConfidence.medium,
           processedAt: DateTime.now(),
           ocrProvider: 'OCR.Space',
         ),

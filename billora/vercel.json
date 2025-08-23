@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "vercel-build.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build/web"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/flutter_bootstrap.js",
+      "dest": "/flutter_bootstrap.js"
+    },
+    {
+      "src": "/main.dart.js",
+      "dest": "/main.dart.js"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/icons/(.*)",
+      "dest": "/icons/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "outputDirectory": "build/web",
+  "buildCommand": "chmod +x vercel-build.sh && ./vercel-build.sh",
+  "installCommand": "echo 'Flutter dependencies will be installed by build script'",
+  "framework": "flutter",
+  "functions": {},
+  "env": {
+    "FLUTTER_VERSION": "3.16.0"
+  },
+  "build": {
+    "env": {
+      "FLUTTER_VERSION": "3.16.0"
+    }
+  }
+} 

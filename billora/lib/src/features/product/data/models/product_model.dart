@@ -10,6 +10,11 @@ class ProductModel {
   final double tax;
   final int inventory;
   final bool isService;
+  final String? companyOrShopName;
+  final String? companyAddress;
+  final String? companyPhone;
+  final String? companyEmail;
+  final String? companyWebsite;
   final String userId;
   final List<String> searchKeywords;
 
@@ -22,6 +27,11 @@ class ProductModel {
     required this.tax,
     required this.inventory,
     this.isService = false,
+    this.companyOrShopName,
+    this.companyAddress,
+    this.companyPhone,
+    this.companyEmail,
+    this.companyWebsite,
     required this.userId,
     this.searchKeywords = const [],
   });
@@ -42,6 +52,11 @@ class ProductModel {
         tax: (json['tax'] ?? 0).toDouble(),
         inventory: (json['inventory'] ?? 0).toInt(),
         isService: json['isService'] ?? false,
+        companyOrShopName: json['companyOrShopName'],
+        companyAddress: json['companyAddress'],
+        companyPhone: json['companyPhone'],
+        companyEmail: json['companyEmail'],
+        companyWebsite: json['companyWebsite'],
         userId: json['userId'] ?? '',
         searchKeywords: List<String>.from(json['searchKeywords'] ?? []),
       );
@@ -56,6 +71,11 @@ class ProductModel {
         'tax': tax,
         'inventory': inventory,
         'isService': isService,
+        if (companyOrShopName != null && companyOrShopName!.isNotEmpty) 'companyOrShopName': companyOrShopName,
+        if (companyAddress != null && companyAddress!.isNotEmpty) 'companyAddress': companyAddress,
+        if (companyPhone != null && companyPhone!.isNotEmpty) 'companyPhone': companyPhone,
+        if (companyEmail != null && companyEmail!.isNotEmpty) 'companyEmail': companyEmail,
+        if (companyWebsite != null && companyWebsite!.isNotEmpty) 'companyWebsite': companyWebsite,
         'userId': userId,
         'searchKeywords': searchKeywords,
       };
@@ -69,6 +89,11 @@ class ProductModel {
         tax: tax,
         inventory: inventory,
         isService: isService,
+        companyOrShopName: companyOrShopName,
+        companyAddress: companyAddress,
+        companyPhone: companyPhone,
+        companyEmail: companyEmail,
+        companyWebsite: companyWebsite,
       );
 
   factory ProductModel.fromEntity(Product product, String userId) => ProductModel(
@@ -80,6 +105,11 @@ class ProductModel {
         tax: product.tax,
         inventory: product.inventory,
         isService: product.isService,
+        companyOrShopName: product.companyOrShopName,
+        companyAddress: product.companyAddress,
+        companyPhone: product.companyPhone,
+        companyEmail: product.companyEmail,
+        companyWebsite: product.companyWebsite,
         userId: userId,
       );
 } 

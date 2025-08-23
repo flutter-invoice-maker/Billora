@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:billora/src/features/invoice/domain/entities/invoice.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/invoice_print_templates.dart';
-import 'package:billora/src/features/invoice/presentation/widgets/ai_summary_card.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/qr_code_widget.dart';
 
 class InvoicePreviewWidget extends StatelessWidget {
@@ -69,16 +68,7 @@ class InvoicePreviewWidget extends StatelessWidget {
             
             const SizedBox(height: 24),
             
-            // AI Summary Card
-            AISummaryCard(
-              invoice: invoice,
-              primaryColor: primaryColor,
-              onRetry: () {
-                // Retry logic for AI analysis - will be implemented when AI service is enhanced
-              },
-            ),
-            
-            const SizedBox(height: 24),
+
             
             // QR Code Section
             Card(

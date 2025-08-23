@@ -33,9 +33,24 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
 
   Future<void> saveScanItem(ScanLibraryItem item) async {
     try {
+      // Save the item first
       await saveScanItemUseCase(item);
-      await loadScanItems(); // Reload to get updated list
-      emit(ScanLibraryState.itemSaved(item));
+      
+      // Get current state
+      final currentState = state;
+      
+      // If we have loaded items, add the new item to the list
+      if (currentState is ScanLibraryLoaded) {
+        final updatedItems = List<ScanLibraryItem>.from(currentState.items);
+        updatedItems.insert(0, item); // Add new item at the beginning
+        emit(ScanLibraryState.loaded(updatedItems));
+        emit(ScanLibraryState.itemSaved(item));
+      } else {
+        // If no items loaded yet, just emit saved state
+        emit(ScanLibraryState.itemSaved(item));
+        // Then load all items to refresh the list
+        await loadScanItems();
+      }
     } catch (e) {
       emit(ScanLibraryState.error(e.toString()));
     }
@@ -44,8 +59,21 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
   Future<void> updateScanItem(ScanLibraryItem item) async {
     try {
       await updateScanItemUseCase(item);
-      await loadScanItems(); // Reload to get updated list
-      emit(ScanLibraryState.itemUpdated(item));
+      
+      // Get current state
+      final currentState = state;
+      
+      // If we have loaded items, update the item in the list
+      if (currentState is ScanLibraryLoaded) {
+        final updatedItems = currentState.items.map((existingItem) {
+          return existingItem.id == item.id ? item : existingItem;
+        }).toList();
+        emit(ScanLibraryState.loaded(updatedItems));
+        emit(ScanLibraryState.itemUpdated(item));
+      } else {
+        emit(ScanLibraryState.itemUpdated(item));
+        await loadScanItems();
+      }
     } catch (e) {
       emit(ScanLibraryState.error(e.toString()));
     }
@@ -54,8 +82,19 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
   Future<void> deleteScanItem(String id) async {
     try {
       await deleteScanItemUseCase(id);
-      await loadScanItems(); // Reload to get updated list
-      emit(ScanLibraryState.itemDeleted(id));
+      
+      // Get current state
+      final currentState = state;
+      
+      // If we have loaded items, remove the item from the list
+      if (currentState is ScanLibraryLoaded) {
+        final updatedItems = currentState.items.where((item) => item.id != id).toList();
+        emit(ScanLibraryState.loaded(updatedItems));
+        emit(ScanLibraryState.itemDeleted(id));
+      } else {
+        emit(ScanLibraryState.itemDeleted(id));
+        await loadScanItems();
+      }
     } catch (e) {
       emit(ScanLibraryState.error(e.toString()));
     }

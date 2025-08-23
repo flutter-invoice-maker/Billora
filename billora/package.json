@@ -1,0 +1,35 @@
+{
+  "name": "billora-web",
+  "version": "1.0.0",
+  "description": "Billora - Business Management Platform Web App",
+  "main": "index.js",
+  "scripts": {
+    "build": "flutter build web --release",
+    "dev": "flutter run -d chrome --web-port=3000",
+    "clean": "flutter clean",
+    "get": "flutter pub get",
+    "analyze": "flutter analyze",
+    "test": "flutter test",
+    "format": "dart format .",
+    "vercel-build": "flutter build web --release"
+  },
+  "keywords": [
+    "flutter",
+    "web",
+    "business",
+    "management",
+    "invoice",
+    "customer",
+    "analytics"
+  ],
+  "author": "Billora Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/billora.git"
+  },
+  "homepage": "https://billora.vercel.app"
+} 

@@ -7,11 +7,17 @@ import 'package:billora/src/core/widgets/delete_dialog.dart';
 class ProductCard extends StatefulWidget {
   final Product product;
   final VoidCallback onEdit;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final ValueChanged<bool> onSelectionChanged;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onEdit,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    required this.onSelectionChanged,
   });
 
   @override
@@ -131,79 +137,126 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-            child: Container(
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+    return GestureDetector(
+      onTap: () {
+        if (widget.isSelectionMode) {
+          widget.onSelectionChanged(!widget.isSelected);
+        } else {
+          widget.onEdit();
+        }
+      },
+      onLongPress: () {
+        if (!widget.isSelectionMode) {
+          widget.onSelectionChanged(true);
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: widget.isSelected ? const Color(0xFFE3F2FD) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: widget.isSelected 
+                ? Border.all(color: const Color(0xFF007AFF), width: 1)
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    _getProductImage(),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.product.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              widget.product.category,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6366F1),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Selection checkbox (only visible in selection mode)
+                if (widget.isSelectionMode) ...[
+                  AnimatedScale(
+                    duration: const Duration(milliseconds: 200),
+                    scale: widget.isSelectionMode ? 1.0 : 0.0,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: widget.isSelected ? const Color(0xFF007AFF) : Colors.transparent,
+                        border: Border.all(
+                          color: widget.isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      child: widget.isSelected
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 16,
+                            )
+                          : null,
                     ),
-                      GestureDetector(
-                        onTap: _showOptionsMenu,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.more_vert,
-                            color: Colors.grey,
-                            size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                
+                _getProductImage(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.product.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          widget.product.category,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6366F1),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+                // Show options menu only when not in selection mode
+                if (!widget.isSelectionMode)
+                  GestureDetector(
+                    onTap: _showOptionsMenu,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.more_vert,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -163,6 +163,11 @@ class InvoiceItemModel {
   final double tax;
   final double total;
   final String productId;
+  final String? companyOrShopName;
+  final String? companyAddress;
+  final String? companyPhone;
+  final String? companyEmail;
+  final String? companyWebsite;
 
   InvoiceItemModel({
     required this.id,
@@ -173,6 +178,11 @@ class InvoiceItemModel {
     required this.tax,
     required this.total,
     required this.productId,
+    this.companyOrShopName,
+    this.companyAddress,
+    this.companyPhone,
+    this.companyEmail,
+    this.companyWebsite,
   });
 
   factory InvoiceItemModel.fromJson(Map<String, dynamic> json) => InvoiceItemModel(
@@ -184,6 +194,11 @@ class InvoiceItemModel {
         tax: (json['tax'] ?? 0).toDouble(),
         total: (json['total'] ?? 0).toDouble(),
         productId: json['productId'] ?? '',
+        companyOrShopName: json['companyOrShopName'],
+        companyAddress: json['companyAddress'],
+        companyPhone: json['companyPhone'],
+        companyEmail: json['companyEmail'],
+        companyWebsite: json['companyWebsite'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -195,6 +210,11 @@ class InvoiceItemModel {
         'tax': tax,
         'total': total,
         'productId': productId,
+        if (companyOrShopName != null && companyOrShopName!.isNotEmpty) 'companyOrShopName': companyOrShopName,
+        if (companyAddress != null && companyAddress!.isNotEmpty) 'companyAddress': companyAddress,
+        if (companyPhone != null && companyPhone!.isNotEmpty) 'companyPhone': companyPhone,
+        if (companyEmail != null && companyEmail!.isNotEmpty) 'companyEmail': companyEmail,
+        if (companyWebsite != null && companyWebsite!.isNotEmpty) 'companyWebsite': companyWebsite,
       };
 
   InvoiceItem toEntity() => InvoiceItem(
@@ -206,6 +226,11 @@ class InvoiceItemModel {
         tax: tax,
         total: total,
         productId: productId,
+        companyOrShopName: companyOrShopName,
+        companyAddress: companyAddress,
+        companyPhone: companyPhone,
+        companyEmail: companyEmail,
+        companyWebsite: companyWebsite,
       );
 
   factory InvoiceItemModel.fromEntity(InvoiceItem item) => InvoiceItemModel(
@@ -217,5 +242,10 @@ class InvoiceItemModel {
         tax: item.tax,
         total: item.total,
         productId: item.productId,
+        companyOrShopName: item.companyOrShopName,
+        companyAddress: item.companyAddress,
+        companyPhone: item.companyPhone,
+        companyEmail: item.companyEmail,
+        companyWebsite: item.companyWebsite,
       );
 } 
