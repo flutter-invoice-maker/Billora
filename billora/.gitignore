@@ -71,5 +71,5 @@ coverage/
 *.tmp
 *.temp
 
-# Keep build script for Vercel
-!build.sh
+# Keep build scripts for Vercel
+!vercel-build.sh

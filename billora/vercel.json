@@ -1,7 +1,7 @@
 {
   "builds": [
     {
-      "src": "build.sh",
+      "src": "vercel-build.sh",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build/web"
