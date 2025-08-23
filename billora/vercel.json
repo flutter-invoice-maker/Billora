@@ -1,12 +1,8 @@
 {
-  "version": 2,
   "builds": [
     {
-      "src": "vercel-build.sh",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build/web"
-      }
+      "src": "index.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -27,21 +23,12 @@
       "dest": "/icons/$1"
     },
     {
+      "src": "/canvaskit/(.*)",
+      "dest": "/canvaskit/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "outputDirectory": "build/web",
-  "buildCommand": "chmod +x vercel-build.sh && ./vercel-build.sh",
-  "installCommand": "echo 'Flutter dependencies will be installed by build script'",
-  "framework": "flutter",
-  "functions": {},
-  "env": {
-    "FLUTTER_VERSION": "3.16.0"
-  },
-  "build": {
-    "env": {
-      "FLUTTER_VERSION": "3.16.0"
-    }
-  }
+  ]
 } 

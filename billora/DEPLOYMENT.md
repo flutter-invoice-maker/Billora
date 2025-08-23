@@ -23,12 +23,7 @@ flutter build web --release
 
 #### 2. Connect to Vercel
 
-1. **Install Vercel CLI** (optional):
-   ```bash
-   npm i -g vercel
-   ```
-
-2. **Deploy via Vercel Dashboard**:
+1. **Deploy via Vercel Dashboard**:
    - Go to [vercel.com](https://vercel.com)
    - Click "New Project"
    - Import your Git repository
@@ -37,15 +32,17 @@ flutter build web --release
 #### 3. Build Configuration
 
 The project includes:
-- `vercel.json` - Vercel configuration
+- `vercel.json` - Vercel configuration for static deployment
 - `.vercelignore` - Files to exclude from deployment
 - `package.json` - Build scripts and metadata
 
-#### 4. Environment Variables
+#### 4. Deployment Process
 
-Set these in Vercel dashboard if needed:
-- `FLUTTER_VERSION` - Flutter version to use
-- `NODE_VERSION` - Node.js version (default: 16)
+Vercel will automatically:
+1. Detect Flutter web project
+2. Use static deployment configuration
+3. Serve the `build/web` directory
+4. Handle routing for SPA (Single Page Application)
 
 #### 5. Custom Domain
 
@@ -57,11 +54,34 @@ After deployment:
 
 ### Build Process
 
-Vercel will automatically:
-1. Install Flutter
-2. Run `flutter pub get`
-3. Execute `flutter build web --release`
-4. Deploy the `build/web` directory
+1. **Local Build**:
+   ```bash
+   flutter build web --release
+   ```
+
+2. **Vercel Deployment**:
+   - Vercel serves the `build/web` directory
+   - All routes redirect to `index.html` for SPA
+   - Static assets are served directly
+
+### File Structure for Deployment
+
+```
+build/web/
+├── index.html          # Main HTML file
+├── main.dart.js        # Flutter compiled JavaScript
+├── flutter_bootstrap.js # Flutter bootstrap
+├── assets/             # App assets
+├── icons/              # App icons
+└── canvaskit/          # Canvas rendering (if enabled)
+```
+
+### Routing Configuration
+
+The `vercel.json` handles:
+- **Static assets**: `/assets/*`, `/icons/*`, `/canvaskit/*`
+- **Flutter files**: `/flutter_bootstrap.js`, `/main.dart.js`
+- **SPA routing**: All other routes redirect to `index.html`
 
 ### Troubleshooting
 
@@ -74,12 +94,11 @@ Vercel will automatically:
 
 2. **Assets Not Loading**:
    - Check asset paths in `web/index.html`
-   - Verify `--base-href` configuration
+   - Verify build output in `build/web/` directory
 
-3. **Performance Issues**:
-   - Enable Flutter web optimizations
-   - Use `--release` build mode
-   - Implement proper caching strategies
+3. **Routing Issues**:
+   - Ensure `vercel.json` routes are correct
+   - Check that all routes redirect to `index.html`
 
 #### Build Commands
 
@@ -131,4 +150,4 @@ For deployment issues:
 
 ---
 
-**Note**: This deployment guide is specifically for Vercel. For other platforms, refer to their respective Flutter web deployment documentation. 
+**Note**: This deployment guide is specifically for Vercel static deployment. The configuration is optimized for Flutter web SPA applications. 

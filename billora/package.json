@@ -2,7 +2,7 @@
   "name": "billora-web",
   "version": "1.0.0",
   "description": "Billora - Business Management Platform Web App",
-  "main": "index.js",
+  "main": "index.html",
   "scripts": {
     "build": "flutter build web --release",
     "dev": "flutter run -d chrome --web-port=3000",
@@ -10,8 +10,7 @@
     "get": "flutter pub get",
     "analyze": "flutter analyze",
     "test": "flutter test",
-    "format": "dart format .",
-    "vercel-build": "flutter build web --release"
+    "format": "dart format ."
   },
   "keywords": [
     "flutter",
