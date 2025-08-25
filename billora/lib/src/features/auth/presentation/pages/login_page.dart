@@ -137,7 +137,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           Text(
                             'Welcome Back',
                             style: TextStyle(
-                              color: Colors.black,
+                              color: const Color(0xFF1E3A8A), // Blue 800
                               fontSize: isTablet ? 18 : 16,
                               fontWeight: FontWeight.w600,
                               letterSpacing: -0.2,
@@ -158,7 +158,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   decoration: BoxDecoration(
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
+                                        color: const Color(0xFF3B82F6).withValues(alpha: 0.2), // Blue shadow
                                         blurRadius: 20,
                                         offset: const Offset(0, 10),
                                         spreadRadius: 2,
@@ -173,7 +173,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                       errorBuilder: (context, error, stackTrace) {
                                         return Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.black,
+                                            gradient: const LinearGradient(
+                                              colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)], // Blue gradient
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
                                             borderRadius: BorderRadius.circular(20),
                                           ),
                                           child: Icon(
@@ -198,7 +202,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                             style: TextStyle(
                               fontSize: isTablet ? 28 : 24,
                               fontWeight: FontWeight.w800,
-                              color: Colors.black,
+                              color: const Color(0xFF1F2937), // Gray 800
                               letterSpacing: -0.5,
                             ),
                           ),
@@ -225,6 +229,32 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 const SizedBox(height: 16),
                                 _buildPasswordField(isTablet),
                                 
+                                const SizedBox(height: 12),
+                                
+                                // Forgot password - aligned to the right
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: const Text('Password reset coming soon.'),
+                                          behavior: SnackBarBehavior.floating,
+                                          backgroundColor: const Color(0xFF1E40AF), // Blue 800
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Forgot password?',
+                                      style: TextStyle(
+                                        color: const Color(0xFF2563EB), // Blue 600
+                                        fontSize: isTablet ? 15 : 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                
                                 const SizedBox(height: 24),
                                 
                                 // Error message
@@ -236,29 +266,26 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 
                                 const SizedBox(height: 20),
                                 
-                                // Forgot password
+                                // Sign up link - moved here
                                 GestureDetector(
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Password reset coming soon.'),
-                                        behavior: SnackBarBehavior.floating,
-                                        backgroundColor: Colors.black,
-                                      ),
-                                    );
+                                  onTap: isLoading ? null : () {
+                                    // Reset animations before navigation
+                                    _fadeController.reset();
+                                    _slideController.reset();
+                                    Navigator.of(context).pushReplacementNamed('/register');
                                   },
                                   child: RichText(
                                     text: TextSpan(
-                                      text: 'Forgot your password? ',
+                                      text: "Don't have an account? ",
                                       style: TextStyle(
                                         color: Colors.grey[600],
                                         fontSize: isTablet ? 15 : 14,
                                       ),
                                       children: [
                                         TextSpan(
-                                          text: 'Reset it here',
+                                          text: 'Sign up',
                                           style: TextStyle(
-                                            color: Colors.blue[600],
+                                            color: const Color(0xFF2563EB), // Blue 600
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -303,10 +330,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 _socialButton(
                                   onPressed: isLoading ? null : () {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Passkey login coming soon.'),
+                                      SnackBar(
+                                        content: const Text('Passkey login coming soon.'),
                                         behavior: SnackBarBehavior.floating,
-                                        backgroundColor: Colors.black,
+                                        backgroundColor: const Color(0xFF1E40AF), // Blue 800
                                       ),
                                     );
                                   },
@@ -329,37 +356,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           ),
                           
                           const Spacer(),
-                          
-                          // Sign up link
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 32),
-                            child: GestureDetector(
-                              onTap: isLoading ? null : () {
-                                // Reset animations before navigation
-                                _fadeController.reset();
-                                _slideController.reset();
-                                Navigator.of(context).pushReplacementNamed('/register');
-                              },
-                              child: RichText(
-                                text: TextSpan(
-                                  text: "Don't have an account? ",
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: isTablet ? 15 : 14,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Sign up',
-                                      style: TextStyle(
-                                        color: Colors.blue[600],
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -392,11 +388,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ),
           prefixIcon: Icon(
             Icons.email_outlined,
-            color: Colors.grey[500],
+            color: const Color(0xFF6B7280), // Gray 500
             size: isTablet ? 22 : 20,
           ),
           filled: true,
-          fillColor: const Color(0xFFF3F4F6),
+          fillColor: const Color(0xFFF9FAFB), // Gray 50
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16,
             vertical: isTablet ? 20 : 18,
@@ -407,11 +403,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: const Color(0xFFE5E7EB), width: 1), // Gray 200
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2), // Blue 500
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -447,19 +443,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ),
           prefixIcon: Icon(
             Icons.lock_outline,
-            color: Colors.grey[500],
+            color: const Color(0xFF6B7280), // Gray 500
             size: isTablet ? 22 : 20,
           ),
           suffixIcon: IconButton(
             onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
             icon: Icon(
               _isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: Colors.grey[500],
+              color: const Color(0xFF6B7280), // Gray 500
               size: isTablet ? 22 : 20,
             ),
           ),
           filled: true,
-          fillColor: const Color(0xFFF3F4F6),
+          fillColor: const Color(0xFFF9FAFB), // Gray 50
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16,
             vertical: isTablet ? 20 : 18,
@@ -470,11 +466,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: const Color(0xFFE5E7EB), width: 1), // Gray 200
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2), // Blue 500
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -525,7 +521,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       child: ElevatedButton(
         onPressed: isLoading ? null : _onLogin,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
+          backgroundColor: const Color(0xFF1E40AF), // Blue 800
           foregroundColor: Colors.white,
           elevation: 0,
           shadowColor: Colors.transparent,
@@ -566,8 +562,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFFF3F4F6),
-          side: BorderSide(color: Colors.grey[300]!, width: 1),
+          backgroundColor: const Color(0xFFF9FAFB), // Gray 50
+          side: BorderSide(color: const Color(0xFFD1D5DB), width: 1), // Gray 300
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -575,12 +571,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.black, size: isTablet ? 24 : 22),
+            Icon(icon, color: const Color(0xFF374151), size: isTablet ? 24 : 22), // Gray 700
             const SizedBox(width: 12),
             Text(
               label,
               style: TextStyle(
-                color: Colors.black,
+                color: const Color(0xFF374151), // Gray 700
                 fontWeight: FontWeight.w600,
                 fontSize: isTablet ? 16 : 15,
                 letterSpacing: -0.1,
