@@ -66,6 +66,4 @@ class _BillScannerHubPageState extends State<BillScannerHubPage>
       ),
     );
   }
-
-
 } 

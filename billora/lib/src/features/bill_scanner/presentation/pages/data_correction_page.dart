@@ -42,14 +42,14 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kiểm Tra Dữ Liệu'),
+        title: const Text('Data Review'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: _saveAndContinue,
-            tooltip: 'Xác nhận và tiếp tục',
+            tooltip: 'Confirm and continue',
           ),
         ],
       ),
@@ -74,7 +74,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
                       Icon(Icons.document_scanner, color: Colors.blue.shade600),
                       const SizedBox(width: 8),
                       Text(
-                        'Dữ Liệu Đã Quét',
+                        'Scanned Data',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.blue.shade700,
@@ -102,7 +102,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             const SizedBox(height: 20),
             
             const Text(
-              'Kiểm tra và sửa dữ liệu trích xuất',
+              'Review and correct extracted data',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -111,7 +111,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             TextFormField(
               controller: _storeNameController,
               decoration: const InputDecoration(
-                labelText: 'Tên Cửa Hàng',
+                labelText: 'Store Name',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.store),
               ),
@@ -122,7 +122,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             TextFormField(
               controller: _totalAmountController,
               decoration: const InputDecoration(
-                labelText: 'Tổng Tiền',
+                labelText: 'Total Amount',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.attach_money),
                 suffixText: 'đ',
@@ -135,7 +135,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             TextFormField(
               controller: _phoneController,
               decoration: const InputDecoration(
-                labelText: 'Số Điện Thoại',
+                labelText: 'Phone Number',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.phone),
               ),
@@ -147,7 +147,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             TextFormField(
               controller: _addressController,
               decoration: const InputDecoration(
-                labelText: 'Địa Chỉ',
+                labelText: 'Address',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.location_on),
               ),
@@ -159,7 +159,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             // Items Section
             if (_items.isNotEmpty) ...[
               Text(
-                'Chi Tiết Hàng Hóa (${_items.length} mục)',
+                'Line Items (${_items.length})',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
@@ -169,7 +169,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             
             // Raw OCR Text (collapsible)
             ExpansionTile(
-              title: const Text('Văn Bản OCR Gốc'),
+              title: const Text('Raw OCR Text'),
               children: [
                 Container(
                   width: double.infinity,
@@ -204,7 +204,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: const Text(
-                      'Xác Nhận & Tiếp Tục',
+                      'Confirm & Continue',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -227,7 +227,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
             TextFormField(
               initialValue: item.description,
               decoration: const InputDecoration(
-                labelText: 'Mô tả sản phẩm',
+                labelText: 'Product Description',
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) {
@@ -243,7 +243,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
                   child: TextFormField(
                     initialValue: item.quantity.toString(),
                     decoration: const InputDecoration(
-                      labelText: 'Số lượng',
+                      labelText: 'Quantity',
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.number,
@@ -260,7 +260,7 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
                   child: TextFormField(
                     initialValue: item.unitPrice.toString(),
                     decoration: const InputDecoration(
-                      labelText: 'Đơn giá',
+                      labelText: 'Unit Price',
                       border: OutlineInputBorder(),
                       suffixText: 'đ',
                     ),
@@ -296,13 +296,13 @@ class _DataCorrectionPageState extends State<DataCorrectionPage> {
   String _getConfidenceText(ScanConfidence confidence) {
     switch (confidence) {
       case ScanConfidence.high:
-        return 'Cao';
+        return 'High';
       case ScanConfidence.medium:
-        return 'Trung bình';
+        return 'Medium';
       case ScanConfidence.low:
-        return 'Thấp';
+        return 'Low';
       case ScanConfidence.unknown:
-        return 'Không xác định';
+        return 'Unknown';
     }
   }
-} 
+}

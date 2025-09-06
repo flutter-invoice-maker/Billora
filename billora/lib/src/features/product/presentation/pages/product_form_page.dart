@@ -279,7 +279,7 @@ class _ProductFormPageState extends State<ProductFormPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: const Color(0xFF1976D2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
@@ -303,7 +303,7 @@ class _ProductFormPageState extends State<ProductFormPage>
       style: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: Colors.black,
+        color: Color(0xFF1976D2),
       ),
     );
   }
@@ -331,47 +331,85 @@ class _ProductFormPageState extends State<ProductFormPage>
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: enabled ? Colors.white : const Color(0xFFF2F2F7),
-            border: Border.all(
-              color: const Color(0xFFE5E5EA),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(8),
+        TextFormField(
+          initialValue: value,
+          onChanged: onChanged,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          enabled: enabled,
+          validator: isRequired ? (value) => value == null || value.isEmpty ? 'Required' : null : null,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
           ),
-          child: TextFormField(
-            initialValue: value,
-            onChanged: onChanged,
-            keyboardType: keyboardType,
-            maxLines: maxLines,
-            enabled: enabled,
-            validator: isRequired ? (value) => value == null || value.isEmpty ? 'Required' : null : null,
-            style: const TextStyle(
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFFE3F2FD),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFFE3F2FD),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFF1976D2),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Colors.red,
+                width: 2,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Colors.red,
+                width: 2,
+              ),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFFF2F2F7),
+                width: 1,
+              ),
+            ),
+            filled: true,
+            fillColor: enabled ? Colors.white : const Color(0xFFF2F2F7),
+            contentPadding: const EdgeInsets.all(16),
+            prefixText: prefix,
+            suffixText: suffix,
+            prefixStyle: const TextStyle(
               fontSize: 16,
-              color: Colors.black,
+              color: Color(0xFF64B5F6),
               fontWeight: FontWeight.w500,
             ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
-              prefixText: prefix,
-              suffixText: suffix,
-              prefixStyle: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF8E8E93),
-                fontWeight: FontWeight.w500,
-              ),
-              suffixStyle: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF8E8E93),
-                fontWeight: FontWeight.w500,
-              ),
-              hintStyle: const TextStyle(
-                color: Color(0xFF8E8E93),
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-              ),
+            suffixStyle: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF64B5F6),
+              fontWeight: FontWeight.w500,
+            ),
+            hintStyle: const TextStyle(
+              color: Color(0xFF8E8E93),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+            errorStyle: const TextStyle(
+              color: Colors.red,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
@@ -405,7 +443,7 @@ class _ProductFormPageState extends State<ProductFormPage>
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(
-              color: const Color(0xFFE5E5EA),
+              color: const Color(0xFFE3F2FD),
               width: 1,
             ),
             borderRadius: BorderRadius.circular(8),
@@ -419,7 +457,7 @@ class _ProductFormPageState extends State<ProductFormPage>
                   Icon(
                     template['icon'] as IconData,
                     size: 20,
-                    color: const Color(0xFF8E8E93),
+                    color: const Color(0xFF1976D2),
                   ),
                   const SizedBox(width: 12),
                   Flexible(
@@ -445,9 +483,50 @@ class _ProductFormPageState extends State<ProductFormPage>
               });
             },
             validator: (value) => value == null ? 'Required' : null,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE3F2FD),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE3F2FD),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1976D2),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 2,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.all(16),
+              errorStyle: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             isExpanded: true,
             dropdownStyleData: DropdownStyleData(
@@ -456,7 +535,7 @@ class _ProductFormPageState extends State<ProductFormPage>
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: const Color(0xFF1976D2).withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -487,7 +566,7 @@ class _ProductFormPageState extends State<ProductFormPage>
           decoration: BoxDecoration(
             color: _selectedTemplate == 'service_based' ? const Color(0xFFF2F2F7) : Colors.white,
             border: Border.all(
-              color: const Color(0xFFE5E5EA),
+              color: const Color(0xFFE3F2FD),
               width: 1,
             ),
             borderRadius: BorderRadius.circular(8),
@@ -508,7 +587,7 @@ class _ProductFormPageState extends State<ProductFormPage>
               Switch(
                 value: _isService,
                 onChanged: _selectedTemplate == 'service_based' ? null : (value) => setState(() => _isService = value),
-                activeColor: Colors.black,
+                activeColor: const Color(0xFF1976D2),
                 inactiveThumbColor: const Color(0xFF8E8E93),
                 inactiveTrackColor: const Color(0xFFE5E5EA),
               ),
@@ -985,7 +1064,7 @@ class _ProductFormPageState extends State<ProductFormPage>
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(
-              color: const Color(0xFFE5E5EA),
+              color: const Color(0xFFE3F2FD),
               width: 1,
             ),
             borderRadius: BorderRadius.circular(8),
@@ -999,7 +1078,7 @@ class _ProductFormPageState extends State<ProductFormPage>
                   Icon(
                     item['icon'],
                     size: 20,
-                    color: const Color(0xFF8E8E93),
+                    color: const Color(0xFF1976D2),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -1015,9 +1094,50 @@ class _ProductFormPageState extends State<ProductFormPage>
             )).toList(),
             onChanged: onChanged,
             validator: isRequired ? (v) => v == null ? 'Required' : null : null,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE3F2FD),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE3F2FD),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1976D2),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 2,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.all(16),
+              errorStyle: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             isExpanded: true,
             dropdownStyleData: DropdownStyleData(
@@ -1026,7 +1146,7 @@ class _ProductFormPageState extends State<ProductFormPage>
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: const Color(0xFF1976D2).withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -1045,7 +1165,7 @@ class _ProductFormPageState extends State<ProductFormPage>
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(
-          color: const Color(0xFFE5E5EA),
+          color: const Color(0xFFE3F2FD),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -1066,7 +1186,7 @@ class _ProductFormPageState extends State<ProductFormPage>
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.black,
+            activeColor: const Color(0xFF1976D2),
             inactiveThumbColor: const Color(0xFF8E8E93),
             inactiveTrackColor: const Color(0xFFE5E5EA),
           ),
@@ -1080,8 +1200,15 @@ class _ProductFormPageState extends State<ProductFormPage>
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: const Color(0xFF1976D2),
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1976D2).withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,

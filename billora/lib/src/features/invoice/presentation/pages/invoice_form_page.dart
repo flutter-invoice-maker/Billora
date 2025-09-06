@@ -621,8 +621,8 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                 children: tempSelected.map((name) {
                                   return Chip(
                                     label: Text(name),
-                                    labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-                                    backgroundColor: Colors.black,
+                                    labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                                    backgroundColor: const Color(0xFF2563EB),
                                     labelPadding: const EdgeInsets.symmetric(horizontal: 8),
                                     deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
                                     onDeleted: () {
@@ -662,7 +662,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                           '#$name',
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: isSelected ? Colors.black : Colors.black87,
+                                            color: isSelected ? const Color(0xFF2563EB) : Colors.black87,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -671,8 +671,8 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                           width: 28,
                                           height: 28,
                                           decoration: BoxDecoration(
-                                            color: isSelected ? Colors.black : Colors.transparent,
-                                            border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
+                                            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+                                            border: Border.all(color: isSelected ? const Color(0xFF2563EB) : Colors.grey.shade300),
                                             borderRadius: BorderRadius.circular(14),
                                           ),
                                           child: Icon(
@@ -743,7 +743,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
+                                    backgroundColor: const Color(0xFF2563EB),
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -765,7 +765,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                               child: ElevatedButton(
                                 onPressed: applySelection,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
+                                  backgroundColor: const Color(0xFF2563EB),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   elevation: 0,
@@ -826,7 +826,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
       case InvoiceStatus.draft:
         return Colors.orange.shade600;
       case InvoiceStatus.sent:
-        return Colors.blue.shade600;
+        return const Color(0xFF2563EB);
       case InvoiceStatus.paid:
         return Colors.green.shade600;
       case InvoiceStatus.overdue:
@@ -931,7 +931,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                         if (isSelected)
                           const Icon(
                             Icons.check_circle,
-                            color: Colors.black,
+                            color: Color(0xFF2563EB),
                             size: 24,
                           ),
                       ],
@@ -1140,7 +1140,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
               padding: const EdgeInsets.only(right: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: const Color(0xFF2563EB),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Material(
@@ -1179,7 +1179,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                   selectedCustomerId: _customerId.isNotEmpty ? _customerId : null,
                   selectedCustomerName: _customerName.isNotEmpty ? _customerName : null,
                   onCustomerSelected: _onCustomerSelected,
-                  primaryColor: Colors.black,
+                  primaryColor: const Color(0xFF2563EB),
                 ),
               ),
             ),
@@ -1217,7 +1217,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                     child: SmartRecommendationsWidget(
                       customerId: _customerId,
                       onProductSelected: _onProductSelected,
-                      primaryColor: Colors.black,
+                      primaryColor: const Color(0xFF2563EB),
                     ),
                   ),
                 ),
@@ -1238,7 +1238,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                       selectedProducts: _selectedProducts,
                       onProductSelected: _onProductSelected,
                       onProductDeselected: _onProductDeselected,
-                      primaryColor: Colors.black,
+                      primaryColor: const Color(0xFF2563EB),
                     ),
                   ),
                 ),
@@ -1282,7 +1282,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
       ),
       floatingActionButton: AIFloatingButton(
         invoiceId: widget.invoice?.id ?? 'new',
-        primaryColor: Colors.black,
+        primaryColor: const Color(0xFF2563EB),
         isVisible: true,
       ),
     );
@@ -1325,7 +1325,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                   children: [
                     const Icon(
                       Icons.description_outlined,
-                      color: Colors.black,
+                      color: Color(0xFF2563EB),
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -1386,7 +1386,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                   children: [
                     const Icon(
                       Icons.label_outline,
-                      color: Colors.black,
+                      color: Color(0xFF2563EB),
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -1403,7 +1403,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: const Color(0xFF2563EB),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -1453,7 +1453,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             child: Row(
               children: [
-                Icon(icon, color: Colors.black, size: 20),
+                Icon(icon, color: const Color(0xFF2563EB), size: 20),
                 const SizedBox(width: 12),
                 Text(
                   title,
@@ -1489,7 +1489,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             child: Row(
               children: [
-                const Icon(Icons.shopping_cart_outlined, color: Colors.black, size: 20),
+                const Icon(Icons.shopping_cart_outlined, color: Color(0xFF2563EB), size: 20),
                 const SizedBox(width: 12),
                 const Text(
                   'Selected Items',
@@ -1503,7 +1503,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -1511,7 +1511,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: Color(0xFF2563EB),
                     ),
                   ),
                 ),
@@ -1667,7 +1667,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
           children: [
             Row(
               children: [
-                const Icon(Icons.receipt_long_outlined, color: Colors.black, size: 20),
+                const Icon(Icons.receipt_long_outlined, color: Color(0xFF2563EB), size: 20),
                 const SizedBox(width: 12),
                 const Text(
                   'Invoice Details',
@@ -1720,7 +1720,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.calendar_today_outlined, color: Colors.grey.shade600, size: 16),
+                              Icon(Icons.calendar_today_outlined, color: const Color(0xFF2563EB), size: 16),
                               const SizedBox(width: 8),
                               Text(
                                 _dueDate != null
@@ -1854,7 +1854,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
           children: [
             Row(
               children: [
-                const Icon(Icons.calculate_outlined, color: Colors.black, size: 20),
+                const Icon(Icons.calculate_outlined, color: Color(0xFF2563EB), size: 20),
                 const SizedBox(width: 12),
                 const Text(
                   'Summary',
@@ -1891,7 +1891,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
           style: TextStyle(
             fontSize: isTotal ? 20 : 16,
             fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
-            color: isTotal ? Colors.black : Colors.grey.shade700,
+            color: isTotal ? const Color(0xFF2563EB) : Colors.grey.shade700,
           ),
         ),
         Text(
@@ -1899,7 +1899,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
           style: TextStyle(
             fontSize: isTotal ? 24 : 16,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: isTotal ? const Color(0xFF2563EB) : Colors.black,
           ),
         ),
       ],

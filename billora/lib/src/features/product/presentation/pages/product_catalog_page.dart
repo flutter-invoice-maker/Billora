@@ -21,21 +21,24 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
     with TickerProviderStateMixin {
   String? _selectedCategory;
   final List<Map<String, dynamic>> _categories = [
-    {'value': null, 'label': 'All', 'icon': Icons.apps},
-    {'value': 'professional_business', 'label': 'Commercial', 'icon': Icons.business},
-    {'value': 'modern_creative', 'label': 'Sales', 'icon': Icons.receipt},
-    {'value': 'minimal_clean', 'label': 'Proforma', 'icon': Icons.description},
-    {'value': 'corporate_formal', 'label': 'Transfer', 'icon': Icons.swap_horiz},
-    {'value': 'service_based', 'label': 'Timesheet', 'icon': Icons.schedule},
-    {'value': 'simple_receipt', 'label': 'Receipt', 'icon': Icons.payment},
+    {'value': null, 'label': 'All', 'image': 'assets/images/all.png'},
+    {'value': 'professional_business', 'label': 'Commercial', 'image': 'assets/images/commercial.png'},
+    {'value': 'modern_creative', 'label': 'Sales', 'image': 'assets/images/sales.png'},
+    {'value': 'minimal_clean', 'label': 'Proforma', 'image': 'assets/images/proforma.png'},
+    {'value': 'corporate_formal', 'label': 'Transfer', 'image': 'assets/images/transfer.png'},
+    {'value': 'service_based', 'label': 'Timesheet', 'image': 'assets/images/timesheet.png'},
+    {'value': 'simple_receipt', 'label': 'Receipt', 'image': 'assets/images/receipt.png'},
   ];
   String _searchTerm = '';
   int _currentPage = 0;
   final int _itemsPerPage = 8;
   late AnimationController _fadeController;
   late AnimationController _listAnimationController;
+  late AnimationController _categoryAnimationController;
   bool _isSelectionMode = false;
   Set<String> _selectedProducts = {};
+  bool _showCategories = false;
+  bool _categoriesAnimationCompleted = false;
 
   @override
   void initState() {
@@ -62,13 +65,44 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..forward();
+
+    _categoryAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    // Listen to animation status
+    _categoryAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _categoriesAnimationCompleted = true;
+        });
+      } else if (status == AnimationStatus.dismissed) {
+        setState(() {
+          _categoriesAnimationCompleted = false;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
     _listAnimationController.dispose();
+    _categoryAnimationController.dispose();
     super.dispose();
+  }
+
+  void _toggleCategories() {
+    setState(() {
+      _showCategories = !_showCategories;
+      if (_showCategories) {
+        _categoryAnimationController.forward();
+      } else {
+        _categoriesAnimationCompleted = false;
+        _categoryAnimationController.reverse();
+      }
+    });
   }
 
   void _toggleSelectionMode() {
@@ -122,6 +156,8 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
             _currentPage = 0;
           });
         },
+        onFilterTap: _toggleCategories,
+        isFilterActive: _selectedCategory != null,
       ),
       body: Container(
         color: const Color(0xFFFAFAFA),
@@ -161,7 +197,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                         child: const Text(
                           'Select All',
                           style: TextStyle(
-                            color: Color(0xFF007AFF),
+                            color: Color(0xFF2196F3),
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -218,10 +254,29 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                 ),
               ),
 
-            const SizedBox(height: 16),
-            
-            // Categories
-            if (!_isSelectionMode) _buildCategories(),
+            // Categories with improved animation
+            AnimatedBuilder(
+              animation: _categoryAnimationController,
+              builder: (context, child) {
+                return ClipRect(
+                  child: SizeTransition(
+                    sizeFactor: CurvedAnimation(
+                      parent: _categoryAnimationController,
+                      curve: Curves.easeInOut,
+                    ),
+                    child: SizedBox(
+                      height: 86,
+                      child: _categoriesAnimationCompleted || _categoryAnimationController.value > 0.8
+                          ? _buildCategories()
+                          : Container(
+                              height: 86,
+                              color: Colors.white,
+                            ),
+                    ),
+                  ),
+                );
+              },
+            ),
 
             const SizedBox(height: 16),
 
@@ -231,7 +286,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                 onRefresh: () async {
                   context.read<ProductCubit>().fetchProducts();
                 },
-                color: const Color.fromARGB(255, 0, 0, 0),
+                color: const Color(0xFF2196F3),
                 backgroundColor: Colors.white,
                 child: BlocBuilder<ProductCubit, ProductState>(
                   builder: (context, state) {
@@ -239,14 +294,14 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                       initial: () => const Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.black, // Đổi từ Color(0xFF007AFF) sang Colors.black
+                            Color(0xFF2196F3),
                           ),
                         ),
                       ),
                       loading: () => const Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.black, // Đổi từ Color(0xFF007AFF) sang Colors.black
+                            Color(0xFF2196F3),
                           ),
                         ),
                       ),
@@ -269,12 +324,20 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                         final endIndex = math.min(startIndex + _itemsPerPage, filteredProducts.length);
                         final paginatedProducts = filteredProducts.sublist(startIndex, endIndex);
 
-                        return Column(
-                          children: [
-                            Expanded(
+                        return CustomScrollView(
+                          slivers: [
+                            SliverToBoxAdapter(
                               child: _buildProductGrid(paginatedProducts),
                             ),
-                            _buildPagination(filteredProducts.length),
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Column(
+                                children: [
+                                  const Spacer(),
+                                  _buildPagination(filteredProducts.length),
+                                ],
+                              ),
+                            ),
                           ],
                         );
                       },
@@ -292,8 +355,14 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
 
   Widget _buildCategories() {
     return Container(
-      height: 90,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 86,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE5E5EA), width: 0.5),
+        ),
+      ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
@@ -309,39 +378,78 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
               });
             },
             child: Container(
-              width: 70,
-              margin: const EdgeInsets.only(right: 16),
-              child: Column(
+              margin: const EdgeInsets.only(right: 20),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 56,
-                    height: 56,
+                  // Base circle with image
+                  Container(
+                    width: 54,
+                    height: 54,
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.black : Colors.grey[100],
+                      color: Colors.grey[100],
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? Colors.black : Colors.grey[300]!,
+                        color: isSelected ? const Color(0xFF2196F3) : Colors.grey[300]!,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
-                    child: Icon(
-                      category['icon'],
-                      color: isSelected ? Colors.white : Colors.grey[600],
-                      size: 24,
+                    child: ClipOval(
+                      child: Image.asset(
+                        category['image'],
+                        width: 54,
+                        height: 54,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to icon if image not found
+                          return Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFF2196F3) : Colors.grey[100],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getCategoryIcon(category['value']),
+                              color: isSelected ? Colors.white : Colors.grey[600],
+                              size: 24,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    category['label'],
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? Colors.black : Colors.grey[600],
+                  
+                  // Animated overlay with label
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    bottom: isSelected ? 0 : -54,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: isSelected ? 1.0 : 0.0,
+                      child: Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            category['label'],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -350,6 +458,27 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
         },
       ),
     );
+  }
+
+  IconData _getCategoryIcon(String? category) {
+    switch (category) {
+      case null:
+        return Icons.apps;
+      case 'professional_business':
+        return Icons.business;
+      case 'modern_creative':
+        return Icons.receipt;
+      case 'minimal_clean':
+        return Icons.description;
+      case 'corporate_formal':
+        return Icons.swap_horiz;
+      case 'service_based':
+        return Icons.schedule;
+      case 'simple_receipt':
+        return Icons.payment;
+      default:
+        return Icons.category;
+    }
   }
 
   Widget _buildProductGrid(List<Product> products) {
@@ -378,6 +507,8 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
           final double aspectRatio = cardWidth / cardHeight;
           
           return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: spacing,
@@ -451,7 +582,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
           color: isSelected ? const Color(0xFFE3F2FD) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: isSelected 
-              ? Border.all(color: const Color(0xFF007AFF), width: 1)
+              ? Border.all(color: const Color(0xFF2196F3), width: 1)
               : Border.all(color: Colors.grey[200]!, width: 1),
           boxShadow: [
             BoxShadow(
@@ -479,7 +610,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.black,
+                        color: const Color(0xFF2196F3),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -501,9 +632,9 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF007AFF) : Colors.transparent,
+                            color: isSelected ? const Color(0xFF2196F3) : Colors.transparent,
                             border: Border.all(
-                              color: isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
+                              color: isSelected ? const Color(0xFF2196F3) : const Color(0xFFE5E5EA),
                               width: 2,
                             ),
                             borderRadius: BorderRadius.circular(12),
@@ -563,7 +694,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: Color.fromARGB(255, 0, 0, 0),
                       ),
                     ),
                     
@@ -575,14 +706,14 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: const Color(0xFFE3F2FD),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             _getCategoryDisplayName(product.category),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 9,
-                              color: Colors.grey[600],
+                              color: Color(0xFF2196F3),
                               fontWeight: FontWeight.w500,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -625,62 +756,101 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
     final totalPages = (totalItems / _itemsPerPage).ceil();
     if (totalPages <= 1) return const SizedBox(height: 16);
 
+    // Calculate page range for display
+    List<int> pageNumbers = [];
+    const int maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      pageNumbers = List.generate(totalPages, (index) => index);
+    } else {
+      int start = math.max(0, _currentPage - 2);
+      int end = math.min(totalPages - 1, start + maxVisiblePages - 1);
+      
+      if (end - start < maxVisiblePages - 1) {
+        start = math.max(0, end - maxVisiblePages + 1);
+      }
+      
+      pageNumbers = List.generate(end - start + 1, (index) => start + index);
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Previous button
-          _buildPaginationButton(
-            icon: Icons.chevron_left,
+          GestureDetector(
             onTap: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+            child: Icon(
+              Icons.chevron_left,
+              color: _currentPage > 0 ? Colors.blue : Colors.grey[400],
+              size: 24,
+            ),
           ),
           
           const SizedBox(width: 16),
           
-          // Page info
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '${_currentPage + 1} of $totalPages',
-              style: const TextStyle(
+          // Page numbers
+          ...pageNumbers.map((pageIndex) {
+            final isCurrentPage = pageIndex == _currentPage;
+            return GestureDetector(
+              onTap: () => setState(() => _currentPage = pageIndex),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 200),
+                  scale: isCurrentPage ? 1.2 : 1.0,
+                  child: Text(
+                    '${pageIndex + 1}',
+                    style: TextStyle(
+                      fontSize: isCurrentPage ? 16 : 14,
+                      fontWeight: isCurrentPage ? FontWeight.w700 : FontWeight.w500,
+                      color: isCurrentPage ? Colors.blue : Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+          
+          // Show ellipsis if there are more pages
+          if (totalPages > maxVisiblePages && pageNumbers.last < totalPages - 1) ...[
+            const SizedBox(width: 8),
+            Text(
+              '...',
+              style: TextStyle(
+                color: Colors.grey[600],
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => setState(() => _currentPage = totalPages - 1),
+              child: Text(
+                '$totalPages',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          ],
           
           const SizedBox(width: 16),
           
           // Next button
-          _buildPaginationButton(
-            icon: Icons.chevron_right,
+          GestureDetector(
             onTap: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+            child: Icon(
+              Icons.chevron_right,
+              color: _currentPage < totalPages - 1 ? Colors.blue : Colors.grey[400],
+              size: 24,
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPaginationButton({required IconData icon, VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: onTap != null ? Colors.black : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Icon(
-          icon,
-          color: onTap != null ? Colors.white : Colors.grey[400],
-          size: 20,
-        ),
       ),
     );
   }
@@ -770,7 +940,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF007AFF),
+                color: const Color(0xFF2196F3),
                 borderRadius: BorderRadius.circular(22),
               ),
               child: const Text(
@@ -810,37 +980,68 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
 
 class _ProductHeaderSearch extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<String> onChanged;
+  final VoidCallback onFilterTap;
+  final bool isFilterActive;
 
-  const _ProductHeaderSearch({required this.onChanged});
+  const _ProductHeaderSearch({
+    required this.onChanged,
+    required this.onFilterTap,
+    required this.isFilterActive,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(80);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.grey.shade300, width: 1),
-        ),
-        child: TextField(
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: 'Search products...',
-            hintStyle: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-            ),
-            prefixIcon: const Icon(Icons.search, color: Colors.black54, size: 20),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      height: 44,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+      child: Row(
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Icon(Icons.search, color: Colors.black54, size: 20),
           ),
-        ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TextField(
+                onChanged: onChanged,
+                decoration: InputDecoration(
+                  hintText: 'Search products...',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  border: InputBorder.none,          
+                  enabledBorder: InputBorder.none,   
+                  focusedBorder: InputBorder.none,   
+                  filled: false,                     
+                  isCollapsed: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: onFilterTap,
+              child: Icon(
+                Icons.filter_list,
+                color: isFilterActive ? const Color(0xFF2196F3) : Colors.black54,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -25,7 +25,7 @@ class HomePage extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               return RefreshIndicator(
-                color: Colors.black, // Để đồng bộ màu refresh
+                color: Colors.blue[700], // Thay đổi màu refresh thành xanh dương
                 backgroundColor: Colors.white,
                 onRefresh: () async {
                   context.read<DashboardCubit>().loadDashboardStats();
@@ -190,12 +190,12 @@ class _HomeHeaderSearchState extends State<_HomeHeaderSearch>
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Colors.blue.shade50, // Thay đổi màu nền icon thành xanh dương nhạt
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
                               d.icon,
-                              color: Colors.black87,
+                              color: Colors.blue[700], // Thay đổi màu icon thành xanh dương
                               size: 20,
                             ),
                           ),
@@ -212,7 +212,7 @@ class _HomeHeaderSearchState extends State<_HomeHeaderSearch>
                           ),
                           Icon(
                             Icons.north_east,
-                            color: Colors.black54,
+                            color: Colors.grey.shade500,
                             size: 16,
                           ),
                         ],
@@ -252,75 +252,79 @@ class _HomeHeaderSearchState extends State<_HomeHeaderSearch>
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(
                     color: _focusNode.hasFocus
-                        ? Colors.black
+                        ? Colors.blue[700]!
                         : Colors.grey.shade300,
                     width: _focusNode.hasFocus ? 1.5 : 1,
                   ),
                 ),
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Search...',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16),
+                      child: Icon(Icons.search, color: Colors.black54, size: 20),
                     ),
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Icon(
-                        Icons.search,
-                        color: _focusNode.hasFocus
-                            ? Colors.black
-                            : Colors.grey[600],
-                        size: 20,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          decoration: InputDecoration(
+                            hintText: 'Search...',
+                            hintStyle: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            border: InputBorder.none,          
+                            enabledBorder: InputBorder.none,   
+                            focusedBorder: InputBorder.none,   
+                            filled: false,                     
+                            isCollapsed: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black87,
+                          ),
+                          onChanged: (value) {
+                            setState(() => _query = value);
+                            if (_overlayEntry != null) {
+                              _removeOverlay();
+                              _showOverlay();
+                            }
+                          },
+                          onSubmitted: (value) {
+                            final first = _filterSuggestions(value).firstOrNull;
+                            if (first != null) {
+                              _removeOverlay();
+                              _focusNode.unfocus();
+                              Navigator.pushReplacementNamed(context, first.route);
+                            }
+                          },
+                        ),
                       ),
                     ),
-                    suffixIcon: _query.isNotEmpty
-                        ? GestureDetector(
-                            onTap: () {
-                              _controller.clear();
-                              setState(() => _query = '');
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Icon(
-                                Icons.close,
-                                color: Colors.grey[600],
-                                size: 20,
-                              ),
-                            ),
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black87,
-                  ),
-                  onChanged: (value) {
-                    setState(() => _query = value);
-                    if (_overlayEntry != null) {
-                      _removeOverlay();
-                      _showOverlay();
-                    }
-                  },
-                  onSubmitted: (value) {
-                    final first = _filterSuggestions(value).firstOrNull;
-                    if (first != null) {
-                      _removeOverlay();
-                      _focusNode.unfocus();
-                      Navigator.pushReplacementNamed(context, first.route);
-                    }
-                  },
+                    if (_query.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: GestureDetector(
+                          onTap: () {
+                            _controller.clear();
+                            setState(() => _query = '');
+                          },
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.grey[600],
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             );
@@ -375,7 +379,7 @@ class _DashboardPreviewWireframe extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: Colors.blue[700], // Thay đổi màu button từ đen thành xanh dương
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
@@ -440,7 +444,7 @@ class _DashboardPreviewWireframe extends StatelessWidget {
                                       ? NumberFormatter.format(stats.totalInvoices)
                                       : '0',
                                   icon: Icons.receipt_long,
-                                  color: Colors.blue[600]!,
+                                  color: Colors.blue[600]!, // Giữ màu xanh dương
                                 ),
                               ),
                               const _VerticalDivider(),
@@ -451,7 +455,7 @@ class _DashboardPreviewWireframe extends StatelessWidget {
                                       ? CurrencyFormatter.formatUSDCompact(stats.totalRevenue, null)
                                       : '\$0',
                                   icon: Icons.trending_up,
-                                  color: Colors.green[600]!,
+                                  color: Colors.blue[800]!, // Thay đổi màu Revenue thành xanh dương đậm
                                 ),
                               ),
                               const _VerticalDivider(),
@@ -462,7 +466,7 @@ class _DashboardPreviewWireframe extends StatelessWidget {
                                       ? NumberFormatter.format(stats.newCustomers)
                                       : '0',
                                   icon: Icons.people,
-                                  color: Colors.purple[600]!,
+                                  color: Colors.blue[500]!, // Thay đổi màu Customers thành xanh dương nhạt
                                 ),
                               ),
                             ],
@@ -472,7 +476,7 @@ class _DashboardPreviewWireframe extends StatelessWidget {
                           Container(
                             height: 220,
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: ClipRRect(
@@ -590,12 +594,17 @@ class _RecentActivitiesSection extends StatelessWidget {
                 letterSpacing: -0.3,
               ),
             ),
-            Text(
-              'See all',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+            GestureDetector(
+              onTap: () {
+                // Action for see all
+              },
+              child: Text(
+                'See all',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.blue[600], // Thay đổi màu "See all" thành xanh dương
+                ),
               ),
             ),
           ],
@@ -628,7 +637,7 @@ class _RecentActivitiesSection extends StatelessWidget {
                         icon: Icons.receipt_long,
                         text: 'Invoice #BL0012 created for Stellar Corp',
                         time: '10 min ago',
-                        color: Colors.blue[600]!,
+                        color: const Color.fromARGB(255, 229, 50, 30), // Giữ màu xanh dương cho Invoice
                         constraints: constraints,
                         isFirst: true,
                       ),
@@ -637,7 +646,7 @@ class _RecentActivitiesSection extends StatelessWidget {
                         icon: Icons.people,
                         text: 'New customer added: Apex Innovations',
                         time: '35 min ago',
-                        color: Colors.green[600]!,
+                        color: const Color.fromARGB(255, 191, 33, 243), // Thay đổi màu từ xanh lá thành xanh dương
                         constraints: constraints,
                       ),
                       const _ActivityDivider(),
@@ -645,7 +654,7 @@ class _RecentActivitiesSection extends StatelessWidget {
                         icon: Icons.inventory_2,
                         text: 'Product stock updated: Widget Pro (+50 units)',
                         time: '1 hour ago',
-                        color: Colors.orange[600]!,
+                        color: const Color.fromARGB(255, 96, 210, 25), // Thay đổi màu từ cam thành xanh dương đậm
                         constraints: constraints,
                         isLast: true,
                       ),
@@ -802,7 +811,7 @@ class _AIInsightsSectionState extends State<_AIInsightsSection>
                     width: 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: Colors.green[500],
+                      color: Colors.blue[600], // Thay đổi màu pulse dot thành xanh dương
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -852,7 +861,7 @@ class _AIInsightsSectionState extends State<_AIInsightsSection>
                         height: 60,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.green[400]!, Colors.green[600]!],
+                            colors: [Colors.blue[500]!, Colors.blue[700]!], // Thay đổi gradient từ xanh lá thành xanh dương
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -870,7 +879,7 @@ class _AIInsightsSectionState extends State<_AIInsightsSection>
                         style: TextStyle(
                           fontSize: widget.constraints.maxWidth * 0.04,
                           fontWeight: FontWeight.w600,
-                          color: Colors.green,
+                          color: Colors.blue[700], // Thay đổi màu text từ xanh lá thành xanh dương
                         ),
                       ),
                       SizedBox(height: widget.constraints.maxHeight * 0.015),
@@ -890,14 +899,17 @@ class _AIInsightsSectionState extends State<_AIInsightsSection>
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.grey.shade400),
+                          side: BorderSide(color: Colors.blue.shade300), // Thay đổi màu border button thành xanh dương
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
                         child: Text(
                           'Explore',
-                          style: TextStyle(fontSize: widget.constraints.maxWidth * 0.035),
+                          style: TextStyle(
+                            fontSize: widget.constraints.maxWidth * 0.035,
+                            color: Colors.blue[700], // Thay đổi màu text button thành xanh dương
+                          ),
                         ),
                       ),
                     ],
@@ -922,7 +934,7 @@ class _EmptyChartPlaceholder extends StatelessWidget {
           Icon(
             Icons.trending_up_outlined,
             size: 32,
-            color: Colors.grey.shade400,
+            color: Colors.blue.shade300, // Thay đổi màu icon placeholder thành xanh dương
           ),
           const SizedBox(height: 8),
           Text(

@@ -103,7 +103,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios,
-            color: Colors.black,
+            color: Color(0xFF1976D2),
             size: 20,
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -123,7 +123,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
             child: Text(
               isEdit ? 'Update' : 'Save',
               style: const TextStyle(
-                color: Colors.black,
+                color: Color(0xFF1976D2),
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -156,16 +156,16 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                           width: 100,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: const Color(0xFFE3F2FD),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.grey[300]!,
-                              width: 1,
+                              color: const Color(0xFF1976D2),
+                              width: 2,
                             ),
                           ),
                           child: const Icon(
                             Icons.person,
-                            color: Colors.grey,
+                            color: Color(0xFF1976D2),
                             size: 50,
                           ),
                         ),
@@ -177,7 +177,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                           child: const Text(
                             'Change Photo',
                             style: TextStyle(
-                              color: Colors.black,
+                              color: Color(0xFF1976D2),
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -248,7 +248,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                     child: ElevatedButton(
                       onPressed: _submit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: const Color(0xFF1976D2),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -296,7 +296,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.black,
+              color: Color(0xFF424242),
             ),
           ),
         ),
@@ -310,10 +310,11 @@ class _CustomerFormPageState extends State<CustomerFormPage>
             return Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: isFocused ? Colors.black : Colors.grey[300]!,
+                  color: isFocused ? const Color(0xFF1976D2) : Colors.grey[300]!,
                   width: isFocused ? 2 : 1,
                 ),
                 borderRadius: BorderRadius.circular(8),
+                color: isFocused ? const Color(0xFFF3F9FF) : Colors.white,
               ),
               child: TextFormField(
                 controller: controller,

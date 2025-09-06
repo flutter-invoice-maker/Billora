@@ -76,18 +76,18 @@ class _InvoiceTemplatePageState extends State<InvoiceTemplatePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1E40AF)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Select Template',
           style: TextStyle(
-            color: Colors.black,
+            color: Color(0xFF1E40AF),
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -108,7 +108,7 @@ class _InvoiceTemplatePageState extends State<InvoiceTemplatePage> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Color(0xFF1E40AF),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -146,13 +146,15 @@ class _InvoiceTemplatePageState extends State<InvoiceTemplatePage> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? Colors.black : const Color(0xFFE5E7EB),
+                          color: isSelected ? const Color(0xFF1E40AF) : const Color(0xFFE5E7EB),
                           width: isSelected ? 2 : 1,
                         ),
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: isSelected 
+                                ? const Color(0xFF1E40AF).withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.04),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -204,14 +206,14 @@ class _InvoiceTemplatePageState extends State<InvoiceTemplatePage> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[100],
+                                      color: const Color(0xFF1E40AF).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       template['category'] as String,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey[600],
+                                        color: Color(0xFF1E40AF),
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -224,7 +226,7 @@ class _InvoiceTemplatePageState extends State<InvoiceTemplatePage> {
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.black,
+                                      color: Color(0xFF1F2937),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -249,10 +251,10 @@ class _InvoiceTemplatePageState extends State<InvoiceTemplatePage> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isSelected ? Colors.black : Colors.grey[400]!,
+                                  color: isSelected ? const Color(0xFF1E40AF) : Colors.grey[400]!,
                                   width: 2,
                                 ),
-                                color: isSelected ? Colors.black : Colors.transparent,
+                                color: isSelected ? const Color(0xFF1E40AF) : Colors.transparent,
                               ),
                               child: isSelected
                                   ? const Icon(
@@ -284,7 +286,7 @@ class _InvoiceTemplatePageState extends State<InvoiceTemplatePage> {
                     Navigator.pop(context, _selectedTemplateId);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: const Color(0xFF1E40AF),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

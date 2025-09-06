@@ -185,7 +185,7 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
             builder: (context, state) {
               return RefreshIndicator(
                 onRefresh: () async => _refreshDashboard(),
-                color: Colors.black,
+                color: const Color(0xFF1976D2),
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
@@ -197,16 +197,16 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
                           Expanded(
                             child: TextButton.icon(
                               onPressed: () => _showFilterPanel(),
-                              icon: const Icon(Icons.tune),
-                              label: const Text('Filter'),
+                              icon: const Icon(Icons.tune, color: Color(0xFF1976D2)),
+                              label: const Text('Filter', style: TextStyle(color: Color(0xFF1976D2))),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: TextButton.icon(
                               onPressed: () => _exportExcelReport(state is DashboardLoaded ? state : null),
-                              icon: const Icon(Icons.file_download_outlined),
-                              label: const Text('Export'),
+                              icon: const Icon(Icons.file_download_outlined, color: Color(0xFF1976D2)),
+                              label: const Text('Export', style: TextStyle(color: Color(0xFF1976D2))),
                             ),
                           ),
                         ],
@@ -215,29 +215,6 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
                       
                       // Content based on state
                       _buildContent(state),
-                      
-                      const SizedBox(height: 24),
-                      const Text('Quick Actions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => Navigator.pushNamed(context, '/enhanced-bill-scanner'),
-                              icon: const Icon(Icons.document_scanner_outlined),
-                              label: const Text('Scan'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => Navigator.pushNamed(context, '/invoice-form'),
-                              icon: const Icon(Icons.receipt_long_outlined),
-                              label: const Text('New Invoice'),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -255,7 +232,7 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
       return Column(
         children: [
           const SizedBox(height: 200),
-          const Center(child: CircularProgressIndicator(color: Colors.black)),
+          const Center(child: CircularProgressIndicator(color: Color(0xFF1976D2))),
           const SizedBox(height: 16),
           const Center(child: Text('Loading dashboard...')),
           const SizedBox(height: 200),
@@ -276,7 +253,7 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.black,
+                      color: Color(0xFF1976D2),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -303,6 +280,10 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => _refreshDashboard(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1976D2),
+                    foregroundColor: Colors.white,
+                  ),
                   child: const Text('Retry'),
                 ),
               ],
@@ -377,7 +358,7 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
           ),
           child: Row(
             children: [
-              Icon(data['icon'] as IconData, color: Colors.black),
+              Icon(data['icon'] as IconData, color: const Color(0xFF1976D2)),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -439,15 +420,15 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.white,
+          color: isSelected ? const Color(0xFF1976D2) : Colors.white,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.black),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : const Color(0xFF1976D2)),
             const SizedBox(width: 6),
-            Text(title, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.w600)),
+            Text(title, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF1976D2), fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -492,7 +473,10 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
         title: const Text('Success!'),
         content: Text('File $fileName has been created successfully.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF1976D2))),
+          ),
         ],
       ),
     );
@@ -505,7 +489,10 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
         title: const Text('Export Report Error'),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF1976D2))),
+          ),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import '../../domain/entities/customer.dart';
 import 'customer_form_page.dart';
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
 import 'package:billora/src/core/widgets/delete_dialog.dart';
+import 'dart:math';
 
 class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
@@ -235,10 +236,10 @@ class _CustomerListPageState extends State<CustomerListPage>
                           }).toList(),
                           orElse: () => <Customer>[],
                         )),
-                        child: Text(
+                        child: const Text(
                           'Select All',
                           style: TextStyle(
-                            color: const Color(0xFF007AFF),
+                            color: Color(0xFF007AFF),
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -318,7 +319,7 @@ class _CustomerListPageState extends State<CustomerListPage>
                       loading: () => const Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.black, // Đổi từ Color(0xFF007AFF) sang Colors.black
+                            Colors.black,
                           ),
                         ),
                       ),
@@ -486,6 +487,7 @@ class _CustomerListPageState extends State<CustomerListPage>
 
   Widget _buildCustomerCard(Customer customer, int index) {
     final isSelected = _selectedCustomers.contains(customer.id);
+    final customerType = _getCustomerType(index);
     
     return GestureDetector(
       onTap: () {
@@ -511,165 +513,139 @@ class _CustomerListPageState extends State<CustomerListPage>
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE3F2FD) : Colors.white,
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          border: isSelected 
-              ? Border.all(color: const Color(0xFF007AFF), width: 1)
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Selection checkbox (only visible in selection mode)
-            if (_isSelectionMode) ...[
-              AnimatedScale(
-                duration: const Duration(milliseconds: 200),
-                scale: _isSelectionMode ? 1.0 : 0.0,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF007AFF) : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: isSelected
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 16,
-                        )
+          child: Stack(
+            children: [
+              // Main card content
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFFE3F2FD) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: isSelected 
+                      ? Border.all(color: const Color(0xFF007AFF), width: 1)
                       : null,
-                ),
-              ),
-              const SizedBox(width: 12),
-            ],
-            
-            // Avatar
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _getAvatarColor(customer.name),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Center(
-                child: Text(
-                  _getInitials(customer.name),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            
-            const SizedBox(width: 12),
-            
-            // Customer Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    customer.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF000000),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  if (customer.email != null) ...[
-                    Text(
-                      customer.email!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF8E8E93),
-                        fontWeight: FontWeight.w400,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 1),
                   ],
-                  if (customer.phone != null)
-                    Text(
-                      customer.phone!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF8E8E93),
-                        fontWeight: FontWeight.w400,
+                ),
+                child: Row(
+                  children: [
+                    // Selection checkbox (only visible in selection mode)
+                    if (_isSelectionMode) ...[
+                      AnimatedScale(
+                        duration: const Duration(milliseconds: 200),
+                        scale: _isSelectionMode ? 1.0 : 0.0,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFF007AFF) : Colors.transparent,
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16,
+                                )
+                              : null,
+                        ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-            
-            // Status and Actions
-            if (!_isSelectionMode)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(index),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      _getStatusText(index),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _getCustomerType(index),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF8E8E93),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  GestureDetector(
-                    onTap: () => _showOptionsMenu(customer),
-                    child: Container(
-                      width: 32,
-                      height: 32,
+                      const SizedBox(width: 12),
+                    ],
+                    
+                    // Avatar
+                    Container(
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(16),
+                        color: _getAvatarColor(customer.name),
+                        borderRadius: BorderRadius.circular(22),
                       ),
-                      child: const Icon(
-                        Icons.more_horiz,
-                        color: Color(0xFF8E8E93),
-                        size: 16,
+                      child: Center(
+                        child: Text(
+                          _getInitials(customer.name),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    
+                    const SizedBox(width: 12),
+                    
+                    // Customer Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            customer.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF000000),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          if (customer.email != null) ...[
+                            Text(
+                              customer.email!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF8E8E93),
+                                fontWeight: FontWeight.w400,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 1),
+                          ],
+                          if (customer.phone != null)
+                            Text(
+                              customer.phone!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF8E8E93),
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Empty space for ribbon area
+                    const SizedBox(width: 16),
+                  ],
+                ),
               ),
-          ],
+              
+              // Corner triangle ribbon for VIP and Partnership customers
+              if (customerType == 'VIP' || customerType == 'Partnership')
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: CustomPaint(
+                    size: const Size(50, 50),
+                    painter: TriangleRibbonPainter(
+                      color: const Color(0xFF000000), // Black ribbon
+                      text: customerType == 'VIP' ? 'VIP' : 'PNS',
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -783,117 +759,6 @@ class _CustomerListPageState extends State<CustomerListPage>
     );
   }
 
-  void _showDeleteDialog(Customer customer) {
-    final customerCubit = context.read<CustomerCubit>();
-    showDialog(
-      context: context,
-      builder: (dialogContext) => DeleteDialog(
-        title: 'Delete Customer',
-        message: 'Are you sure you want to delete this customer? This action cannot be undone.',
-        itemName: customer.name,
-        onDelete: () {
-          customerCubit.deleteCustomer(customer.id);
-        },
-      ),
-    );
-  }
-
-  void _showOptionsMenu(Customer customer) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 5,
-              margin: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5E5EA),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.edit_outlined,
-                  color: Color(0xFF007AFF),
-                  size: 20,
-                ),
-              ),
-              title: const Text(
-                'Edit Customer',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF000000),
-                ),
-              ),
-              subtitle: const Text(
-                'Modify customer details',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF8E8E93),
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _openForm(customer);
-              },
-            ),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.delete_outline,
-                  color: Color(0xFFFF3B30),
-                  size: 20,
-                ),
-              ),
-              title: const Text(
-                'Delete Customer',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFFF3B30),
-                ),
-              ),
-              subtitle: const Text(
-                'Remove from database',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF8E8E93),
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteDialog(customer);
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _openForm([Customer? customer]) {
     final customerCubit = context.read<CustomerCubit>();
     Navigator.push(
@@ -930,26 +795,109 @@ class _CustomerListPageState extends State<CustomerListPage>
     return colors[name.hashCode % colors.length];
   }
 
-  Color _getStatusColor(int index) {
-    final colors = [
-      const Color(0xFF34C759), // Green - Active
-      const Color(0xFF34C759), // Green - Active  
-      const Color(0xFF8E8E93), // Gray - Inactive
-      const Color(0xFF34C759), // Green - Active
-      const Color(0xFF34C759), // Green - Active
-    ];
-    return colors[index % colors.length];
-  }
-
-  String _getStatusText(int index) {
-    final statuses = ['Active', 'Active', 'Inactive', 'Active', 'Active'];
-    return statuses[index % statuses.length];
-  }
-
   String _getCustomerType(int index) {
-    final types = ['VIP', 'Key Account', 'Small Business', 'Prospect', 'Partnership'];
+    final types = ['VIP', 'Key Account', 'Member', 'Partnership', 'Member'];
     return types[index % types.length];
   }
+}
+
+// Triangle Ribbon Painter - Simple right triangle at corner with rotated text
+class TriangleRibbonPainter extends CustomPainter {
+  final Color color;
+  final String text;
+
+  const TriangleRibbonPainter({required this.color, required this.text});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Create a simple right triangle at top-right corner
+    final path = Path();
+    
+    // Triangle with vertex at top-right corner
+    path.moveTo(size.width, 0);           // Top-right corner (vertex)
+    path.lineTo(size.width, size.height); // Bottom-right edge
+    path.lineTo(0, 0);                    // Top-left edge
+    path.close();
+
+    canvas.drawPath(path, paint);
+
+    // Add a subtle gradient for depth
+    final gradientPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [
+          color,
+          color.withValues(alpha: 0.8),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawPath(path, gradientPaint);
+
+    // Add border
+    final borderPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+
+    canvas.drawPath(path, borderPaint);
+
+    // Draw rotated text at the center of triangle
+    final textStyle = TextStyle(
+      color: const Color(0xFFFFD700), // Gold color for text
+      fontSize: 12,
+      fontWeight: FontWeight.w900,
+      shadows: const [
+        Shadow(
+          offset: Offset(0.5, 0.5),
+          blurRadius: 1.0,
+          color: Colors.black26,
+        ),
+      ],
+    );
+
+    final textSpan = TextSpan(text: text, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+
+    // Calculate the center point of the triangle
+    // For a right triangle at top-right, the centroid is at (2/3 * width, 1/3 * height)
+    final centerX = size.width * 2 / 3;
+    final centerY = size.height * 1 / 3;
+
+    // Calculate rotation angle to be parallel to the hypotenuse
+    // The hypotenuse goes from (0,0) to (width, height), so angle is atan2(height, width)
+    // Add π/2 to make text parallel (not perpendicular) to the hypotenuse
+    final angle = atan2(size.height, -size.width) + pi / 2;
+
+    // Save canvas state
+    canvas.save();
+
+    // Translate to center point
+    canvas.translate(centerX, centerY);
+
+    // Rotate the canvas
+    canvas.rotate(angle + pi);
+
+    // Draw the text centered at the origin (which is now the center of triangle)
+    textPainter.paint(
+      canvas, 
+      Offset(-textPainter.width / 2, -textPainter.height / 2),
+    );
+
+    // Restore canvas state
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class _CustomerHeaderSearch extends StatelessWidget implements PreferredSizeWidget {
@@ -967,23 +915,38 @@ class _CustomerHeaderSearch extends StatelessWidget implements PreferredSizeWidg
       child: Container(
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.grey[50],
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: Colors.grey.shade300, width: 1),
         ),
-        child: TextField(
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: 'Search customers...',
-            hintStyle: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
+        child: Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 16),
+              child: Icon(Icons.search, color: Colors.black54, size: 20),
             ),
-            prefixIcon: const Icon(Icons.search, color: Colors.black54, size: 20),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: TextField(
+                  onChanged: onChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search customers...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,   
+                    focusedBorder: InputBorder.none,   
+                    filled: false,                     
+                    isCollapsed: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

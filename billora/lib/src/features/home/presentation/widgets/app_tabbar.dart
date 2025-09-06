@@ -16,6 +16,7 @@ class AppTabBar extends StatelessWidget {
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
       notchMargin: 8,
+      color: Colors.white,
       child: SafeArea(
         top: false,
         child: SizedBox(
@@ -89,7 +90,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? Colors.black : Colors.black54;
+    final color = isSelected ? const Color(0xFF1976D2) : Colors.black54;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -152,11 +153,11 @@ class _ContextAwareFAB extends StatelessWidget {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: const Color(0xFF1976D2),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: const Color(0xFF1976D2).withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -195,7 +196,7 @@ class _ContextAwareFAB extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.document_scanner_outlined),
+                  leading: const Icon(Icons.document_scanner_outlined, color: Color(0xFF1976D2)),
                   title: const Text('Scan'),
                   onTap: () {
                     Navigator.pop(context);
@@ -203,7 +204,7 @@ class _ContextAwareFAB extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.receipt_long_outlined),
+                  leading: const Icon(Icons.receipt_long_outlined, color: Color(0xFF1976D2)),
                   title: const Text('New Invoice'),
                   onTap: () {
                     Navigator.pop(context);
