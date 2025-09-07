@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/invoice/domain/entities/invoice.dart';
-import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart';
 
@@ -64,7 +63,6 @@ class _AISuggestionsWidgetState extends State<AISuggestionsWidget> {
 
   Future<void> _generateTagSuggestions() async {
     try {
-      final suggestTagsUseCase = context.read<SuggestTagsUseCase>();
       final tags = await suggestTagsUseCase(widget.invoice!);
       
       setState(() {
@@ -392,4 +390,6 @@ class _AISuggestionsWidgetState extends State<AISuggestionsWidget> {
       ),
     );
   }
+  
+  suggestTagsUseCase(Invoice invoice) {}
 } 

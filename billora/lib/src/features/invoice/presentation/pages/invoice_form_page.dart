@@ -14,6 +14,7 @@ import 'package:billora/src/features/product/presentation/cubit/product_cubit.da
 import 'package:billora/src/core/utils/app_strings.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/invoice/presentation/widgets/ai_floating_button.dart';
+import 'package:billora/src/core/services/data_refresh_service.dart';
 
 class InvoiceFormPage extends StatefulWidget {
   final Invoice? invoice;
@@ -40,6 +41,9 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
   List<String> _tags = [];
   final List<Product> _selectedProducts = [];
   bool _isEdit = false;
+  
+  // Controllers for quantity fields
+  final Map<String, TextEditingController> _quantityControllers = {};
 
   // Simple animations
   late AnimationController _fadeController;
@@ -110,6 +114,9 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
     _note = invoice?.note;
     _templateId = invoice?.templateId ?? 'template_a';
     _tags = invoice?.tags ?? [];
+    
+    // Initialize quantity controllers for existing items
+    _initializeQuantityControllers();
 
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -340,10 +347,29 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
     });
   }
 
+  void _initializeQuantityControllers() {
+    // Clear existing controllers
+    for (final controller in _quantityControllers.values) {
+      controller.dispose();
+    }
+    _quantityControllers.clear();
+    
+    // Initialize controllers for existing items
+    for (final item in _items) {
+      _quantityControllers[item.productId] = TextEditingController(
+        text: item.quantity.toString(),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    // Dispose quantity controllers
+    for (final controller in _quantityControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -484,6 +510,12 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
         companyWebsite: product.companyWebsite,
       );
       _items.add(item);
+      
+      // Create quantity controller for new item
+      _quantityControllers[item.productId] = TextEditingController(
+        text: item.quantity.toString(),
+      );
+      
       _recalculateTotals();
       
       debugPrint('Final _selectedProducts count: ${_selectedProducts.length}');
@@ -505,6 +537,10 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
       _items.removeWhere((item) => item.productId == product.id);
       final removedFromItems = initialItemsCount - _items.length;
       debugPrint('Removed from _items: $removedFromItems items');
+      
+      // Remove quantity controller for removed item
+      _quantityControllers[product.id]?.dispose();
+      _quantityControllers.remove(product.id);
       
       _recalculateTotals();
       debugPrint('Removed ${product.name} from invoice');
@@ -1098,6 +1134,10 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
           backgroundColor: Colors.black87,
         ),
       );
+      
+      // Refresh all data after creating/updating invoice
+      DataRefreshService().refreshAllData();
+      
       Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1591,7 +1631,8 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                           border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: TextFormField(
-                          initialValue: item.quantity.toString(),
+                          controller: _quantityControllers[item.productId] ?? 
+                              TextEditingController(text: item.quantity.toString()),
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
                           decoration: const InputDecoration(
@@ -1625,6 +1666,11 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                           setState(() {
                             _items.removeWhere((i) => i.productId == item.productId);
                             _selectedProducts.removeWhere((p) => p.id == item.productId);
+                            
+                            // Remove quantity controller for removed item
+                            _quantityControllers[item.productId]?.dispose();
+                            _quantityControllers.remove(item.productId);
+                            
                             _recalculateTotals();
                           });
                         },

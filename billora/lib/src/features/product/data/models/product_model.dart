@@ -15,6 +15,7 @@ class ProductModel {
   final String? companyPhone;
   final String? companyEmail;
   final String? companyWebsite;
+  final String? imageUrl;
   final String userId;
   final List<String> searchKeywords;
 
@@ -32,6 +33,7 @@ class ProductModel {
     this.companyPhone,
     this.companyEmail,
     this.companyWebsite,
+    this.imageUrl,
     required this.userId,
     this.searchKeywords = const [],
   });
@@ -57,6 +59,7 @@ class ProductModel {
         companyPhone: json['companyPhone'],
         companyEmail: json['companyEmail'],
         companyWebsite: json['companyWebsite'],
+        imageUrl: json['imageUrl'],
         userId: json['userId'] ?? '',
         searchKeywords: List<String>.from(json['searchKeywords'] ?? []),
       );
@@ -76,6 +79,7 @@ class ProductModel {
         if (companyPhone != null && companyPhone!.isNotEmpty) 'companyPhone': companyPhone,
         if (companyEmail != null && companyEmail!.isNotEmpty) 'companyEmail': companyEmail,
         if (companyWebsite != null && companyWebsite!.isNotEmpty) 'companyWebsite': companyWebsite,
+        if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
         'userId': userId,
         'searchKeywords': searchKeywords,
       };
@@ -94,6 +98,7 @@ class ProductModel {
         companyPhone: companyPhone,
         companyEmail: companyEmail,
         companyWebsite: companyWebsite,
+        imageUrl: imageUrl,
       );
 
   factory ProductModel.fromEntity(Product product, String userId) => ProductModel(
@@ -110,6 +115,7 @@ class ProductModel {
         companyPhone: product.companyPhone,
         companyEmail: product.companyEmail,
         companyWebsite: product.companyWebsite,
+        imageUrl: product.imageUrl,
         userId: userId,
       );
 } 

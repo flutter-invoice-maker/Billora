@@ -13,6 +13,7 @@ _$CustomerModelImpl _$$CustomerModelImplFromJson(Map<String, dynamic> json) =>
       email: json['email'] as String?,
       phone: json['phone'] as String?,
       address: json['address'] as String?,
+      isVip: json['isVip'] as bool? ?? false,
       userId: json['userId'] as String,
       searchKeywords:
           (json['searchKeywords'] as List<dynamic>?)
@@ -28,6 +29,7 @@ Map<String, dynamic> _$$CustomerModelImplToJson(_$CustomerModelImpl instance) =>
       'email': instance.email,
       'phone': instance.phone,
       'address': instance.address,
+      'isVip': instance.isVip,
       'userId': instance.userId,
       'searchKeywords': instance.searchKeywords,
     };

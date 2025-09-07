@@ -21,6 +21,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
+  late bool _isVip;
   late AnimationController _fadeController;
   late AnimationController _slideController;
 
@@ -40,6 +41,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
     _emailController = TextEditingController(text: widget.customer?.email ?? widget.prefill?['email'] ?? '');
     _phoneController = TextEditingController(text: widget.customer?.phone ?? widget.prefill?['phone'] ?? '');
     _addressController = TextEditingController(text: widget.customer?.address ?? widget.prefill?['address'] ?? '');
+    _isVip = widget.customer?.isVip ?? (widget.prefill?['isVip'] as bool?) ?? false;
     
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -79,6 +81,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
         email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
         address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+        isVip: _isVip,
       );
 
       if (isCreate) {
@@ -239,6 +242,11 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                     onSubmitted: (_) => _submit(),
                   ),
                   
+                  const SizedBox(height: 24),
+                  
+                  // VIP Toggle
+                  _buildVipToggle(),
+                  
                   const SizedBox(height: 40),
                   
                   // Action Button
@@ -342,6 +350,73 @@ class _CustomerFormPageState extends State<CustomerFormPage>
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildVipToggle() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _isVip ? const Color(0xFF1976D2) : Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: _isVip ? const Color(0xFF1976D2).withValues(alpha: 0.1) : Colors.grey[100],
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              Icons.star,
+              color: _isVip ? const Color(0xFF1976D2) : Colors.grey[600],
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'VIP Customer',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _isVip ? const Color(0xFF1976D2) : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Mark this customer as VIP for special treatment',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _isVip,
+            onChanged: (value) {
+              setState(() {
+                _isVip = value;
+              });
+            },
+            activeColor: const Color(0xFF1976D2),
+            inactiveThumbColor: const Color(0xFF8E8E93),
+            inactiveTrackColor: const Color(0xFFE5E5EA),
+          ),
+        ],
+      ),
     );
   }
 }

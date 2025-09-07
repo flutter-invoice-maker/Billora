@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/product/domain/entities/product.dart';
-import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
-import 'package:billora/src/core/widgets/delete_dialog.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -25,112 +22,32 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  void _showOptionsMenu() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.edit_outlined,
-                  color: Color(0xFF6366F1),
-                  size: 20,
-                ),
-              ),
-              title: const Text('Edit Product'),
-              subtitle: const Text('Modify product details'),
-              onTap: () {
-                Navigator.pop(context);
-                widget.onEdit();
-              },
-            ),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.red,
-                  size: 20,
-                ),
-              ),
-              title: const Text('Delete Product'),
-              subtitle: const Text('Remove from catalog'),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteConfirmation();
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
+
+
+  String _formatPrice(double price) {
+    if (price >= 1000000) {
+      return '${(price / 1000000).toStringAsFixed(1)}M';
+    } else if (price >= 1000) {
+      return '${(price / 1000).toStringAsFixed(1)}K';
+    } else {
+      return price.toStringAsFixed(2);
+    }
   }
 
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return DeleteDialog(
-          title: 'Delete Product',
-          message: 'Are you sure you want to delete this product? This action cannot be undone.',
-          itemName: widget.product.name,
-          onDelete: () {
-    context.read<ProductCubit>().deleteProduct(widget.product.id);
-          },
-        );
-      },
-    );
-  }
 
-  Widget _getProductImage() {
-    // Default professional product image
+  Widget _buildPlaceholderImage() {
     return Container(
-      width: 60,
-      height: 60,
+      width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF6366F1).withValues(alpha: 0.8),
-            const Color(0xFF8B5CF6).withValues(alpha: 0.8),
-          ],
-        ),
+        color: const Color(0xFF2196F3),
       ),
-      child: const Icon(
-        Icons.inventory_2_outlined,
-        color: Colors.white,
-        size: 28,
+      child: const Center(
+        child: Icon(
+          Icons.inventory_2_outlined,
+          color: Colors.white,
+          size: 48,
+        ),
       ),
     );
   }
@@ -151,110 +68,165 @@ class _ProductCardState extends State<ProductCard> {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 16),
         child: Container(
-          height: 80,
           decoration: BoxDecoration(
             color: widget.isSelected ? const Color(0xFFE3F2FD) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: widget.isSelected 
-                ? Border.all(color: const Color(0xFF007AFF), width: 1)
-                : null,
+                ? Border.all(color: const Color(0xFF007AFF), width: 2)
+                : Border.all(color: Colors.grey[200]!, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+                spreadRadius: 0,
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                // Selection checkbox (only visible in selection mode)
-                if (widget.isSelectionMode) ...[
-                  AnimatedScale(
-                    duration: const Duration(milliseconds: 200),
-                    scale: widget.isSelectionMode ? 1.0 : 0.0,
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: widget.isSelected ? const Color(0xFF007AFF) : Colors.transparent,
-                        border: Border.all(
-                          color: widget.isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product Image Section
+              Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
                       ),
-                      child: widget.isSelected
-                          ? const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 16,
+                      color: Colors.grey[100],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                      child: widget.product.imageUrl != null && widget.product.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              widget.product.imageUrl!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _buildPlaceholderImage();
+                              },
                             )
-                          : null,
+                          : _buildPlaceholderImage(),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  
+                  // Selection checkbox (only visible in selection mode)
+                  if (widget.isSelectionMode)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: AnimatedScale(
+                        duration: const Duration(milliseconds: 200),
+                        scale: widget.isSelectionMode ? 1.0 : 0.0,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: widget.isSelected ? const Color(0xFF007AFF) : Colors.white,
+                            border: Border.all(
+                              color: widget.isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: widget.isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16,
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
                 ],
-                
-                _getProductImage(),
-                const SizedBox(width: 12),
-                Expanded(
+              ),
+              
+              // Product Info Section
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Product Name - Single line only
                       Text(
                         widget.product.name,
                         style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                          height: 1.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      
                       const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
+                      
+                      // Price
+                      Text(
+                        '\$${_formatPrice(widget.product.price)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1F2937),
                         ),
+                      ),
+                      
+                      // Description (if available)
+                      if (widget.product.description != null && widget.product.description!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.product.description!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                            height: 1.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      
+                      const Spacer(),
+                      
+                      // Stock at bottom right
+                      Align(
+                        alignment: Alignment.bottomRight,
                         child: Text(
-                          widget.product.category,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF6366F1),
-                            fontWeight: FontWeight.w500,
+                          'Stock: ${widget.product.inventory}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: widget.product.inventory > 0 
+                                ? Colors.green[700]
+                                : Colors.red[700],
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Show options menu only when not in selection mode
-                if (!widget.isSelectionMode)
-                  GestureDetector(
-                    onTap: _showOptionsMenu,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.more_vert,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

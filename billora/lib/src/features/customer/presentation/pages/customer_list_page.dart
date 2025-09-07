@@ -487,7 +487,6 @@ class _CustomerListPageState extends State<CustomerListPage>
 
   Widget _buildCustomerCard(Customer customer, int index) {
     final isSelected = _selectedCustomers.contains(customer.id);
-    final customerType = _getCustomerType(index);
     
     return GestureDetector(
       onTap: () {
@@ -631,8 +630,8 @@ class _CustomerListPageState extends State<CustomerListPage>
                 ),
               ),
               
-              // Corner triangle ribbon for VIP and Partnership customers
-              if (customerType == 'VIP' || customerType == 'Partnership')
+              // Corner triangle ribbon for VIP customers
+              if (customer.isVip)
                 Positioned(
                   right: 0,
                   top: 0,
@@ -640,7 +639,7 @@ class _CustomerListPageState extends State<CustomerListPage>
                     size: const Size(50, 50),
                     painter: TriangleRibbonPainter(
                       color: const Color(0xFF000000), // Black ribbon
-                      text: customerType == 'VIP' ? 'VIP' : 'PNS',
+                      text: 'VIP',
                     ),
                   ),
                 ),
@@ -795,10 +794,6 @@ class _CustomerListPageState extends State<CustomerListPage>
     return colors[name.hashCode % colors.length];
   }
 
-  String _getCustomerType(int index) {
-    final types = ['VIP', 'Key Account', 'Member', 'Partnership', 'Member'];
-    return types[index % types.length];
-  }
 }
 
 // Triangle Ribbon Painter - Simple right triangle at corner with rotated text

@@ -23,6 +23,19 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
     }
     
+    // Allow authenticated users to upload profile images
+    match /profiles/{userId}/{fileName} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024 // 5MB limit
+        && request.resource.contentType.matches('image/.*');
+    }
+    
+    // Allow public read access to profile images
+    match /profiles/{userId}/{fileName} {
+      allow read: if true; // Public read access for profile images
+    }
+    
     // Default rule - deny all other access
     match /{allPaths=**} {
       allow read, write: if false;

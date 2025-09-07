@@ -24,12 +24,12 @@ class DeleteDialog extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -39,38 +39,28 @@ class DeleteDialog extends StatelessWidget {
             // Header with icon
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
+                      color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                     child: const Icon(
-                      Icons.delete_forever,
-                      color: Colors.white,
-                      size: 32,
+                      Icons.delete_outline,
+                      color: Color(0xFFFF3B30),
+                      size: 28,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     title,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -80,44 +70,44 @@ class DeleteDialog extends StatelessWidget {
             
             // Content
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: Column(
                 children: [
                   Text(
                     message,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF2D3748),
-                      height: 1.5,
+                      color: Colors.grey[600],
+                      height: 1.4,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF5F5),
+                      color: Colors.grey[50],
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFFFFE5E5),
+                        color: Colors.grey[200]!,
                         width: 1,
                       ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          color: Color(0xFFFF6B6B),
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.grey[600],
                           size: 20,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             itemName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF2D3748),
+                              color: Colors.grey[800],
                             ),
                           ),
                         ),
@@ -136,25 +126,25 @@ class DeleteDialog extends StatelessWidget {
                   // Cancel button
                   Expanded(
                     child: Container(
-                      height: 50,
+                      height: 48,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
-                          width: 2,
+                          color: Colors.grey[300]!,
+                          width: 1,
                         ),
                       ),
                       child: TextButton(
                         onPressed: onCancel ?? () => Navigator.of(context).pop(),
                         style: TextButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Cancel',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: Colors.grey[700],
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -167,19 +157,10 @@ class DeleteDialog extends StatelessWidget {
                   // Delete button
                   Expanded(
                     child: Container(
-                      height: 50,
+                      height: 48,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFF6B6B).withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        color: const Color(0xFFFF3B30),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: ElevatedButton(
                         onPressed: () {
@@ -190,7 +171,7 @@ class DeleteDialog extends StatelessWidget {
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const Text(

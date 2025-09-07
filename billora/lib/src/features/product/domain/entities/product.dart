@@ -12,6 +12,7 @@ class Product {
   final String? companyPhone;
   final String? companyEmail;
   final String? companyWebsite;
+  final String? imageUrl;
   final Map<String, dynamic> extraFields;
 
   Product({
@@ -28,6 +29,7 @@ class Product {
     this.companyPhone,
     this.companyEmail,
     this.companyWebsite,
+    this.imageUrl,
     this.extraFields = const {},
   });
 
@@ -45,6 +47,7 @@ class Product {
     String? companyPhone,
     String? companyEmail,
     String? companyWebsite,
+    String? imageUrl,
     Map<String, dynamic>? extraFields,
   }) {
     return Product(
@@ -61,6 +64,7 @@ class Product {
       companyPhone: companyPhone ?? this.companyPhone,
       companyEmail: companyEmail ?? this.companyEmail,
       companyWebsite: companyWebsite ?? this.companyWebsite,
+      imageUrl: imageUrl ?? this.imageUrl,
       extraFields: extraFields ?? this.extraFields,
     );
   }
@@ -81,6 +85,7 @@ class Product {
       'companyPhone': companyPhone,
       'companyEmail': companyEmail,
       'companyWebsite': companyWebsite,
+      'imageUrl': imageUrl,
       'extraFields': extraFields,
     };
   }

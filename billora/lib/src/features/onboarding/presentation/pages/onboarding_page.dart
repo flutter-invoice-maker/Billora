@@ -3,7 +3,9 @@ import 'dart:async';
 import 'dart:math';
 
 class OnboardingPage extends StatefulWidget {
-  const OnboardingPage({super.key});
+  final VoidCallback? onComplete;
+  
+  const OnboardingPage({super.key, this.onComplete});
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -126,12 +128,14 @@ class _OnboardingPageState extends State<OnboardingPage>
         curve: Curves.easeInOutCubic,
       );
     } else {
-      Navigator.of(context).pushReplacementNamed('/login');
+      // Complete onboarding and navigate to login
+      widget.onComplete?.call();
     }
   }
 
   void _skipOnboarding() {
-    Navigator.of(context).pushReplacementNamed('/login');
+    // Complete onboarding and navigate to login
+    widget.onComplete?.call();
   }
 
   void _onPageChanged(int index) {
@@ -156,7 +160,7 @@ class _OnboardingPageState extends State<OnboardingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -242,7 +246,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     Text(
                       'Billora',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: const Color(0xFF1976D2),
                         fontSize: titleFontSize,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -266,9 +270,9 @@ class _OnboardingPageState extends State<OnboardingPage>
                 child: Text(
                   'Skip',
                   style: TextStyle(
-                    color: Colors.black54,
+                    color: const Color(0xFF1976D2),
                     fontSize: skipFontSize,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -312,7 +316,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                           right: index < _slides.length - 1 ? 8 : 0,
                         ),
                         decoration: BoxDecoration(
-                          color: isPassed ? Colors.black : Colors.grey[200],
+                          color: isPassed ? const Color(0xFF1976D2) : Colors.grey[300],
                           borderRadius: BorderRadius.circular(1),
                         ),
                         child: isActive
@@ -321,7 +325,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                                 widthFactor: _progressController.value,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.black,
+                                    color: const Color(0xFF1976D2),
                                     borderRadius: BorderRadius.circular(1),
                                   ),
                                 ),
@@ -342,12 +346,12 @@ class _OnboardingPageState extends State<OnboardingPage>
             child: ElevatedButton(
               onPressed: _nextPage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: const Color(0xFF1976D2),
                 foregroundColor: Colors.white,
-                elevation: 0,
-                shadowColor: Colors.transparent,
+                elevation: 2,
+                shadowColor: const Color(0xFF1976D2).withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: Text(
@@ -506,7 +510,7 @@ class _OnboardSlideState extends State<_OnboardSlide>
                     child: Icon(
                       widget.data.icon,
                       size: iconSize,
-                      color: Colors.black,
+                      color: const Color(0xFF1976D2),
                     ),
                   ),
                 );
@@ -520,7 +524,7 @@ class _OnboardSlideState extends State<_OnboardSlide>
                 style: TextStyle(
                   fontSize: headlineFontSize,
                   fontWeight: FontWeight.w300,
-                  color: Colors.black87,
+                  color: Colors.grey.shade800,
                   height: 1.1,
                   letterSpacing: -1.0,
                 ),
@@ -536,7 +540,7 @@ class _OnboardSlideState extends State<_OnboardSlide>
                 style: TextStyle(
                   fontSize: brandFontSize,
                   fontWeight: FontWeight.w800,
-                  color: Colors.black,
+                  color: const Color(0xFF1976D2),
                   height: 1.0,
                   letterSpacing: -1.5,
                 ),
@@ -552,7 +556,7 @@ class _OnboardSlideState extends State<_OnboardSlide>
                 style: TextStyle(
                   fontSize: subtitleFontSize,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black54,
+                  color: Colors.grey.shade600,
                   letterSpacing: -0.3,
                 ),
                 delay: const Duration(milliseconds: 1000),
@@ -567,7 +571,7 @@ class _OnboardSlideState extends State<_OnboardSlide>
                 style: TextStyle(
                   fontSize: descriptionFontSize,
                   fontWeight: FontWeight.w400,
-                  color: Colors.black45,
+                  color: Colors.grey.shade500,
                   height: 1.5,
                   letterSpacing: -0.1,
                 ),
@@ -662,7 +666,7 @@ class _TypewriterTextState extends State<_TypewriterText>
                 TextSpan(
                   text: '|',
                   style: widget.style.copyWith(
-                    color: Colors.black26,
+                    color: const Color(0xFF1976D2).withValues(alpha: 0.6),
                   ),
                 ),
             ],
@@ -816,7 +820,7 @@ class _Particle {
         velocityY = random.nextDouble() * 2 + 1;
         size = random.nextDouble() * 3 + 1;
         opacity = random.nextDouble() * 0.7 + 0.3;
-        color = Colors.black.withValues(alpha: opacity * 0.6);
+        color = const Color(0xFF1976D2).withValues(alpha: opacity * 0.6);
         break;
         
       case 1: // Invoice - Geometric dots
@@ -826,7 +830,7 @@ class _Particle {
         velocityY = random.nextDouble() * 1.5 + 0.5;
         size = random.nextDouble() * 2 + 1.5;
         opacity = random.nextDouble() * 0.5 + 0.2;
-        color = Colors.black.withValues(alpha: opacity * 0.4);
+        color = const Color(0xFF1976D2).withValues(alpha: opacity * 0.4);
         break;
         
       case 2: // Analytics - Data points
@@ -836,7 +840,7 @@ class _Particle {
         velocityY = random.nextDouble() * 1 + 0.3;
         size = random.nextDouble() * 1.5 + 1;
         opacity = random.nextDouble() * 0.6 + 0.2;
-        color = Colors.black.withValues(alpha: opacity * 0.3);
+        color = const Color(0xFF1976D2).withValues(alpha: opacity * 0.3);
         break;
     }
   }
@@ -932,7 +936,7 @@ class _EffectsPainter extends CustomPainter {
 
   void _drawConnectionLines(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.1)
+      ..color = const Color(0xFF1976D2).withValues(alpha: 0.1)
       ..strokeWidth = 0.5
       ..style = PaintingStyle.stroke;
 

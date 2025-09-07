@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform, kIsWeb;
+import 'package:billora/src/core/services/passkey_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,6 +26,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   bool _isFormSubmitted = false;
   bool _isPasswordVisible = false;
+  final PasskeyService _passkeyService = PasskeyService();
+  bool _isPasskeyAvailable = false;
 
   @override
   void initState() {
@@ -64,11 +67,21 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     ));
     
     _startAnimations();
+    _checkPasskeyAvailability();
   }
 
   void _startAnimations() {
     _fadeController.forward();
     _slideController.forward();
+  }
+
+  void _checkPasskeyAvailability() async {
+    final isAvailable = await _passkeyService.isBiometricAvailable();
+    if (mounted) {
+      setState(() {
+        _isPasskeyAvailable = isAvailable;
+      });
+    }
   }
 
   @override
@@ -87,6 +100,75 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             _emailController.text.trim(),
             _passwordController.text.trim(),
           );
+    }
+  }
+
+  void _onPasskeyLogin() async {
+    try {
+      // Check if passkey is available
+      if (!_isPasskeyAvailable) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Passkey authentication is not available on this device.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Try to authenticate with passkey
+      final result = await _passkeyService.authenticateWithPasskey(
+        credentialId: 'demo_credential_id', // In real app, this would be retrieved from storage
+      );
+
+      // Hide loading indicator
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (result['success'] == true) {
+        // Generate a user ID for passkey login
+        final userId = _passkeyService.generateUserId();
+        
+        // Create a mock user for passkey login
+        // In a real app, you would validate the passkey with your server
+        // and get the actual user data
+        if (mounted) {
+          context.read<AuthCubit>().loginWithPasskey(userId);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Passkey authentication failed: ${result['error']}'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Hide loading indicator
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Passkey login error: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -328,15 +410,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 const SizedBox(height: 12),
                                 
                                 _socialButton(
-                                  onPressed: isLoading ? null : () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Passkey login coming soon.'),
-                                        behavior: SnackBarBehavior.floating,
-                                        backgroundColor: const Color(0xFF1E40AF), // Blue 800
-                                      ),
-                                    );
-                                  },
+                                  onPressed: isLoading ? null : _onPasskeyLogin,
                                   label: 'Login with Passkey',
                                   icon: Icons.fingerprint,
                                   isTablet: isTablet,

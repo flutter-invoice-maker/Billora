@@ -126,24 +126,10 @@ class _EnhancedImageUploadPageState extends State<EnhancedImageUploadPage>
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Color(0xFF1A1A1A),
-            size: 18,
-          ),
+        icon: const Icon(
+          Icons.arrow_back_ios_new,
+          color: Color(0xFF1A1A1A),
+          size: 20,
         ),
       ),
       title: const Text(
@@ -159,24 +145,10 @@ class _EnhancedImageUploadPageState extends State<EnhancedImageUploadPage>
       actions: [
         IconButton(
           onPressed: _showHelpDialog,
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.help_outline,
-              color: Color(0xFF1A1A1A),
-              size: 18,
-            ),
+          icon: const Icon(
+            Icons.help_outline,
+            color: Color(0xFF1A1A1A),
+            size: 20,
           ),
         ),
         const SizedBox(width: 16),

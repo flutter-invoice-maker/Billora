@@ -64,6 +64,11 @@ dependencies:
 
   # Week 9 - AI & QR Code Integration
   qr_flutter: ^4.1.0
+  dart_openai: ^5.1.0
+  
+  # Passkey Authentication
+  local_auth: ^2.3.0
+  crypto: ^3.0.5
 
 dev_dependencies:
   flutter_test:

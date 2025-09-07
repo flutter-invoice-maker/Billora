@@ -12,6 +12,7 @@ class CustomerModel with _$CustomerModel {
     String? email,
     String? phone,
     String? address,
+    @Default(false) bool isVip,
     required String userId,
     @Default([]) List<String> searchKeywords,
   }) = _CustomerModel;
@@ -26,6 +27,7 @@ extension CustomerModelX on CustomerModel {
         email: email,
         phone: phone,
         address: address,
+        isVip: isVip,
       );
 
   static CustomerModel fromEntity(Customer customer, String userId) => CustomerModel(
@@ -34,6 +36,7 @@ extension CustomerModelX on CustomerModel {
         email: customer.email,
         phone: customer.phone,
         address: customer.address,
+        isVip: customer.isVip,
         userId: userId,
       );
 }

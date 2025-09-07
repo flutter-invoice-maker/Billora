@@ -48,8 +48,15 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> logout() async {
-    await logoutUseCase();
-    emit(const AuthState.unauthenticated());
+    try {
+      emit(const AuthState.loading());
+      await logoutUseCase();
+      emit(const AuthState.unauthenticated());
+    } catch (e) {
+      // Even if logout fails, we should still emit unauthenticated state
+      // to ensure user is logged out from the UI perspective
+      emit(const AuthState.unauthenticated());
+    }
   }
 
   Future<void> signInWithGoogle() async {
@@ -96,5 +103,18 @@ class AuthCubit extends Cubit<AuthState> {
       (failure) => emit(AuthState.error(failure.message)),
       (user) => emit(AuthState.authenticated(user)),
     );
+  }
+
+  Future<void> loginWithPasskey(String userId) async {
+    emit(const AuthState.loading());
+    
+    try {
+      // Simulate successful authentication
+      // Note: In a real implementation, you would need to create a proper User object
+      // For now, we'll emit an error since we can't create a proper User object
+      emit(AuthState.error('Passkey authentication not fully implemented yet'));
+    } catch (e) {
+      emit(AuthState.error('Passkey authentication failed: $e'));
+    }
   }
 } 

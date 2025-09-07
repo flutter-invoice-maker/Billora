@@ -26,6 +26,7 @@ mixin _$CustomerModel {
   String? get email => throw _privateConstructorUsedError;
   String? get phone => throw _privateConstructorUsedError;
   String? get address => throw _privateConstructorUsedError;
+  bool get isVip => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError;
   List<String> get searchKeywords => throw _privateConstructorUsedError;
 
@@ -52,6 +53,7 @@ abstract class $CustomerModelCopyWith<$Res> {
     String? email,
     String? phone,
     String? address,
+    bool isVip,
     String userId,
     List<String> searchKeywords,
   });
@@ -77,6 +79,7 @@ class _$CustomerModelCopyWithImpl<$Res, $Val extends CustomerModel>
     Object? email = freezed,
     Object? phone = freezed,
     Object? address = freezed,
+    Object? isVip = null,
     Object? userId = null,
     Object? searchKeywords = null,
   }) {
@@ -107,6 +110,11 @@ class _$CustomerModelCopyWithImpl<$Res, $Val extends CustomerModel>
                     ? _value.address
                     : address // ignore: cast_nullable_to_non_nullable
                         as String?,
+            isVip:
+                null == isVip
+                    ? _value.isVip
+                    : isVip // ignore: cast_nullable_to_non_nullable
+                        as bool,
             userId:
                 null == userId
                     ? _value.userId
@@ -138,6 +146,7 @@ abstract class _$$CustomerModelImplCopyWith<$Res>
     String? email,
     String? phone,
     String? address,
+    bool isVip,
     String userId,
     List<String> searchKeywords,
   });
@@ -162,6 +171,7 @@ class __$$CustomerModelImplCopyWithImpl<$Res>
     Object? email = freezed,
     Object? phone = freezed,
     Object? address = freezed,
+    Object? isVip = null,
     Object? userId = null,
     Object? searchKeywords = null,
   }) {
@@ -192,6 +202,11 @@ class __$$CustomerModelImplCopyWithImpl<$Res>
                 ? _value.address
                 : address // ignore: cast_nullable_to_non_nullable
                     as String?,
+        isVip:
+            null == isVip
+                ? _value.isVip
+                : isVip // ignore: cast_nullable_to_non_nullable
+                    as bool,
         userId:
             null == userId
                 ? _value.userId
@@ -216,6 +231,7 @@ class _$CustomerModelImpl implements _CustomerModel {
     this.email,
     this.phone,
     this.address,
+    this.isVip = false,
     required this.userId,
     final List<String> searchKeywords = const [],
   }) : _searchKeywords = searchKeywords;
@@ -234,6 +250,9 @@ class _$CustomerModelImpl implements _CustomerModel {
   @override
   final String? address;
   @override
+  @JsonKey()
+  final bool isVip;
+  @override
   final String userId;
   final List<String> _searchKeywords;
   @override
@@ -246,7 +265,7 @@ class _$CustomerModelImpl implements _CustomerModel {
 
   @override
   String toString() {
-    return 'CustomerModel(id: $id, name: $name, email: $email, phone: $phone, address: $address, userId: $userId, searchKeywords: $searchKeywords)';
+    return 'CustomerModel(id: $id, name: $name, email: $email, phone: $phone, address: $address, isVip: $isVip, userId: $userId, searchKeywords: $searchKeywords)';
   }
 
   @override
@@ -259,6 +278,7 @@ class _$CustomerModelImpl implements _CustomerModel {
             (identical(other.email, email) || other.email == email) &&
             (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.address, address) || other.address == address) &&
+            (identical(other.isVip, isVip) || other.isVip == isVip) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             const DeepCollectionEquality().equals(
               other._searchKeywords,
@@ -275,6 +295,7 @@ class _$CustomerModelImpl implements _CustomerModel {
     email,
     phone,
     address,
+    isVip,
     userId,
     const DeepCollectionEquality().hash(_searchKeywords),
   );
@@ -300,6 +321,7 @@ abstract class _CustomerModel implements CustomerModel {
     final String? email,
     final String? phone,
     final String? address,
+    final bool isVip,
     required final String userId,
     final List<String> searchKeywords,
   }) = _$CustomerModelImpl;
@@ -317,6 +339,8 @@ abstract class _CustomerModel implements CustomerModel {
   String? get phone;
   @override
   String? get address;
+  @override
+  bool get isVip;
   @override
   String get userId;
   @override

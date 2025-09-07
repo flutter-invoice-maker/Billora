@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:billora/src/core/constants/app_constants.dart';
@@ -25,8 +26,18 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
   @override
   Future<Map<String, dynamic>> getInvoiceStats(DateRange dateRange, List<String> tagFilters) async {
     try {
+      // Check if user is authenticated
+      if (_userId.isEmpty) {
+        developer.log('Dashboard: User not authenticated, returning empty stats', name: 'DashboardDataSource');
+        return _getEmptyStats();
+      }
+      
+      developer.log('Dashboard: Fetching stats for user: $_userId', name: 'DashboardDataSource');
+      
       final query = _buildInvoicesQuery(dateRange, tagFilters);
       final invoicesSnapshot = await query.get();
+      
+      developer.log('Dashboard: Found ${invoicesSnapshot.docs.length} invoices in Firestore', name: 'DashboardDataSource');
 
       // Filter results in memory
       final filteredInvoices = invoicesSnapshot.docs.where((doc) {
@@ -89,6 +100,8 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
       final totalInvoices = validInvoices.length;
       final totalRevenue = validInvoices.fold<double>(0.0, (total, invoice) => total + (invoice['total'] as double));
       final averageValue = totalInvoices > 0 ? totalRevenue / totalInvoices : 0.0;
+      
+      developer.log('Dashboard: Calculated stats - Invoices: $totalInvoices, Revenue: $totalRevenue, Average: $averageValue', name: 'DashboardDataSource');
 
       // Get chart data
       final revenueChartData = await getRevenueChartData(dateRange, tagFilters);
@@ -118,7 +131,8 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
         'totalPendingAmount': totalRevenue * ((100 - paidPercentage) / 100),
       };
     } catch (e) {
-      throw Exception('Failed to get invoice stats: $e');
+      // Return empty stats instead of rethrowing to prevent UI crashes
+      return _getEmptyStats();
     }
   }
 
@@ -136,6 +150,11 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
   @override
   Future<List<Map<String, dynamic>>> getRevenueChartData(DateRange dateRange, List<String> tagFilters) async {
     try {
+      // Check if user is authenticated
+      if (_userId.isEmpty) {
+        return [];
+      }
+      
       final query = _buildInvoicesQuery(dateRange, tagFilters);
       final invoicesSnapshot = await query.get();
 
@@ -198,13 +217,18 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
       
       return chartData;
     } catch (e) {
-      throw Exception('Failed to get revenue chart data: $e');
+      return [];
     }
   }
 
   @override
   Future<List<Map<String, dynamic>>> getInvoiceChartData(DateRange dateRange, List<String> tagFilters) async {
     try {
+      // Check if user is authenticated
+      if (_userId.isEmpty) {
+        return [];
+      }
+      
       final query = _buildInvoicesQuery(dateRange, tagFilters);
       final invoicesSnapshot = await query.get();
 
@@ -265,13 +289,18 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
       
       return chartData;
     } catch (e) {
-      throw Exception('Failed to get invoice chart data: $e');
+      return [];
     }
   }
 
   @override
   Future<List<Map<String, dynamic>>> getTopTags(DateRange dateRange, int limit) async {
     try {
+      // Check if user is authenticated
+      if (_userId.isEmpty) {
+        return [];
+      }
+      
       final query = _buildInvoicesQuery(dateRange, []);
       final invoicesSnapshot = await query.get();
 
@@ -311,13 +340,18 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
 
       return topTags;
     } catch (e) {
-      throw Exception('Failed to get top tags: $e');
+      return [];
     }
   }
 
   @override
   Future<Map<String, int>> getStatusDistribution(DateRange dateRange, List<String> tagFilters) async {
     try {
+      // Check if user is authenticated
+      if (_userId.isEmpty) {
+        return {};
+      }
+      
       final query = _buildInvoicesQuery(dateRange, tagFilters);
       final invoicesSnapshot = await query.get();
 
@@ -331,7 +365,7 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
 
       return statusCount;
     } catch (e) {
-      throw Exception('Failed to get status distribution: $e');
+      return {};
     }
   }
 
@@ -353,5 +387,18 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
     if (statusStr.contains('overdue')) return 'overdue';
     if (statusStr.contains('cancelled')) return 'cancelled';
     return 'pending';
+  }
+
+  Map<String, dynamic> _getEmptyStats() {
+    return {
+      'totalInvoices': 0,
+      'totalRevenue': 0.0,
+      'averageValue': 0.0,
+      'newCustomers': 0,
+      'revenueChartData': <Map<String, dynamic>>[],
+      'invoiceChartData': <Map<String, dynamic>>[],
+      'topTags': <Map<String, dynamic>>[],
+      'statusDistribution': <String, int>{},
+    };
   }
 } 

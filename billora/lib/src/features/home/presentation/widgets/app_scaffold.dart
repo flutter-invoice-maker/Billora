@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app_header.dart';
 import 'app_tabbar.dart';
 import 'global_ai_button.dart';
+import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart';
 
 class AppScaffold extends StatelessWidget {
   final Widget body;
@@ -23,11 +25,21 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Try to get AuthCubit from context, but don't fail if not available
+    AuthCubit? authCubit;
+    try {
+      authCubit = context.read<AuthCubit>();
+    } catch (e) {
+      // AuthCubit not available in this context
+      authCubit = null;
+    }
+
     final header = AppHeader(
       currentTabIndex: currentTabIndex,
       pageTitle: pageTitle,
       actions: actions,
       bottom: headerBottom,
+      authCubit: authCubit,
     );
 
     return Scaffold(

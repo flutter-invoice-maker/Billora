@@ -5,6 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/core/utils/app_strings.dart';
 import 'dart:math';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:billora/src/core/services/image_upload_service.dart';
+import 'package:billora/src/core/di/injection_container.dart';
 
 class ProductFormPage extends StatefulWidget {
   final Product? product;
@@ -32,6 +36,9 @@ class _ProductFormPageState extends State<ProductFormPage>
   late String? _companyPhone;
   late String? _companyEmail;
   late String? _companyWebsite;
+  late String? _imageUrl;
+  File? _selectedImage;
+  final ImagePicker _imagePicker = ImagePicker();
   Map<String, dynamic> _extraFields = {};
   String _selectedTemplate = 'professional_business';
 
@@ -50,6 +57,7 @@ class _ProductFormPageState extends State<ProductFormPage>
     _companyPhone = widget.product?.companyPhone ?? widget.prefill?['companyPhone']?.toString();
     _companyEmail = widget.product?.companyEmail ?? widget.prefill?['companyEmail']?.toString();
     _companyWebsite = widget.product?.companyWebsite ?? widget.prefill?['companyWebsite']?.toString();
+    _imageUrl = widget.product?.imageUrl ?? widget.prefill?['imageUrl']?.toString();
     _extraFields = Map<String, dynamic>.from(widget.product?.extraFields ?? {});
     _selectedTemplate = widget.product?.category ?? (widget.prefill?['category']?.toString() ?? 'professional_business');
     // Normalize invalid values to avoid dropdown assertion
@@ -95,6 +103,11 @@ class _ProductFormPageState extends State<ProductFormPage>
                         // Basic Information Section
                         _buildSectionHeader('Basic Information'),
                         const SizedBox(height: 16),
+                        
+                        // Product Image Section
+                        _buildImageUploadSection(),
+                        const SizedBox(height: 16),
+                        
                         _buildTextField(
                           label: 'Product/Service Name',
                           value: _name,
@@ -1230,12 +1243,51 @@ class _ProductFormPageState extends State<ProductFormPage>
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
       final isCreate = widget.forceCreate || !_isEdit;
+      final productId = isCreate ? _genId() : (widget.product!.id);
+      
+      String? finalImageUrl = _imageUrl;
+      
+      // Upload image if a new image is selected
+      if (_selectedImage != null) {
+        try {
+          // Show loading indicator
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+          
+          final imageUploadService = sl<ImageUploadService>();
+          finalImageUrl = await imageUploadService.uploadProductImage(_selectedImage!, productId);
+          
+          // Hide loading indicator
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        } catch (e) {
+          // Hide loading indicator
+          if (mounted) {
+            Navigator.of(context).pop();
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error uploading image: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+      
       final product = Product(
-        id: isCreate ? _genId() : (widget.product!.id),
+        id: productId,
         name: _name.trim(),
         description: _description?.trim().isEmpty == true ? null : _description?.trim(),
         price: _price,
@@ -1248,18 +1300,272 @@ class _ProductFormPageState extends State<ProductFormPage>
         companyPhone: _companyPhone?.trim().isEmpty == true ? null : _companyPhone?.trim(),
         companyEmail: _companyEmail?.trim().isEmpty == true ? null : _companyEmail?.trim(),
         companyWebsite: _companyWebsite?.trim().isEmpty == true ? null : _companyWebsite?.trim(),
+        imageUrl: finalImageUrl,
         extraFields: _extraFields,
       );
 
-      if (isCreate) {
-        context.read<ProductCubit>().addProduct(product);
-      } else {
-        context.read<ProductCubit>().updateProduct(product);
-      }
+      if (mounted) {
+        if (isCreate) {
+          context.read<ProductCubit>().addProduct(product);
+        } else {
+          context.read<ProductCubit>().updateProduct(product);
+        }
 
-      Navigator.of(context).pop(product);
+        Navigator.of(context).pop(product);
+      }
     }
   }
 
   String _genId() => DateTime.now().millisecondsSinceEpoch.toString() + Random().nextInt(10000).toString();
+
+  Widget _buildImageUploadSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Product Image',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _showImagePicker,
+          child: Container(
+            height: 120,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.grey[300]!,
+                width: 1,
+              ),
+            ),
+            child: _selectedImage != null || _imageUrl != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: _selectedImage != null
+                        ? Image.file(
+                            _selectedImage!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          )
+                        : _imageUrl != null
+                            ? Image.network(
+                                _imageUrl!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return _buildImagePlaceholder();
+                                },
+                              )
+                            : _buildImagePlaceholder(),
+                  )
+                : _buildImagePlaceholder(),
+          ),
+        ),
+        if (_selectedImage != null || _imageUrl != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: _showImagePicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1976D2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'Change Image',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _removeImage,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Remove',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.add_photo_alternate_outlined,
+          size: 32,
+          color: Colors.grey[600],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Tap to add product image',
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showImagePicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Select Image Source',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1976D2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Camera',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1976D2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Icons.photo_library,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Gallery',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+          _imageUrl = null; // Clear existing URL when new image is selected
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+      _imageUrl = null;
+    });
+  }
 }

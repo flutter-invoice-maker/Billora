@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:dart_openai/dart_openai.dart';
 import 'src/features/auth/presentation/pages/login_page.dart';
 import 'src/features/auth/presentation/pages/register_page.dart';
 import 'src/features/auth/presentation/cubit/auth_cubit.dart';
@@ -40,13 +41,13 @@ import 'src/features/bill_scanner/presentation/pages/scan_library_page.dart';
 import 'src/features/bill_scanner/presentation/cubit/scan_library_cubit.dart';
 
 import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart';
-import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/customer/presentation/pages/customer_form_page.dart';
 import 'src/features/auth/presentation/widgets/profile_form.dart';
 import 'src/features/auth/presentation/cubit/auth_state.dart';
 import 'src/features/invoice/presentation/pages/invoice_template_page.dart';
+import 'src/core/widgets/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +56,15 @@ void main() async {
   try {
     await dotenv.load(fileName: ".env");
     debugPrint('✅ .env file loaded successfully');
-    debugPrint('🔑 API Key loaded: ${dotenv.env['OPENAI_API_KEY']?.substring(0, 7) ?? 'NOT_FOUND'}...');
+    
+    // Initialize OpenAI with API key
+    final apiKey = dotenv.env['OPENAI_API_KEY'];
+    if (apiKey != null && apiKey.isNotEmpty) {
+      OpenAI.apiKey = apiKey;
+      debugPrint('🔑 OpenAI API Key loaded: ${apiKey.substring(0, 7)}...');
+    } else {
+      debugPrint('⚠️ OpenAI API key not found in .env file');
+    }
   } catch (e) {
     debugPrint('❌ Failed to load .env file: $e');
     debugPrint('⚠️ Make sure .env file exists in project root with OPENAI_API_KEY');
@@ -93,7 +102,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
 
-      home: const OnboardingPage(),
+      home: const AuthWrapper(),
       routes: {
         '/onboarding': (context) => const OnboardingPage(),
         '/login': (context) => BlocProvider.value(
@@ -149,7 +158,6 @@ class _MyAppState extends State<MyApp> {
                 BlocProvider.value(value: sl<TagsCubit>()),
                 // Add AI UseCase providers
                 Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
-                Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
                 Provider<ClassifyInvoiceUseCase>(create: (_) => sl<ClassifyInvoiceUseCase>()),
               ],
               child: const InvoiceListPage(),
@@ -163,7 +171,6 @@ class _MyAppState extends State<MyApp> {
                 BlocProvider.value(value: sl<SuggestionsCubit>()),
                 BlocProvider.value(value: sl<TagsCubit>()),
                 Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
-                Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
                 Provider<ClassifyInvoiceUseCase>(create: (_) => sl<ClassifyInvoiceUseCase>()),
               ],
               child: const InvoiceFormPage(),
@@ -191,7 +198,6 @@ class _MyAppState extends State<MyApp> {
                 BlocProvider<ScanLibraryCubit>(create: (_) => sl<ScanLibraryCubit>()),
                 // Add AI UseCase providers for scan library
                 Provider<GenerateSummaryUseCase>(create: (_) => sl<GenerateSummaryUseCase>()),
-                Provider<SuggestTagsUseCase>(create: (_) => sl<SuggestTagsUseCase>()),
                 Provider<ClassifyInvoiceUseCase>(create: (_) => sl<ClassifyInvoiceUseCase>()),
               ],
               child: const ScanLibraryPage(),

@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'injection_container.config.dart'; // import file config được sinh ra
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:billora/src/core/services/user_service.dart';
 import 'package:billora/src/features/customer/domain/usecases/get_customers_usecase.dart';
 import 'package:billora/src/features/customer/domain/usecases/create_customer_usecase.dart';
 import 'package:billora/src/features/customer/domain/usecases/update_customer_usecase.dart';
@@ -85,13 +86,16 @@ import 'package:billora/src/features/dashboard/domain/usecases/export_invoice_re
 import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
 // Week 9 - AI & QR Code Dependencies
-import 'package:billora/src/core/services/huggingface_ai_service.dart';
-import 'package:billora/src/core/services/ai_chat_service.dart';
+import 'package:billora/src/core/services/chatbot_ai_service.dart';
 import 'package:billora/src/core/services/qr_service.dart';
-import 'package:billora/src/features/invoice/domain/usecases/suggest_tags_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/classify_invoice_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/generate_summary_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/generate_qr_code_usecase.dart';
+
+// Chat Dependencies
+import 'package:billora/src/features/chat/domain/repositories/chat_repository.dart';
+import 'package:billora/src/features/chat/data/repositories/chat_repository_impl.dart';
+import 'package:billora/src/features/chat/presentation/cubit/chatbot_cubit.dart';
 
 
 final sl = GetIt.instance;
@@ -187,7 +191,7 @@ Future<void> configureDependencies() async {
   }
   if (!sl.isRegistered<AuthRemoteDataSource>()) {
     sl.registerLazySingleton<AuthRemoteDataSource>(
-      () => AuthRemoteDataSourceImpl(sl<FirebaseAuth>(), sl<GoogleSignIn>()),
+      () => AuthRemoteDataSourceImpl(sl<FirebaseAuth>(), sl<GoogleSignIn>(), sl<UserService>()),
     );
   }
   if (!sl.isRegistered<SignInWithGoogleUseCase>()) {
@@ -463,37 +467,44 @@ Future<void> configureDependencies() async {
   }
 
   // Week 9 - AI & QR Code Dependencies
-  if (!sl.isRegistered<HuggingFaceAIService>()) {
-    sl.registerLazySingleton<HuggingFaceAIService>(() => HuggingFaceAIService(
+  if (!sl.isRegistered<ChatbotAIService>()) {
+    sl.registerLazySingleton<ChatbotAIService>(() => ChatbotAIServiceImpl(
       invoiceRepository: sl<InvoiceRepository>(),
       customerRepository: sl<CustomerRepository>(),
       productRepository: sl<ProductRepository>(),
-      firebaseAuth: sl<FirebaseAuth>(),
-    ));
-  }
-  if (!sl.isRegistered<AIChatService>()) {
-    sl.registerLazySingleton<AIChatService>(() => AIChatService(
-      aiService: sl<HuggingFaceAIService>(),
-      invoiceRepository: sl<InvoiceRepository>(),
-      customerRepository: sl<CustomerRepository>(),
-      productRepository: sl<ProductRepository>(),
-      firebaseAuth: sl<FirebaseAuth>(),
     ));
   }
   if (!sl.isRegistered<QRService>()) {
     sl.registerLazySingleton<QRService>(() => QRService());
   }
-  if (!sl.isRegistered<SuggestTagsUseCase>()) {
-    sl.registerLazySingleton<SuggestTagsUseCase>(() => SuggestTagsUseCase(sl<HuggingFaceAIService>()));
-  }
+
   if (!sl.isRegistered<ClassifyInvoiceUseCase>()) {
-    sl.registerLazySingleton<ClassifyInvoiceUseCase>(() => ClassifyInvoiceUseCase(sl<HuggingFaceAIService>()));
+    sl.registerLazySingleton<ClassifyInvoiceUseCase>(() => ClassifyInvoiceUseCase(sl<ChatbotAIService>(), sl<FirebaseAuth>()));
   }
   if (!sl.isRegistered<GenerateSummaryUseCase>()) {
-    sl.registerLazySingleton<GenerateSummaryUseCase>(() => GenerateSummaryUseCase(sl<HuggingFaceAIService>()));
+    sl.registerLazySingleton<GenerateSummaryUseCase>(() => GenerateSummaryUseCase(sl<ChatbotAIService>(), sl<FirebaseAuth>()));
   }
   if (!sl.isRegistered<GenerateQRCodeUseCase>()) {
     sl.registerLazySingleton<GenerateQRCodeUseCase>(() => GenerateQRCodeUseCase(sl()));
+  }
+
+  // Chat Dependencies
+  if (!sl.isRegistered<ChatRepository>()) {
+    sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl(
+      sl<FirebaseFirestore>(),
+      sl<FirebaseAuth>(),
+      sl<InvoiceRepository>(),
+      sl<CustomerRepository>(),
+      sl<ProductRepository>(),
+    ));
+  }
+  if (!sl.isRegistered<ChatbotCubit>()) {
+    sl.registerLazySingleton<ChatbotCubit>(() => ChatbotCubit(
+      chatRepository: sl<ChatRepository>(),
+      aiService: sl<ChatbotAIService>(),
+      firebaseAuth: sl<FirebaseAuth>(),
+      uuid: sl<Uuid>(),
+    ));
   }
 
   // Bill Scanner dependencies

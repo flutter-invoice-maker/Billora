@@ -8,6 +8,9 @@ import '../../domain/usecases/send_invoice_email_usecase.dart';
 import '../../domain/usecases/send_firebase_email_usecase.dart';
 import '../../domain/usecases/upload_invoice_usecase.dart';
 import 'package:flutter/foundation.dart';
+import 'package:billora/src/core/services/notification_service.dart';
+import 'package:billora/src/core/services/activity_service.dart';
+import 'package:billora/src/core/services/customer_ranking_service.dart';
 import 'invoice_state.dart';
 
 class InvoiceCubit extends Cubit<InvoiceState> {
@@ -36,7 +39,13 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     if (isClosed) return; // Check again after async operation
     result.fold(
       (failure) => emit(InvoiceState.error(failure.message)),
-      (invoices) => emit(InvoiceState.loaded(invoices)),
+      (invoices) {
+        emit(InvoiceState.loaded(invoices));
+        // Load fresh data from Firestore for all services
+        NotificationService().loadOverdueInvoices();
+        ActivityService().loadActivities();
+        CustomerRankingService().loadCustomerRankings();
+      },
     );
   }
 
@@ -49,6 +58,8 @@ class InvoiceCubit extends Cubit<InvoiceState> {
       (failure) => emit(InvoiceState.error(failure.message)),
       (_) {
         fetchInvoices(); // Refresh invoices list
+        // Add activity for invoice creation
+        ActivityService().addInvoiceCreatedActivity(invoice);
         // Notify other cubits to refresh their data
         _notifyDataChanged();
       },

@@ -32,7 +32,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    await remoteDataSource.logout();
+    try {
+      await remoteDataSource.logout();
+    } catch (e) {
+      // Log the error but don't throw it - we want logout to succeed
+      // even if some cleanup operations fail
+      print('Warning: Logout operation failed: $e');
+    }
   }
 
   @override

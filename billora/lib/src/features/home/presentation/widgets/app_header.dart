@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:billora/src/features/home/presentation/widgets/notification_widget.dart';
+import 'package:billora/src/features/home/presentation/widgets/user_profile_popup.dart';
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
@@ -7,6 +9,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 	final int currentTabIndex;
 	final List<Widget>? actions;
 	final PreferredSizeWidget? bottom;
+	final AuthCubit? authCubit;
 
 	const AppHeader({
 		super.key,
@@ -14,6 +17,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 		required this.currentTabIndex,
 		this.actions,
 		this.bottom,
+		this.authCubit,
 	});
 
 	static const double _headerRowHeight = 56;
@@ -55,10 +59,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 										child: Row(
 											mainAxisSize: MainAxisSize.min,
 											children: [
-												IconButton(
-													icon: const Icon(Icons.notifications_none_rounded, color: Colors.black),
-													onPressed: () {},
-												),
+												const NotificationWidget(),
 												const SizedBox(width: 8),
 												_buildAvatarWithMenu(context),
 											],
@@ -76,51 +77,53 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 	}
 
 	Widget _buildAvatarWithMenu(BuildContext context) {
-		return PopupMenuButton<String>(
-			offset: const Offset(0, 50),
-			shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-			child: const CircleAvatar(
-				radius: 20,
-				backgroundColor: Colors.black,
-				child: Icon(Icons.person, color: Colors.white, size: 24),
-			),
-			itemBuilder: (context) => [
-				_buildMenuItem(context, 'Profile', Icons.person_outline),
-				_buildMenuItem(context, 'Settings', Icons.settings_outlined),
-				const PopupMenuDivider(),
-				_buildMenuItem(context, 'Logout', Icons.logout),
-			],
-			onSelected: (value) {
-				switch (value) {
-					case 'Profile':
-						Navigator.pushNamed(context, '/profile');
-						break;
-					case 'Settings':
-						ScaffoldMessenger.of(context).showSnackBar(
-							const SnackBar(content: Text('Settings page coming soon!')),
-						);
-						break;
-					case 'Logout':
-						context.read<AuthCubit>().logout();
-						Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-						break;
-				}
-			},
+		return GestureDetector(
+			onTap: () => _showProfilePopup(context),
+			 child: const CircleAvatar(
+			radius: 20,
+			backgroundColor: Colors.black,
+			child: Icon(Icons.person, color: Colors.white, size: 24),
+		),
 		);
 	}
 
-	PopupMenuItem<String> _buildMenuItem(BuildContext context, String title, IconData icon) {
-		return PopupMenuItem<String>(
-			value: title,
-			child: Row(
-				children: [
-					Icon(icon, size: 18, color: Colors.black87),
-					const SizedBox(width: 12),
-					Text(title, style: const TextStyle(fontSize: 14)),
-				],
-			),
-		);
+	void _showProfilePopup(BuildContext context) {
+		if (authCubit == null) {
+			// If no AuthCubit provided, try to get it from context
+			try {
+				final cubit = context.read<AuthCubit>();
+				Navigator.push(
+					context,
+					MaterialPageRoute(
+						builder: (context) => BlocProvider.value(
+							value: cubit,
+							child: const UserProfilePopup(),
+						),
+					),
+				);
+			} catch (e) {
+				// If AuthCubit is not available, show error message
+				ScaffoldMessenger.of(context).showSnackBar(
+					const SnackBar(
+						content: Text('Authentication service not available'),
+						backgroundColor: Colors.red,
+					),
+				);
+			}
+		} else {
+			// Use provided AuthCubit
+			Navigator.push(
+				context,
+				MaterialPageRoute(
+					builder: (context) => BlocProvider.value(
+						value: authCubit!,
+						child: const UserProfilePopup(),
+					),
+				),
+			);
+		}
 	}
+
 
 	String _titleForIndex(int index) {
 		switch (index) {

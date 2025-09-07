@@ -1,10 +1,14 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:billora/src/core/di/injection_container.dart';
 import 'package:billora/src/core/utils/currency_formatter.dart';
 import 'package:billora/src/core/utils/number_formatter.dart';
 import 'package:billora/src/features/dashboard/presentation/widgets/revenue_chart.dart';
+import 'package:billora/src/core/services/activity_service.dart';
+import 'package:billora/src/core/services/data_refresh_service.dart';
+import 'package:billora/src/features/home/presentation/widgets/activity_history_popup.dart';
+import 'package:billora/src/features/home/presentation/widgets/ai_insight_ranking_widget.dart';
 import '../widgets/app_scaffold.dart';
 
 class HomePage extends StatelessWidget {
@@ -14,22 +18,23 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<DashboardCubit>(
-      create: (_) => sl<DashboardCubit>()..loadDashboardStats(),
-      child: AppScaffold(
-        currentTabIndex: _currentIndex,
-        pageTitle: 'Home',
-        headerBottom: const _HomeHeaderSearch(),
-        body: SafeArea(
-          top: false,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return RefreshIndicator(
-                color: Colors.blue[700], // Thay đổi màu refresh thành xanh dương
-                backgroundColor: Colors.white,
-                onRefresh: () async {
-                  context.read<DashboardCubit>().loadDashboardStats();
-                },
+    // Load dashboard stats when HomePage is built
+    context.read<DashboardCubit>().loadDashboardStats();
+    
+    return AppScaffold(
+      currentTabIndex: _currentIndex,
+      pageTitle: 'Home',
+      headerBottom: const _HomeHeaderSearch(),
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return RefreshIndicator(
+              color: Colors.blue[700], // Thay đổi màu refresh thành xanh dương
+              backgroundColor: Colors.white,
+              onRefresh: () async {
+                context.read<DashboardCubit>().loadDashboardStats();
+              },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
@@ -43,7 +48,7 @@ class HomePage extends StatelessWidget {
                       const SizedBox(height: 32),
                       _RecentActivitiesSection(constraints: constraints),
                       const SizedBox(height: 32),
-                      _AIInsightsSection(constraints: constraints),
+                      const AIInsightRankingWidget(),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -52,7 +57,6 @@ class HomePage extends StatelessWidget {
             },
           ),
         ),
-      ),
     );
   }
 }
@@ -571,10 +575,47 @@ class _StatItem extends StatelessWidget {
 }
 
 
-class _RecentActivitiesSection extends StatelessWidget {
+class _RecentActivitiesSection extends StatefulWidget {
   final BoxConstraints constraints;
 
   const _RecentActivitiesSection({required this.constraints});
+
+  @override
+  State<_RecentActivitiesSection> createState() => _RecentActivitiesSectionState();
+}
+
+class _RecentActivitiesSectionState extends State<_RecentActivitiesSection> {
+  final ActivityService _activityService = ActivityService();
+
+  @override
+  void initState() {
+    super.initState();
+    _activityService.addListener(_onActivitiesChanged);
+    
+    // Refresh all data from Firestore
+    DataRefreshService().refreshAllData();
+  }
+
+
+  @override
+  void dispose() {
+    _activityService.removeListener(_onActivitiesChanged);
+    super.dispose();
+  }
+
+  void _onActivitiesChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _showActivityHistory(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const ActivityHistoryPopup(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -595,9 +636,7 @@ class _RecentActivitiesSection extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                // Action for see all
-              },
+              onTap: () => _showActivityHistory(context),
               child: Text(
                 'See all',
                 style: TextStyle(
@@ -631,40 +670,67 @@ class _RecentActivitiesSection extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Column(
-                    children: [
-                      _ActivityRow(
-                        icon: Icons.receipt_long,
-                        text: 'Invoice #BL0012 created for Stellar Corp',
-                        time: '10 min ago',
-                        color: const Color.fromARGB(255, 229, 50, 30), // Giữ màu xanh dương cho Invoice
-                        constraints: constraints,
-                        isFirst: true,
-                      ),
-                      const _ActivityDivider(),
-                      _ActivityRow(
-                        icon: Icons.people,
-                        text: 'New customer added: Apex Innovations',
-                        time: '35 min ago',
-                        color: const Color.fromARGB(255, 191, 33, 243), // Thay đổi màu từ xanh lá thành xanh dương
-                        constraints: constraints,
-                      ),
-                      const _ActivityDivider(),
-                      _ActivityRow(
-                        icon: Icons.inventory_2,
-                        text: 'Product stock updated: Widget Pro (+50 units)',
-                        time: '1 hour ago',
-                        color: const Color.fromARGB(255, 96, 210, 25), // Thay đổi màu từ cam thành xanh dương đậm
-                        constraints: constraints,
-                        isLast: true,
-                      ),
-                    ],
-                  ),
+                  child: _buildActivitiesList(),
                 ),
               ),
             );
           },
         ),
+      ],
+    );
+  }
+
+  Widget _buildActivitiesList() {
+    final activities = _activityService.activities.take(3).toList();
+    
+    if (activities.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.history,
+                size: 48,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No recent activities',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your activities will appear here',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (int i = 0; i < activities.length; i++) ...[
+          _ActivityRow(
+            icon: activities[i].icon,
+            text: activities[i].description,
+            time: activities[i].timeAgo,
+            color: activities[i].color,
+            constraints: widget.constraints,
+            isFirst: i == 0,
+            isLast: i == activities.length - 1,
+          ),
+          if (i < activities.length - 1) const _ActivityDivider(),
+        ],
       ],
     );
   }
@@ -734,17 +800,19 @@ class _ActivityRow extends StatelessWidget {
                 Text(
                   text,
                   style: TextStyle(
-                    fontSize: constraints.maxWidth * 0.035,
+                    fontSize: math.max(14, constraints.maxWidth * 0.035), // Minimum 14px
                     fontWeight: FontWeight.w500,
                     color: Colors.black87,
                     height: 1.3,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: constraints.maxHeight * 0.005),
+                SizedBox(height: math.max(4, constraints.maxHeight * 0.005)),
                 Text(
                   time,
                   style: TextStyle(
-                    fontSize: constraints.maxWidth * 0.03,
+                    fontSize: math.max(12, constraints.maxWidth * 0.03), // Minimum 12px
                     fontWeight: FontWeight.w400,
                     color: Colors.grey[600],
                   ),
@@ -763,166 +831,6 @@ class _ActivityRow extends StatelessWidget {
   }
 }
 
-class _AIInsightsSection extends StatefulWidget {
-  final BoxConstraints constraints;
-
-  const _AIInsightsSection({required this.constraints});
-
-  @override
-  State<_AIInsightsSection> createState() => _AIInsightsSectionState();
-}
-
-class _AIInsightsSectionState extends State<_AIInsightsSection>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Colors.blue[600], // Thay đổi màu pulse dot thành xanh dương
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'AI Insights',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 800),
-          tween: Tween(begin: 0.0, end: 1.0),
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(0, 40 * (1 - value)),
-              child: Opacity(
-                opacity: value,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(widget.constraints.maxWidth * 0.05),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade100),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.blue[500]!, Colors.blue[700]!], // Thay đổi gradient từ xanh lá thành xanh dương
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          Icons.lightbulb_outline,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ),
-                      SizedBox(height: widget.constraints.maxHeight * 0.02),
-                      Text(
-                        'Smart Insight',
-                        style: TextStyle(
-                          fontSize: widget.constraints.maxWidth * 0.04,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue[700], // Thay đổi màu text từ xanh lá thành xanh dương
-                        ),
-                      ),
-                      SizedBox(height: widget.constraints.maxHeight * 0.015),
-                      Text(
-                        'Your customer "Global Traders" has increased purchases by 25% this month. Consider offering them a loyalty discount.',
-                        style: TextStyle(
-                          fontSize: widget.constraints.maxWidth * 0.035,
-                          color: Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: widget.constraints.maxHeight * 0.025),
-                      OutlinedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('AI Insights exploration coming soon!')),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.blue.shade300), // Thay đổi màu border button thành xanh dương
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: Text(
-                          'Explore',
-                          style: TextStyle(
-                            fontSize: widget.constraints.maxWidth * 0.035,
-                            color: Colors.blue[700], // Thay đổi màu text button thành xanh dương
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
 
 class _EmptyChartPlaceholder extends StatelessWidget {
   @override

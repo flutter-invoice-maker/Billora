@@ -5,6 +5,7 @@ import '../cubit/product_cubit.dart';
 import '../cubit/product_state.dart';
 import '../../domain/entities/product.dart';
 import 'product_form_page.dart';
+import '../widgets/product_card.dart';
 
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
 import 'package:billora/src/core/utils/snackbar_helper.dart';
@@ -149,6 +150,16 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
     return AppScaffold(
       currentTabIndex: 3, // Products tab
       pageTitle: 'Products',
+      actions: [
+        IconButton(
+          onPressed: _toggleSelectionMode,
+          icon: Icon(
+            _isSelectionMode ? Icons.close : Icons.checklist,
+            color: _isSelectionMode ? Colors.red : Colors.blue,
+          ),
+          tooltip: _isSelectionMode ? 'Exit Selection' : 'Select Items',
+        ),
+      ],
       headerBottom: _ProductHeaderSearch(
         onChanged: (value) {
           setState(() {
@@ -491,19 +502,23 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
           double cardWidth;
           
           final screenWidth = constraints.maxWidth;
-          const double desiredCardWidth = 160.0; // Desired card width
+          const double minCardWidth = 140.0; // Minimum card width
+          const double maxCardWidth = 180.0; // Maximum card width
           const double spacing = 12.0;
           
-          // Calculate how many cards can fit
-          crossAxisCount = ((screenWidth - 32 + spacing) / (desiredCardWidth + spacing)).floor();
+          // Calculate how many cards can fit with minimum width
+          crossAxisCount = ((screenWidth - 32 + spacing) / (minCardWidth + spacing)).floor();
           crossAxisCount = math.max(2, crossAxisCount); // Minimum 2 columns
-          crossAxisCount = math.min(4, crossAxisCount); // Maximum 4 columns
+          crossAxisCount = math.min(6, crossAxisCount); // Maximum 6 columns for very large screens
           
           // Calculate actual card width
           cardWidth = (screenWidth - 32 - (spacing * (crossAxisCount - 1))) / crossAxisCount;
           
-          // Calculate aspect ratio to maintain consistent card height - Increased height
-          const double cardHeight = 220.0; // Increased from 200 to 220
+          // Ensure card width is within reasonable bounds
+          cardWidth = math.max(minCardWidth, math.min(maxCardWidth, cardWidth));
+          
+          // Calculate aspect ratio to maintain consistent card height for ProductCard widget
+          const double cardHeight = 240.0; // Increased slightly to prevent overflow
           final double aspectRatio = cardWidth / cardHeight;
           
           return GridView.builder(
@@ -541,7 +556,24 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                       curve: Curves.easeOutQuart,
                     ),
                   )),
-                  child: _buildModernProductCard(products[index], index),
+                  child: ProductCard(
+                    product: products[index],
+                    onEdit: () => _openForm(products[index]),
+                    isSelectionMode: _isSelectionMode,
+                    isSelected: _selectedProducts.contains(products[index].id),
+                    onSelectionChanged: (isSelected) {
+                      setState(() {
+                        if (isSelected) {
+                          if (!_isSelectionMode) {
+                            _toggleSelectionMode();
+                          }
+                          _selectedProducts.add(products[index].id);
+                        } else {
+                          _selectedProducts.remove(products[index].id);
+                        }
+                      });
+                    },
+                  ),
                 ),
               );
             },
@@ -551,206 +583,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
     );
   }
 
-  Widget _buildModernProductCard(Product product, int index) {
-    final isSelected = _selectedProducts.contains(product.id);
-    
-    return GestureDetector(
-      onTap: () {
-        if (_isSelectionMode) {
-          setState(() {
-            if (isSelected) {
-              _selectedProducts.remove(product.id);
-            } else {
-              _selectedProducts.add(product.id);
-            }
-          });
-        } else {
-          _openForm(product);
-        }
-      },
-      onLongPress: () {
-        if (!_isSelectionMode) {
-          _toggleSelectionMode();
-          setState(() {
-            _selectedProducts.add(product.id);
-          });
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE3F2FD) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected 
-              ? Border.all(color: const Color(0xFF2196F3), width: 1)
-              : Border.all(color: Colors.grey[200]!, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(10),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product Icon/Image Area
-            Container(
-              height: 80,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2196F3),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        product.isService ? Icons.build : Icons.inventory_2,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  // Selection checkbox - positioned at top right
-                  if (_isSelectionMode)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: AnimatedScale(
-                        duration: const Duration(milliseconds: 200),
-                        scale: _isSelectionMode ? 1.0 : 0.0,
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF2196F3) : Colors.transparent,
-                            border: Border.all(
-                              color: isSelected ? const Color(0xFF2196F3) : const Color(0xFFE5E5EA),
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 16,
-                                )
-                              : null,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            
-            // Product Info
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    if (product.description != null) ...[
-                      Text(
-                        product.description!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w400,
-                          height: 1.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    const Spacer(),
-                    
-                    // Price
-                    Text(
-                      product.price.toStringAsFixed(2),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color.fromARGB(255, 0, 0, 0),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 6),
-                    
-                    // Category and Inventory
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE3F2FD),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _getCategoryDisplayName(product.category),
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: Color(0xFF2196F3),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const Spacer(),
-                        if (!product.isService)
-                          Flexible(
-                            child: Text(
-                              'Stock: ${product.inventory}',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: product.inventory > 0 ? Colors.green[600] : Colors.red[600],
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  String _getCategoryDisplayName(String category) {
-    final categoryData = _categories.firstWhere(
-      (cat) => cat['value'] == category,
-      orElse: () => {'label': 'Other'},
-    );
-    return categoryData['label'];
-  }
 
   Widget _buildPagination(int totalItems) {
     final totalPages = (totalItems / _itemsPerPage).ceil();
