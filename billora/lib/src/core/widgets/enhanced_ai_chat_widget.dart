@@ -156,10 +156,7 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      color: Colors.white,
       child: Column(
         children: [
           _buildHeader(),
@@ -176,18 +173,8 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      color: Colors.white,
       child: Row(
         children: [
           // AI Avatar
@@ -569,21 +556,8 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
 
   Widget _buildInputSection() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      color: Colors.white,
       child: Row(
         children: [
           // Attachment button

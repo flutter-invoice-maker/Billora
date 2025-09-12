@@ -5,7 +5,6 @@ import '../../domain/entities/enhanced_scanned_bill.dart';
 import '../../domain/entities/bill_line_item.dart';
 import '../../domain/entities/scan_library_item.dart';
 import '../../../customer/presentation/pages/customer_form_page.dart';
-import '../../../product/presentation/pages/product_form_page.dart';
 import '../../../customer/presentation/cubit/customer_cubit.dart';
 import '../../../product/presentation/cubit/product_cubit.dart';
 import '../../../../core/di/injection_container.dart';
@@ -681,49 +680,66 @@ class _EnhancedDataCorrectionPageState extends State<EnhancedDataCorrectionPage>
   void _createProduct() async {
     final updatedBill = _getCorrectedBill();
     final ai = updatedBill.scanResult['aiExtractedData'] as Map<String, dynamic>?;
-    final productName = ai?['productName']?.toString() ?? updatedBill.storeName;
-
+    
     try {
       final productCubit = sl<ProductCubit>();
-
-      // Build prefill from line items if available
-      Map<String, dynamic> prefill = {
-        'name': productName,
-        'description': null,
-        'price': ai?['unitPrice']?.toString() ?? ai?['totalPrice']?.toString() ?? updatedBill.totalAmount.toString(),
-        'category': ai?['category']?.toString() ?? 'professional_business',
-        'tax': ai?['tax']?.toString() ?? '0',
-        'inventory': '1',
-        'isService': false,
-        'companyOrShopName': updatedBill.storeName,
-      };
-
+      
+      // Prepare products data from scan results
+      List<Map<String, dynamic>> productsToAdd = [];
+      
+      // Check if we have line items from AI extraction
       final items = ai?['lineItems'];
-      if (items is List && items.isNotEmpty && items.first is Map) {
-        final first = Map<String, dynamic>.from(items.first as Map);
-        prefill['name'] = (first['description']?.toString() ?? prefill['name']);
-        prefill['price'] = (first['unitPrice']?.toString() ?? first['totalPrice']?.toString() ?? prefill['price']);
+      if (items is List && items.isNotEmpty) {
+        // Add each line item as a separate product
+        for (final item in items) {
+          if (item is Map<String, dynamic>) {
+            final productData = {
+              'name': item['description']?.toString() ?? 'Unknown Product',
+              'description': item['description']?.toString(),
+              'price': item['unitPrice']?.toString() ?? item['totalPrice']?.toString() ?? '0',
+              'category': item['category']?.toString() ?? ai?['category']?.toString() ?? 'professional_business',
+              'tax': item['tax']?.toString() ?? ai?['tax']?.toString() ?? '0',
+              'inventory': item['quantity']?.toString() ?? '1',
+              'isService': false,
+              'companyOrShopName': updatedBill.storeName,
+            };
+            productsToAdd.add(productData);
+          }
+        }
+      } else {
+        // Fallback: create a single product from bill data
+        final productData = {
+          'name': ai?['productName']?.toString() ?? updatedBill.storeName,
+          'description': 'Product from ${updatedBill.storeName}',
+          'price': ai?['unitPrice']?.toString() ?? ai?['totalPrice']?.toString() ?? updatedBill.totalAmount.toString(),
+          'category': ai?['category']?.toString() ?? 'professional_business',
+          'tax': ai?['tax']?.toString() ?? '0',
+          'inventory': '1',
+          'isService': false,
+          'companyOrShopName': updatedBill.storeName,
+        };
+        productsToAdd.add(productData);
       }
-
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BlocProvider<ProductCubit>.value(
-            value: productCubit,
-            child: ProductFormPage(
-              prefill: prefill,
-              forceCreate: true,
-            ),
-          ),
-        ),
-      );
-
-      if (!mounted) return;
-      if (result != null) {
+      
+      if (productsToAdd.isNotEmpty) {
+        // Add all products directly to product list
+        await productCubit.addProductsFromScan(productsToAdd);
+        
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Product "${result.name}" created successfully!'),
+            content: Text('${productsToAdd.length} product(s) added to product list successfully!'),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No products found to add'),
+            backgroundColor: Colors.orange,
           ),
         );
       }

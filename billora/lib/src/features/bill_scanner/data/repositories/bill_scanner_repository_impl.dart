@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import '../../../../core/utils/logger.dart';
 import '../../domain/entities/scanned_bill.dart';
 import '../../domain/entities/bill_line_item.dart';
 import '../../domain/entities/scan_result.dart';
@@ -16,11 +16,11 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
   @override
   Future<ScannedBill> scanBill(File imageFile) async {
     try {
-      debugPrint('🔍 Starting bill scan for file: ${imageFile.path}');
+      Logger.scanStart('bill scan', context: {'file': imageFile.path});
       final ocrResult = await _ocrDataSource.extractText(imageFile);
       
       if (!ocrResult['success']) {
-        debugPrint('❌ OCR processing failed: ${ocrResult['error']}');
+        Logger.scanError('OCR processing', Exception(ocrResult['error'] ?? 'OCR processing failed'));
         throw Exception(ocrResult['error'] ?? 'OCR processing failed');
       }
 
@@ -29,7 +29,7 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
       final confidence = ocrResult['confidence'] as String;
       final billType = ocrResult['billType'] as String;
 
-      debugPrint('🔍 Creating scan result with confidence: $confidence, billType: $billType');
+      Logger.debug('Creating scan result with confidence: $confidence, billType: $billType', tag: 'SCAN');
 
       final scanResult = ScanResult(
         rawText: rawText,
@@ -72,10 +72,10 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
         currency: structuredData['currency'] ?? 'USD',
       );
       
-      debugPrint('✅ Successfully created scanned bill: ${scannedBill.storeName}, Total: \$${scannedBill.totalAmount}');
+      Logger.scanSuccess('scanned bill creation', result: {'storeName': scannedBill.storeName, 'totalAmount': scannedBill.totalAmount});
       return scannedBill;
     } catch (e) {
-      debugPrint('❌ Failed to scan bill: $e');
+      Logger.scanError('bill scan', e);
       throw Exception('Failed to scan bill: $e');
     }
   }
@@ -134,13 +134,13 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
       );
     }).toList();
     
-    debugPrint('✅ Created ${items.length} line items');
+    Logger.debug('Created ${items.length} line items', tag: 'SCAN');
     return items;
   }
 
   @override
   Future<ScannedBill> validateAndCorrectBill(ScannedBill scannedBill) async {
-    debugPrint('🔍 Validating and correcting scanned bill...');
+    Logger.debug('Validating and correcting scanned bill', tag: 'SCAN');
     
     final correctedBill = scannedBill.copyWith(
       // Ensure total amount matches sum of line items if items exist
@@ -151,7 +151,7 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
       subtotal: _validateSubtotal(scannedBill),
     );
     
-          debugPrint('✅ Bill validation completed');
+          Logger.debug('Bill validation completed', tag: 'SCAN');
     return correctedBill;
   }
 
@@ -165,7 +165,7 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
       // If calculated total is significantly different, use the larger value
       if ((calculatedTotal - bill.totalAmount).abs() > bill.totalAmount * 0.1) {
         final newTotal = calculatedTotal > bill.totalAmount ? calculatedTotal : bill.totalAmount;
-        debugPrint('🔍 Adjusted total amount from \$${bill.totalAmount} to \$$newTotal');
+        Logger.debug('Adjusted total amount from \$${bill.totalAmount} to \$$newTotal', tag: 'SCAN');
         return newTotal;
       }
     }
@@ -181,7 +181,7 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
       
       final currentSubtotal = bill.subtotal ?? 0.0;
       if (currentSubtotal == 0.0 || (calculatedSubtotal - currentSubtotal).abs() > currentSubtotal * 0.1) {
-        debugPrint('🔍 Adjusted subtotal from \$$currentSubtotal to \$$calculatedSubtotal');
+        Logger.debug('Adjusted subtotal from \$$currentSubtotal to \$$calculatedSubtotal', tag: 'SCAN');
         return calculatedSubtotal;
       }
     }
@@ -191,7 +191,7 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
   String _cleanStoreName(String storeName) {
     final cleaned = storeName.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (cleaned != storeName) {
-      debugPrint('🔍 Cleaned store name: "$storeName" -> "$cleaned"');
+      Logger.debug('Cleaned store name: "$storeName" -> "$cleaned"', tag: 'SCAN');
     }
     return cleaned;
   }
@@ -200,11 +200,11 @@ class BillScannerRepositoryImpl implements BillScannerRepository {
   Future<bool> saveBill(ScannedBill scannedBill) async {
     // Implement save logic (database, local storage, etc.)
     try {
-      debugPrint('💾 Saving scanned bill: ${scannedBill.id}');
+      Logger.saveOperation('scanned bill', itemId: scannedBill.id, itemName: scannedBill.storeName);
       // Save to your preferred storage
       return true;
     } catch (e) {
-      debugPrint('❌ Failed to save bill: $e');
+      Logger.saveError('scanned bill', e, itemId: scannedBill.id);
       return false;
     }
   }

@@ -4,6 +4,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../models/user_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:billora/src/core/services/user_service.dart';
+import '../../../../core/utils/logger.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> login({required String email, required String password});
@@ -64,7 +65,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } catch (e) {
       // Log the error but don't throw it - we want logout to succeed
       // even if some cleanup operations fail
-      print('Warning: Some logout operations failed: $e');
+      Logger.warning('Some logout operations failed: $e', tag: 'AUTH');
     }
   }
   

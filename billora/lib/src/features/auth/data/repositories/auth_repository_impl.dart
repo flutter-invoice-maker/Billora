@@ -4,6 +4,7 @@ import '../datasources/auth_remote_datasource.dart';
 import '../../../../core/errors/failures.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/utils/logger.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -37,7 +38,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       // Log the error but don't throw it - we want logout to succeed
       // even if some cleanup operations fail
-      print('Warning: Logout operation failed: $e');
+      Logger.warning('Logout operation failed: $e', tag: 'AUTH');
     }
   }
 

@@ -22,13 +22,13 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
     with TickerProviderStateMixin {
   String? _selectedCategory;
   final List<Map<String, dynamic>> _categories = [
-    {'value': null, 'label': 'All', 'image': 'assets/images/all.png'},
-    {'value': 'professional_business', 'label': 'Commercial', 'image': 'assets/images/commercial.png'},
-    {'value': 'modern_creative', 'label': 'Sales', 'image': 'assets/images/sales.png'},
-    {'value': 'minimal_clean', 'label': 'Proforma', 'image': 'assets/images/proforma.png'},
-    {'value': 'corporate_formal', 'label': 'Transfer', 'image': 'assets/images/transfer.png'},
-    {'value': 'service_based', 'label': 'Timesheet', 'image': 'assets/images/timesheet.png'},
-    {'value': 'simple_receipt', 'label': 'Receipt', 'image': 'assets/images/receipt.png'},
+    {'value': null, 'label': 'All', 'icon': Icons.apps},
+    {'value': 'professional_business', 'label': 'Commercial', 'icon': Icons.business},
+    {'value': 'modern_creative', 'label': 'Sales', 'icon': Icons.sell},
+    {'value': 'minimal_clean', 'label': 'Proforma', 'icon': Icons.description},
+    {'value': 'corporate_formal', 'label': 'Transfer', 'icon': Icons.swap_horiz},
+    {'value': 'service_based', 'label': 'Timesheet', 'icon': Icons.schedule},
+    {'value': 'simple_receipt', 'label': 'Receipt', 'icon': Icons.receipt},
   ];
   String _searchTerm = '';
   int _currentPage = 0;
@@ -276,11 +276,11 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                       curve: Curves.easeInOut,
                     ),
                     child: SizedBox(
-                      height: 86,
+                      height: 120,
                       child: _categoriesAnimationCompleted || _categoryAnimationController.value > 0.8
                           ? _buildCategories()
                           : Container(
-                              height: 86,
+                              height: 120,
                               color: Colors.white,
                             ),
                     ),
@@ -366,7 +366,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
 
   Widget _buildCategories() {
     return Container(
-      height: 86,
+      height: 120,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -389,77 +389,49 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
               });
             },
             child: Container(
-              margin: const EdgeInsets.only(right: 20),
-              child: Stack(
-                alignment: Alignment.center,
+              margin: const EdgeInsets.only(right: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Base circle with image
+                  // Icon circle
                   Container(
-                    width: 54,
-                    height: 54,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: isSelected ? const Color(0xFF2196F3) : Colors.grey[100],
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isSelected ? const Color(0xFF2196F3) : Colors.grey[300]!,
                         width: isSelected ? 2 : 1,
                       ),
+                      boxShadow: isSelected ? [
+                        BoxShadow(
+                          color: const Color(0xFF2196F3).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ] : null,
                     ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        category['image'],
-                        width: 54,
-                        height: 54,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback to icon if image not found
-                          return Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFF2196F3) : Colors.grey[100],
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              _getCategoryIcon(category['value']),
-                              color: isSelected ? Colors.white : Colors.grey[600],
-                              size: 24,
-                            ),
-                          );
-                        },
-                      ),
+                    child: Icon(
+                      category['icon'],
+                      color: isSelected ? Colors.white : Colors.grey[600],
+                      size: 28,
                     ),
                   ),
-                  
-                  // Animated overlay with label
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    bottom: isSelected ? 0 : -54,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: isSelected ? 1.0 : 0.0,
-                      child: Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            category['label'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                  const SizedBox(height: 8),
+                  // Label text
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 80),
+                    child: Text(
+                      category['label'],
+                      style: TextStyle(
+                        color: isSelected ? const Color(0xFF2196F3) : Colors.grey[600],
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -471,26 +443,6 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
     );
   }
 
-  IconData _getCategoryIcon(String? category) {
-    switch (category) {
-      case null:
-        return Icons.apps;
-      case 'professional_business':
-        return Icons.business;
-      case 'modern_creative':
-        return Icons.receipt;
-      case 'minimal_clean':
-        return Icons.description;
-      case 'corporate_formal':
-        return Icons.swap_horiz;
-      case 'service_based':
-        return Icons.schedule;
-      case 'simple_receipt':
-        return Icons.payment;
-      default:
-        return Icons.category;
-    }
-  }
 
   Widget _buildProductGrid(List<Product> products) {
     return Container(

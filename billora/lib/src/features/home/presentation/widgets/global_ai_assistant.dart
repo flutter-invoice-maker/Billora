@@ -138,17 +138,19 @@ class _GlobalAIAssistantState extends State<GlobalAIAssistant>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.8,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => GlobalAIChatPanel(
-          currentTabIndex: widget.currentTabIndex,
-          primaryColor: widget.primaryColor,
-          scrollController: scrollController,
-        ),
-      ),
+      builder: (context) {
+        final height = MediaQuery.of(context).size.height;
+        return SizedBox(
+          height: height,
+          child: GlobalAIChatPanel(
+            currentTabIndex: widget.currentTabIndex,
+            primaryColor: widget.primaryColor,
+            scrollController: ScrollController(),
+          ),
+        );
+      },
     );
   }
 }

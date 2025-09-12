@@ -132,8 +132,14 @@ class ChatbotAIServiceImpl implements ChatbotAIService {
       debugPrint('🤖 AI Service: OpenAI API response received');
       final content = chatCompletion.choices.first.message.content;
       if (content != null) {
-        debugPrint('✅ AI Service: Response content length: ${content.toString().length}');
-        return content.toString();
+        // Extract text from content items
+        String responseText = content
+            .map((item) => item.text)
+            .where((text) => text != null)
+            .join('');
+        
+        debugPrint('✅ AI Service: Response content length: ${responseText.length}');
+        return responseText;
       }
       debugPrint('⚠️ AI Service: No content in response');
       return 'No response received.';
@@ -201,7 +207,15 @@ class ChatbotAIServiceImpl implements ChatbotAIService {
 
           final content = chatStreamEvent.choices.first.delta.content;
           if (content != null && content.isNotEmpty) {
-            controller.add(content.toString());
+            // Extract text from content items for streaming
+            String contentText = content
+                .map((item) => item?.text)
+                .where((text) => text != null)
+                .join('');
+            
+            if (contentText.isNotEmpty) {
+              controller.add(contentText);
+            }
           }
         },
         onError: (error) {
