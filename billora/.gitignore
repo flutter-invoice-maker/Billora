@@ -63,6 +63,11 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
+# Secrets to ignore (Firebase credentials)
+ios/GoogleService-Info.plist
+android/app/src/*/google-services.json
+lib/firebase_options.dart
+
 # Test coverage
 coverage/
 *.lcov
