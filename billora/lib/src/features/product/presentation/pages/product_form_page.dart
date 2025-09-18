@@ -1094,12 +1094,15 @@ class _ProductFormPageState extends State<ProductFormPage>
                     color: const Color(0xFF1976D2),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    item['label'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
+                  Flexible(
+                    child: Text(
+                      item['label'],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

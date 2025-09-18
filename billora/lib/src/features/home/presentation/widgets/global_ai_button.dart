@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:billora/src/core/widgets/enhanced_ai_chat_widget.dart';
+import 'package:billora/src/core/utils/debug_logger.dart';
 
 class GlobalAIButton extends StatefulWidget {
   final String? invoiceId;
@@ -24,6 +25,7 @@ class GlobalAIButton extends StatefulWidget {
 class _GlobalAIButtonState extends State<GlobalAIButton> with TickerProviderStateMixin {
   late Offset _position; // from bottom-right by default
   bool _initialized = false;
+  bool _isDragging = false;
   late AnimationController _pulseController;
   late AnimationController _chatController;
   late Animation<double> _pulseAnimation;
@@ -81,14 +83,15 @@ class _GlobalAIButtonState extends State<GlobalAIButton> with TickerProviderStat
         size.height * 0.5, // middle of screen for visibility
       );
       _initialized = true;
-      debugPrint('AI Button initialized at position: $_position');
+      // Only print once during initialization, not on every rebuild
+      DebugLogger.log('AI Button initialized at position: $_position', tag: 'AIButton');
     }
 
     final button = AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Transform.scale(
-          scale: _pulseAnimation.value,
+          scale: _isDragging ? 1.0 : _pulseAnimation.value,
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -170,23 +173,58 @@ class _GlobalAIButtonState extends State<GlobalAIButton> with TickerProviderStat
     return Positioned(
       left: _position.dx,
       top: _position.dy,
-      child: Draggable(
-        feedback: Material(color: Colors.transparent, child: button),
-        childWhenDragging: const SizedBox(width: 56, height: 56),
-        onDragEnd: (details) {
-          final global = details.offset;
-          // Constrain within screen minus button size and safe areas
-          double x = global.dx.clamp(20.0, size.width - 20.0 - 56.0);
-          double y = global.dy.clamp(padding.top + 80.0, size.height - padding.bottom - 80.0);
-
-          // Snap to nearest horizontal edge
-          final snapLeft = 20.0;
-          final snapRight = size.width - 20.0 - 56.0;
+      child: GestureDetector(
+        onPanStart: (details) {
+          setState(() {
+            _isDragging = true;
+          });
+        },
+        onPanUpdate: (details) {
+          // Update position during drag for better visual feedback
+          final global = details.globalPosition;
+          const buttonSize = 56.0;
+          
+          // Constrain during drag to prevent going off-screen
+          final minX = 16.0;
+          final maxX = size.width - buttonSize - 16.0;
+          final minY = padding.top + 16.0;
+          final maxY = size.height - padding.bottom - buttonSize - 16.0;
+          
+          double x = global.dx.clamp(minX, maxX);
+          double y = global.dy.clamp(minY, maxY);
+          
+          setState(() {
+            _position = Offset(x, y);
+          });
+        },
+        onPanEnd: (details) {
+          // Use globalPosition for more accurate positioning
+          final global = details.globalPosition;
+          
+          // Calculate the button size (56x56)
+          const buttonSize = 56.0;
+          
+          // Constrain within screen bounds with proper margins
+          final minX = 16.0; // Left margin
+          final maxX = size.width - buttonSize - 16.0; // Right margin
+          final minY = padding.top + 16.0; // Top margin (below status bar)
+          final maxY = size.height - padding.bottom - buttonSize - 16.0; // Bottom margin (above navigation)
+          
+          // Clamp the position to stay within screen bounds
+          double x = global.dx.clamp(minX, maxX);
+          double y = global.dy.clamp(minY, maxY);
+          
+          // Snap to nearest horizontal edge for better UX
+          final snapLeft = minX;
+          final snapRight = maxX;
           x = (x < size.width / 2) ? snapLeft : snapRight;
 
           setState(() {
             _position = Offset(x, y);
+            _isDragging = false;
           });
+          
+          DebugLogger.log('AI Button moved to: $_position (global: $global)', tag: 'AIButton');
         },
         child: button,
       ),

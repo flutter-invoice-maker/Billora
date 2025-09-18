@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.billora"
+    namespace = "billora.invoice_maker"
     compileSdk = 35
     ndkVersion = "29.0.13599879"
 
@@ -26,7 +26,7 @@ android {
 
     defaultConfig {
         // Application ID
-        applicationId = "com.Billora.invoice_maker"
+        applicationId = "billora.invoice_maker"
         // Firebase yêu cầu tối thiểu API 23
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
@@ -38,12 +38,13 @@ android {
     productFlavors {
         create("dev") {
             dimension = "env"
-            applicationIdSuffix = ".dev"
+            applicationId = "billora.invoice_maker.dev"
             versionNameSuffix = "-dev"
             minSdk = 23
         }
         create("prod") {
             dimension = "env"
+            applicationId = "billora.invoice_maker"
             minSdk = 23
         }
     }

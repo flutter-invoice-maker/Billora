@@ -1,48 +1,48 @@
 {
   "project_info": {
-    "project_number": "1018575120402",
-    "project_id": "billora-invoice-maker",
-    "storage_bucket": "billora-invoice-maker.firebasestorage.app"
+    "project_number": "51733160680",
+    "project_id": "invoice-marker",
+    "storage_bucket": "invoice-marker.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1018575120402:android:a0c31a6d5a51630fd190cb",
+        "mobilesdk_app_id": "1:51733160680:android:1db1b0227a780b6b861f5d",
         "android_client_info": {
-          "package_name": "com.Billora.invoice_maker"
+          "package_name": "billora.invoice_maker"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1018575120402-jiv1473i1dvqn0paerbg5r05s4kff2i6.apps.googleusercontent.com",
+          "client_id": "51733160680-lb0nnbu6cbpt629t750j158v2omsfpt9.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.Billora.invoice_maker",
-            "certificate_hash": "91cbe05ec05b85aa53821e9bbf00e0778e1472ba"
+            "package_name": "billora.invoice_maker",
+            "certificate_hash": "9e95cc112ac0437a196ca016d446136069fa1140"
           }
         },
         {
-          "client_id": "1018575120402-nf5o2f072rscc9s1qd8llerjc945pqr8.apps.googleusercontent.com",
+          "client_id": "51733160680-3ivskesdsfhui22hdol99c0puc3fknkk.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBceKMe6jFiD9TuuRogHv2EqMPXtPP3KE4"
+          "current_key": "AIzaSyCwcPBStTwaO3N0fIacbHnApbZw8ZhjEjM"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1018575120402-nf5o2f072rscc9s1qd8llerjc945pqr8.apps.googleusercontent.com",
+              "client_id": "51733160680-3ivskesdsfhui22hdol99c0puc3fknkk.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "1018575120402-8dh1gk4nbsm861l1csafe2vr33rrm4gb.apps.googleusercontent.com",
+              "client_id": "51733160680-6eu12s17h8ssibeuab9jo2d6f0egpe2f.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.billora"
+                "bundle_id": "billora"
               }
             }
           ]
@@ -51,34 +51,42 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1018575120402:android:37be17f60eb252cbd190cb",
+        "mobilesdk_app_id": "1:51733160680:android:b2fbbca0bd299fd6861f5d",
         "android_client_info": {
-          "package_name": "com.Billora.invoice_maker.dev"
+          "package_name": "billora.invoice_maker.dev"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1018575120402-nf5o2f072rscc9s1qd8llerjc945pqr8.apps.googleusercontent.com",
+          "client_id": "51733160680-jno9uuul49p6cdfin6cot2vqtmq8gc0b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "billora.invoice_maker.dev",
+            "certificate_hash": "9e95cc112ac0437a196ca016d446136069fa1140"
+          }
+        },
+        {
+          "client_id": "51733160680-3ivskesdsfhui22hdol99c0puc3fknkk.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBceKMe6jFiD9TuuRogHv2EqMPXtPP3KE4"
+          "current_key": "AIzaSyCwcPBStTwaO3N0fIacbHnApbZw8ZhjEjM"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1018575120402-nf5o2f072rscc9s1qd8llerjc945pqr8.apps.googleusercontent.com",
+              "client_id": "51733160680-3ivskesdsfhui22hdol99c0puc3fknkk.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "1018575120402-8dh1gk4nbsm861l1csafe2vr33rrm4gb.apps.googleusercontent.com",
+              "client_id": "51733160680-6eu12s17h8ssibeuab9jo2d6f0egpe2f.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.billora"
+                "bundle_id": "billora"
               }
             }
           ]

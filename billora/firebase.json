@@ -13,20 +13,20 @@
     "platforms": {
       "android": {
         "default": {
-          "projectId": "billora-invoice-maker",
-          "appId": "1:1018575120402:android:a0c31a6d5a51630fd190cb",
+          "projectId": "invoice-marker",
+          "appId": "1:51733160680:android:1db1b0227a780b6b861f5d",
           "fileOutput": "android/app/google-services.json"
         }
       },
       "dart": {
         "lib/firebase_options.dart": {
-          "projectId": "billora-invoice-maker",
+          "projectId": "invoice-marker",
           "configurations": {
-            "android": "1:1018575120402:android:a0c31a6d5a51630fd190cb",
-            "ios": "1:1018575120402:ios:3806aa2780e0152bd190cb",
-            "macos": "1:1018575120402:ios:3806aa2780e0152bd190cb",
-            "web": "3c10646dd3b3ed3cd190cb",
-            "windows": "437e83eabe88956ed190cb"
+            "android": "1:51733160680:android:1db1b0227a780b6b861f5d",
+            "ios": "1:51733160680:ios:877d19fee3e90108861f5d",
+            "macos": "1:51733160680:ios:877d19fee3e90108861f5d",
+            "web": "1:51733160680:web:db9067803bd5983d861f5d",
+            "windows": "1:51733160680:web:db9067803bd5983d861f5d"
           }
         }
       }

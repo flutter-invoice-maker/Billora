@@ -134,7 +134,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => firebaseModule.firebaseFunctions,
     );
     gh.lazySingleton<_i706.Uuid>(() => firebaseModule.uuid);
-    gh.lazySingleton<_i719.UserService>(() => _i719.UserService());
     gh.factory<_i173.ChatbotAIServiceImpl>(
       () => _i173.ChatbotAIServiceImpl(
         invoiceRepository: gh<_i364.InvoiceRepository>(),
@@ -173,13 +172,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i760.GenerateSummaryUseCase(
         gh<_i173.ChatbotAIService>(),
         gh<_i59.FirebaseAuth>(),
-      ),
-    );
-    gh.lazySingleton<_i910.AuthRemoteDataSource>(
-      () => _i910.AuthRemoteDataSourceImpl(
-        gh<_i59.FirebaseAuth>(),
-        gh<_i116.GoogleSignIn>(),
-        gh<_i719.UserService>(),
       ),
     );
     gh.factory<_i18.TagsRepository>(
@@ -226,9 +218,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1014.UploadInvoiceUseCase>(
       () => _i1014.UploadInvoiceUseCase(gh<_i537.StorageService>()),
     );
-    gh.lazySingleton<_i253.AuthRepository>(
-      () => _i1.AuthRepositoryImpl(gh<_i910.AuthRemoteDataSource>()),
-    );
     gh.factory<_i281.CreateTagUseCase>(
       () => _i281.CreateTagUseCase(gh<_i18.TagsRepository>()),
     );
@@ -244,6 +233,33 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i227.RecordProductUsageUseCase>(
       () => _i227.RecordProductUsageUseCase(gh<_i456.SuggestionsRepository>()),
+    );
+    gh.factory<_i694.SuggestionsCubit>(
+      () => _i694.SuggestionsCubit(
+        getProductSuggestionsUseCase: gh<_i671.GetProductSuggestionsUseCase>(),
+        recordProductUsageUseCase: gh<_i227.RecordProductUsageUseCase>(),
+        calculateSuggestionScoreUseCase:
+            gh<_i577.CalculateSuggestionScoreUseCase>(),
+      ),
+    );
+    gh.factory<_i989.TagsCubit>(
+      () => _i989.TagsCubit(
+        getAllTagsUseCase: gh<_i53.GetAllTagsUseCase>(),
+        createTagUseCase: gh<_i281.CreateTagUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i719.UserService>(
+      () => _i719.UserService(gh<_i957.ImageUploadService>()),
+    );
+    gh.lazySingleton<_i910.AuthRemoteDataSource>(
+      () => _i910.AuthRemoteDataSourceImpl(
+        gh<_i59.FirebaseAuth>(),
+        gh<_i116.GoogleSignIn>(),
+        gh<_i719.UserService>(),
+      ),
+    );
+    gh.lazySingleton<_i253.AuthRepository>(
+      () => _i1.AuthRepositoryImpl(gh<_i910.AuthRemoteDataSource>()),
     );
     gh.factory<_i330.GetCurrentUserUseCase>(
       () => _i330.GetCurrentUserUseCase(gh<_i253.AuthRepository>()),
@@ -265,20 +281,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i866.UpdateProfileUseCase>(
       () => _i866.UpdateProfileUseCase(gh<_i253.AuthRepository>()),
-    );
-    gh.factory<_i694.SuggestionsCubit>(
-      () => _i694.SuggestionsCubit(
-        getProductSuggestionsUseCase: gh<_i671.GetProductSuggestionsUseCase>(),
-        recordProductUsageUseCase: gh<_i227.RecordProductUsageUseCase>(),
-        calculateSuggestionScoreUseCase:
-            gh<_i577.CalculateSuggestionScoreUseCase>(),
-      ),
-    );
-    gh.factory<_i989.TagsCubit>(
-      () => _i989.TagsCubit(
-        getAllTagsUseCase: gh<_i53.GetAllTagsUseCase>(),
-        createTagUseCase: gh<_i281.CreateTagUseCase>(),
-      ),
     );
     gh.factory<_i232.AuthCubit>(
       () => _i232.AuthCubit(

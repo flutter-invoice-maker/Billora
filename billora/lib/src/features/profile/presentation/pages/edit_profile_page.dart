@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:billora/src/core/services/user_service.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
+import 'package:billora/src/core/di/injection_container.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -17,13 +21,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _companyController = TextEditingController();
   final _addressController = TextEditingController();
   
-  final UserService _userService = UserService();
+  late final UserService _userService;
+  final ImagePicker _imagePicker = ImagePicker();
   bool _isLoading = false;
   bool _isSaving = false;
+  String? _selectedImagePath;
+  String? _currentAvatarUrl;
 
   @override
   void initState() {
     super.initState();
+    _userService = sl<UserService>();
     _loadUserData();
   }
 
@@ -52,6 +60,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           _phoneController.text = profile.phone ?? '';
           _companyController.text = profile.company ?? '';
           _addressController.text = profile.address ?? '';
+          _currentAvatarUrl = profile.avatarUrl;
         }
       }
     } catch (e) {
@@ -87,6 +96,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           phone: _phoneController.text.trim(),
           company: _companyController.text.trim(),
           address: _addressController.text.trim(),
+          avatarUrl: _currentAvatarUrl,
         );
         
         if (mounted) {
@@ -113,6 +123,47 @@ class _EditProfilePageState extends State<EditProfilePage> {
         setState(() => _isSaving = false);
       }
     }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _selectedImagePath = image.path;
+        });
+        
+        // Upload image and get URL
+        final avatarUrl = await _userService.uploadAvatar(File(image.path));
+        if (avatarUrl != null) {
+          setState(() {
+            _currentAvatarUrl = avatarUrl;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeAvatar() async {
+    setState(() {
+      _selectedImagePath = null;
+      _currentAvatarUrl = null;
+    });
   }
 
   @override
@@ -168,6 +219,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Avatar Section
+                    _buildAvatarSection(),
+                    const SizedBox(height: 32),
+                    
                     _buildSectionTitle('Personal Information'),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -222,6 +277,138 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildAvatarSection() {
+    return Center(
+      child: Column(
+        children: [
+          Text(
+            'Profile Picture',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Stack(
+            children: [
+              // Avatar
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.grey[300]!,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: _selectedImagePath != null
+                        ? Image.file(
+                            File(_selectedImagePath!),
+                            width: 120,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          )
+                        : _currentAvatarUrl != null
+                            ? Image.network(
+                                _currentAvatarUrl!,
+                                width: 120,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return _buildDefaultAvatar();
+                                },
+                              )
+                            : _buildDefaultAvatar(),
+                  ),
+                ),
+              ),
+              // Camera icon
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 3,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.photo_camera, size: 16),
+                label: const Text('Change Photo'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF2563EB),
+                ),
+              ),
+              const SizedBox(width: 16),
+              if (_selectedImagePath != null || _currentAvatarUrl != null)
+                TextButton.icon(
+                  onPressed: _removeAvatar,
+                  icon: const Icon(Icons.delete, size: 16),
+                  label: const Text('Remove'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultAvatar() {
+    final userName = _nameController.text.trim();
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: AvatarService.getAvatarColor(userName),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          AvatarService.getInitials(userName),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 

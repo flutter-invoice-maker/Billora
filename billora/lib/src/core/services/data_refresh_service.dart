@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'notification_service.dart';
 import 'activity_service.dart';
 import 'customer_ranking_service.dart';
+import 'package:billora/src/core/di/injection_container.dart';
+import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
 class DataRefreshService {
   static final DataRefreshService _instance = DataRefreshService._internal();
@@ -20,9 +22,20 @@ class DataRefreshService {
         _notificationService.loadOverdueInvoices(),
         _activityService.loadActivities(),
         _customerRankingService.loadCustomerRankings(),
+        _refreshDashboard(),
       ]);
     } catch (e) {
       debugPrint('❌ Error refreshing data: $e');
+    }
+  }
+
+  // Refresh dashboard data
+  Future<void> _refreshDashboard() async {
+    try {
+      final dashboardCubit = sl<DashboardCubit>();
+      await dashboardCubit.loadDashboardStats();
+    } catch (e) {
+      debugPrint('❌ Error refreshing dashboard: $e');
     }
   }
 
@@ -37,6 +50,10 @@ class DataRefreshService {
 
   Future<void> refreshCustomerRankings() async {
     await _customerRankingService.loadCustomerRankings();
+  }
+
+  Future<void> refreshDashboard() async {
+    await _refreshDashboard();
   }
 
 }

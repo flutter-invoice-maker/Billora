@@ -155,10 +155,10 @@ class DashboardCubit extends Cubit<DashboardState> {
       return;
     }
 
-    // Debounce rapid calls
+    // Debounce rapid calls - reduced from 300ms to 100ms for better responsiveness
     final now = DateTime.now();
     if (_lastLoadTime != null && 
-        now.difference(_lastLoadTime!) < const Duration(milliseconds: 300)) {
+        now.difference(_lastLoadTime!) < const Duration(milliseconds: 100)) {
       developer.log('Too soon since last load, skipping...', name: 'Dashboard');
       return;
     }

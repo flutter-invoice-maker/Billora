@@ -18,13 +18,12 @@ class CustomerRemoteDatasourceImpl implements CustomerRemoteDatasource {
   Future<void> createCustomer(CustomerModel customer) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     final keywords = _generateKeywords(customer.name, customer.email, customer.phone);
-    final data = customer.copyWith(searchKeywords: keywords).toJson()..['userId'] = userId;
+    final data = customer.copyWith(
+      searchKeywords: keywords,
+    ).toJson()..['userId'] = userId..['createdAt'] = DateTime.now().toIso8601String();
 
-    if (customer.id.isEmpty) {
-      await firestore.collection('customers').add(data);
-    } else {
-      await firestore.collection('customers').doc(customer.id).set(data);
-    }
+    // Always use the provided customer ID to ensure consistency
+    await firestore.collection('customers').doc(customer.id).set(data);
   }
 
   @override
@@ -42,6 +41,10 @@ class CustomerRemoteDatasourceImpl implements CustomerRemoteDatasource {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     final keywords = _generateKeywords(customer.name, customer.email, customer.phone);
     final data = customer.copyWith(searchKeywords: keywords).toJson()..['userId'] = userId;
+    // Ensure createdAt is a string if it exists
+    if (data['createdAt'] is DateTime) {
+      data['createdAt'] = (data['createdAt'] as DateTime).toIso8601String();
+    }
     await firestore.collection('customers').doc(customer.id).update(data);
   }
 

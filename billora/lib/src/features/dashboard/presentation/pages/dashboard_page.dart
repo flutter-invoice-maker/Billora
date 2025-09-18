@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:typed_data';
+import 'dart:io' show File, Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -8,6 +9,7 @@ import 'package:billora/src/features/dashboard/domain/entities/dashboard_stats.d
 import 'package:billora/src/features/dashboard/domain/entities/report_params.dart';
 import 'package:billora/src/features/dashboard/presentation/widgets/revenue_chart.dart';
 import 'package:billora/src/features/dashboard/presentation/widgets/tags_pie_chart.dart';
+import 'package:billora/src/features/dashboard/presentation/widgets/filter_panel.dart';
 import 'package:billora/src/core/utils/currency_formatter.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:billora/src/core/di/injection_container.dart';
@@ -19,6 +21,8 @@ import 'package:billora/src/features/product/presentation/cubit/product_cubit.da
 import 'package:billora/src/features/product/presentation/cubit/product_state.dart';
 import 'package:billora/src/core/utils/snackbar_helper.dart';
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:path_provider/path_provider.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -85,9 +89,9 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
   void _refreshDashboard() {
     final now = DateTime.now();
     
-    // Prevent multiple rapid refreshes (debounce)
+    // Prevent multiple rapid refreshes (debounce) - reduced from 500ms to 200ms
     if (_lastRefreshTime != null && 
-        now.difference(_lastRefreshTime!) < const Duration(milliseconds: 500)) {
+        now.difference(_lastRefreshTime!) < const Duration(milliseconds: 200)) {
       return;
     }
     
@@ -97,10 +101,11 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
         _lastRefreshTime = now;
       });
       
+      // Force refresh dashboard data
       context.read<DashboardCubit>().loadDashboardStats();
       
       // Reset refresh flag after delay
-      Future.delayed(const Duration(milliseconds: 1000), () {
+      Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) {
           setState(() {
             _isRefreshing = false;
@@ -125,8 +130,8 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
               listener: (context, state) {
                 state.when(
                   loaded: (invoices) {
-                    // Only refresh if invoices actually changed and we're not already refreshing
-                    if (invoices.isNotEmpty && !_isRefreshing) {
+                    // Refresh dashboard when invoices are loaded (including after creation)
+                    if (!_isRefreshing) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted) _refreshDashboard();
                       });
@@ -450,7 +455,7 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
             value: dashboardCubit,
           ),
         ],
-        child: const SizedBox(height: 400, child: Center(child: Text('Filters'))),
+        child: const FilterPanel(),
       ),
     );
   }
@@ -503,6 +508,34 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
   }
 
   void _downloadExcelFile(Uint8List excelData, String fileName) {
-    SnackBarHelper.showSuccess(context, message: 'File $fileName has been created successfully!');
+    if (kIsWeb) {
+      _showExportErrorDialog('Saving Excel on web is not supported in this build.');
+      return;
+    }
+
+    () async {
+      try {
+        String directoryPath;
+        if (Platform.isAndroid || Platform.isIOS) {
+          final dir = await getApplicationDocumentsDirectory();
+          directoryPath = dir.path;
+        } else {
+          final downloadsDir = await getDownloadsDirectory();
+          final dir = downloadsDir ?? await getApplicationDocumentsDirectory();
+          directoryPath = dir.path;
+        }
+
+        final filePath = '$directoryPath/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(excelData, flush: true);
+
+        if (!mounted) return;
+        SnackBarHelper.showSuccess(context, message: 'Đã lưu: $fileName');
+        _showExportSuccessDialog(fileName);
+      } catch (e) {
+        if (!mounted) return;
+        _showExportErrorDialog('Không thể lưu file: $e');
+      }
+    }();
   }
 }

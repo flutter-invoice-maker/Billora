@@ -3,6 +3,7 @@ import 'package:billora/src/core/services/user_service.dart';
 import 'package:billora/src/core/services/notification_service.dart';
 import 'package:billora/src/core/services/activity_service.dart';
 import 'package:billora/src/core/services/customer_ranking_service.dart';
+import 'package:billora/src/core/di/injection_container.dart';
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -12,7 +13,7 @@ class AnalyticsPage extends StatefulWidget {
 }
 
 class _AnalyticsPageState extends State<AnalyticsPage> {
-  final UserService _userService = UserService();
+  late final UserService _userService;
   final NotificationService _notificationService = NotificationService();
   final ActivityService _activityService = ActivityService();
   final CustomerRankingService _customerRankingService = CustomerRankingService();
@@ -24,6 +25,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   @override
   void initState() {
     super.initState();
+    _userService = sl<UserService>();
     _loadAnalytics();
   }
 

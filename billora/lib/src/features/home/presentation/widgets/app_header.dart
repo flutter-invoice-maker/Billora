@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/home/presentation/widgets/notification_widget.dart';
 import 'package:billora/src/features/home/presentation/widgets/user_profile_popup.dart';
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:billora/src/core/services/user_service.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
+import 'package:billora/src/core/di/injection_container.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 	final String? pageTitle;
@@ -79,11 +82,50 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 	Widget _buildAvatarWithMenu(BuildContext context) {
 		return GestureDetector(
 			onTap: () => _showProfilePopup(context),
-			 child: const CircleAvatar(
-			radius: 20,
-			backgroundColor: Colors.black,
-			child: Icon(Icons.person, color: Colors.white, size: 24),
-		),
+			child: FutureBuilder<UserProfile?>(
+				future: sl<UserService>().getUserProfileCached(),
+				builder: (context, snapshot) {
+					if (snapshot.hasData && snapshot.data != null) {
+						final profile = snapshot.data!;
+						if (profile.avatarUrl != null) {
+							return ClipOval(
+								child: Image.network(
+									profile.avatarUrl!,
+									width: 40,
+									height: 40,
+									fit: BoxFit.cover,
+									// Prevent flicker by keeping old frame until new completes
+									frameBuilder: (context, child, frame, wasSyncLoaded) {
+										if (wasSyncLoaded) return child;
+										return AnimatedOpacity(
+											opacity: frame == null ? 0.0 : 1.0,
+											duration: const Duration(milliseconds: 200),
+											child: child,
+										);
+									},
+									errorBuilder: (context, error, stack) {
+										return AvatarService.buildAvatar(
+											name: profile.displayName,
+											size: 40,
+										);
+									},
+								),
+							);
+						}
+						return AvatarService.buildAvatar(
+							name: profile.displayName,
+							size: 40,
+						);
+					}
+
+					// Fallback to default avatar
+					return const CircleAvatar(
+						radius: 20,
+						backgroundColor: Colors.black,
+						child: Icon(Icons.person, color: Colors.white, size: 24),
+					);
+				},
+			),
 		);
 	}
 

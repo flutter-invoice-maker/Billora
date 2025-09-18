@@ -13,7 +13,7 @@ import 'package:billora/src/features/product/domain/entities/product.dart';
 import 'package:billora/src/features/product/presentation/cubit/product_cubit.dart';
 import 'package:billora/src/core/utils/app_strings.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
-import 'package:billora/src/features/invoice/presentation/widgets/ai_floating_button.dart';
+import 'package:billora/src/features/home/presentation/widgets/global_ai_button.dart';
 import 'package:billora/src/core/services/data_refresh_service.dart';
 
 class InvoiceFormPage extends StatefulWidget {
@@ -117,6 +117,11 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
     
     // Initialize quantity controllers for existing items
     _initializeQuantityControllers();
+    
+    // Load selected products for edit mode
+    if (_isEdit && _items.isNotEmpty) {
+      _loadSelectedProductsFromItems();
+    }
 
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -325,7 +330,12 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
         
         final productState = context.read<ProductCubit>().state;
         productState.when(
-          loaded: (_) => null,
+          loaded: (_) {
+            // If we're in edit mode and haven't loaded selected products yet, do it now
+            if (_isEdit && _selectedProducts.isEmpty && _items.isNotEmpty) {
+              _loadSelectedProductsFromItems();
+            }
+          },
           initial: () => context.read<ProductCubit>().fetchProducts(),
           loading: () => null,
           error: (_) => context.read<ProductCubit>().fetchProducts(),
@@ -360,6 +370,53 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
         text: item.quantity.toString(),
       );
     }
+  }
+
+  void _loadSelectedProductsFromItems() {
+    // This will be called after products are loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final productState = context.read<ProductCubit>().state;
+        productState.when(
+          loaded: (products) {
+            setState(() {
+              _selectedProducts.clear();
+              for (final item in _items) {
+                try {
+                  final product = products.firstWhere((p) => p.id == item.productId);
+                  _selectedProducts.add(product);
+                  debugPrint('Loaded product for edit: ${product.name} (${product.id})');
+                } catch (e) {
+                  debugPrint('Product not found for item ${item.name}: ${item.productId}');
+                  // Create a temporary product from item data
+                  final tempProduct = Product(
+                    id: item.productId,
+                    name: item.name,
+                    description: item.description ?? '',
+                    price: item.unitPrice,
+                    tax: item.tax,
+                    category: 'Unknown',
+                    inventory: 0, // Default inventory
+                    isService: false,
+                    companyOrShopName: item.companyOrShopName ?? '',
+                    companyAddress: item.companyAddress ?? '',
+                    companyPhone: item.companyPhone ?? '',
+                    companyEmail: item.companyEmail ?? '',
+                    companyWebsite: item.companyWebsite ?? '',
+                    extraFields: {},
+                  );
+                  _selectedProducts.add(tempProduct);
+                }
+              }
+              debugPrint('Loaded ${_selectedProducts.length} selected products for edit');
+            });
+          },
+          initial: () => debugPrint('Products not loaded yet for edit mode'),
+          loading: () => debugPrint('Products are loading for edit mode'),
+          error: (message) => debugPrint('Error loading products for edit mode: $message'),
+        );
+      }
+    });
   }
 
   @override
@@ -550,6 +607,9 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
   }
 
   void _showTagSelector() {
+    // Ensure tags are loaded before showing modal
+    context.read<TagsCubit>().getAllTags();
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -566,14 +626,57 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
             ),
             child: BlocBuilder<TagsCubit, TagsState>(
               builder: (context, tagsState) {
+                // Handle different states
+                if (tagsState is TagsLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                
+                if (tagsState is TagsError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red[300],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading tags: ${tagsState.message}',
+                          style: TextStyle(
+                            color: Colors.red[600],
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.read<TagsCubit>().getAllTags();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
                 List<String> allTagNames = tagsState is TagsLoaded
                     ? tagsState.tags.map((t) => t.name).toList()
                     : <String>[];
-                List<String> tempSelected = List<String>.from(_tags);
+                // Initialize inside sheet state only once to prevent reset on Bloc rebuilds
+                List<String> tempSelected = <String>[];
                 String searchQuery = '';
                 final TextEditingController addController = TextEditingController();
                 return StatefulBuilder(
                   builder: (context, setSheetState) {
+                    // Initialize selection only once per sheet lifecycle
+                    if (tempSelected.isEmpty) {
+                      tempSelected = List<String>.from(_tags);
+                    }
 
                     void applySelection() {
                       setState(() {
@@ -881,38 +984,45 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 5,
-              margin: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(3),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 5,
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-            ),
-            
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Text(
-                    'Select Status',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
+              
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Text(
+                      'Select Status',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            ...InvoiceStatus.values.map((status) {
+              
+              const SizedBox(height: 20),
+              
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: InvoiceStatus.values.map((status) {
               final isSelected = _status == status;
               return Material(
                 color: Colors.transparent,
@@ -975,10 +1085,14 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                   ),
                 ),
               );
-            }),
-            
-            const SizedBox(height: 20),
-          ],
+                    }).toList(),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -1320,10 +1434,11 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
           ],
         ),
       ),
-      floatingActionButton: AIFloatingButton(
-        invoiceId: widget.invoice?.id ?? 'new',
+      floatingActionButton: GlobalAIButton(
+        invoiceId: widget.invoice?.id,
         primaryColor: const Color(0xFF2563EB),
         isVisible: true,
+        currentTabIndex: 3, // Invoice tab index
       ),
     );
   }
@@ -1822,6 +1937,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> with TickerProviderSt
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               Icon(

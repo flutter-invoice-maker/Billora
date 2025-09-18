@@ -14,12 +14,17 @@ _$CustomerModelImpl _$$CustomerModelImplFromJson(Map<String, dynamic> json) =>
       phone: json['phone'] as String?,
       address: json['address'] as String?,
       isVip: json['isVip'] as bool? ?? false,
+      avatarUrl: json['avatarUrl'] as String?,
       userId: json['userId'] as String,
       searchKeywords:
           (json['searchKeywords'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      createdAt:
+          json['createdAt'] == null
+              ? null
+              : DateTime.parse(json['createdAt'] as String),
     );
 
 Map<String, dynamic> _$$CustomerModelImplToJson(_$CustomerModelImpl instance) =>
@@ -30,6 +35,8 @@ Map<String, dynamic> _$$CustomerModelImplToJson(_$CustomerModelImpl instance) =>
       'phone': instance.phone,
       'address': instance.address,
       'isVip': instance.isVip,
+      'avatarUrl': instance.avatarUrl,
       'userId': instance.userId,
       'searchKeywords': instance.searchKeywords,
+      'createdAt': instance.createdAt?.toIso8601String(),
     };

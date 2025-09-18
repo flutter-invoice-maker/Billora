@@ -745,8 +745,8 @@ class _AnimationEffectsState extends State<_AnimationEffects>
   void _startAnimation() {
     _effectController.repeat();
     
-    // Stagger particle animations
-    _particleTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+    // Stagger particle animations - reduce frequency to prevent excessive rebuilds
+    _particleTimer = Timer.periodic(const Duration(milliseconds: 1000), (timer) {
       if (mounted) {
         setState(() {
           for (var particle in _particles) {

@@ -115,11 +115,14 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
       final paidPercentage = totalInvoices > 0 ? (paidCount / totalInvoices) * 100 : 0.0;
       final overduePercentage = totalInvoices > 0 ? (overdueCount / totalInvoices) * 100 : 0.0;
 
+      // Calculate new customers for the date range
+      final newCustomers = await _getNewCustomersCount(dateRange);
+
       return {
         'totalInvoices': totalInvoices,
         'totalRevenue': totalRevenue,
         'averageValue': averageValue,
-        'newCustomers': 0, // Would need to calculate from customer data
+        'newCustomers': newCustomers,
         'topTags': topTags,
         'revenueChartData': revenueChartData,
         'invoiceChartData': invoiceChartData,
@@ -400,5 +403,73 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
       'topTags': <Map<String, dynamic>>[],
       'statusDistribution': <String, int>{},
     };
+  }
+
+  // Get new customers count for the specified date range
+  Future<int> _getNewCustomersCount(DateRange dateRange) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return 0;
+
+      final customersSnapshot = await _firestore
+          .collection('customers')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      int newCustomersCount = 0;
+      
+      for (final doc in customersSnapshot.docs) {
+        final data = doc.data();
+        final createdAt = data['createdAt'];
+        
+        DateTime? parsedCreatedAt;
+        if (createdAt is Timestamp) {
+          parsedCreatedAt = createdAt.toDate();
+        } else if (createdAt is String) {
+          parsedCreatedAt = DateTime.tryParse(createdAt);
+        }
+        
+        if (parsedCreatedAt != null) {
+          // Check if customer was created within the date range
+          if (parsedCreatedAt.isAfter(dateRange.startDate) && 
+              parsedCreatedAt.isBefore(dateRange.endDate)) {
+            newCustomersCount++;
+          }
+        } else {
+          // For customers without createdAt, consider them as new if they have no invoices
+          // This handles legacy customers that were created before createdAt field was added
+          final hasInvoices = await _checkCustomerHasInvoices(doc.id);
+          if (!hasInvoices) {
+            newCustomersCount++;
+          }
+        }
+      }
+      
+      developer.log('Dashboard: New customers count: $newCustomersCount for range ${dateRange.startDate} to ${dateRange.endDate}', name: 'DashboardDataSource');
+      return newCustomersCount;
+    } catch (e) {
+      developer.log('Error getting new customers count: $e', name: 'DashboardDataSource');
+      return 0;
+    }
+  }
+
+  // Check if customer has any invoices
+  Future<bool> _checkCustomerHasInvoices(String customerId) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+
+      final invoicesSnapshot = await _firestore
+          .collection('invoices')
+          .where('userId', isEqualTo: user.uid)
+          .where('customerId', isEqualTo: customerId)
+          .limit(1)
+          .get();
+
+      return invoicesSnapshot.docs.isNotEmpty;
+    } catch (e) {
+      developer.log('Error checking customer invoices: $e', name: 'DashboardDataSource');
+      return false;
+    }
   }
 } 

@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/customer/domain/entities/customer.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
+import 'package:billora/src/core/services/vip_threshold_service.dart';
+import 'package:billora/src/features/customer/presentation/widgets/vip_threshold_settings.dart';
+import 'package:billora/src/core/utils/currency_formatter.dart';
+import 'package:billora/src/core/services/image_upload_service.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
+import 'package:billora/src/core/di/injection_container.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'dart:math' as math;
 
 class CustomerFormPage extends StatefulWidget {
@@ -24,6 +32,19 @@ class _CustomerFormPageState extends State<CustomerFormPage>
   late bool _isVip;
   late AnimationController _fadeController;
   late AnimationController _slideController;
+  
+  // VIP related variables
+  final VipThresholdService _vipService = VipThresholdService();
+  double _customerRevenue = 0.0;
+  double _vipThreshold = 1000.0;
+  bool _isLoadingVipData = false;
+
+  // Avatar related variables
+  String? _selectedImagePath;
+  String? _currentAvatarUrl;
+  bool _isUploadingAvatar = false;
+  late final ImageUploadService _imageUploadService;
+  final ImagePicker _imagePicker = ImagePicker();
 
   // Focus nodes for better UX
   final FocusNode _nameFocus = FocusNode();
@@ -43,6 +64,10 @@ class _CustomerFormPageState extends State<CustomerFormPage>
     _addressController = TextEditingController(text: widget.customer?.address ?? widget.prefill?['address'] ?? '');
     _isVip = widget.customer?.isVip ?? (widget.prefill?['isVip'] as bool?) ?? false;
     
+    // Initialize avatar
+    _currentAvatarUrl = widget.customer?.avatarUrl;
+    _imageUploadService = sl<ImageUploadService>();
+    
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -55,6 +80,35 @@ class _CustomerFormPageState extends State<CustomerFormPage>
     
     _fadeController.forward();
     _slideController.forward();
+    
+    // Load VIP data if editing existing customer
+    if (widget.customer != null) {
+      _loadVipData();
+    }
+  }
+
+  Future<void> _loadVipData() async {
+    if (widget.customer == null) return;
+    
+    setState(() {
+      _isLoadingVipData = true;
+    });
+
+    try {
+      final revenue = await _vipService.getCustomerTotalRevenue(widget.customer!.id);
+      final threshold = await _vipService.getVipThreshold();
+      
+      setState(() {
+        _customerRevenue = revenue;
+        _vipThreshold = threshold;
+      });
+    } catch (e) {
+      debugPrint('Error loading VIP data: $e');
+    } finally {
+      setState(() {
+        _isLoadingVipData = false;
+      });
+    }
   }
 
   @override
@@ -72,7 +126,7 @@ class _CustomerFormPageState extends State<CustomerFormPage>
     super.dispose();
   }
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState?.validate() ?? false) {
       final isCreate = widget.forceCreate || widget.customer == null;
       final customer = Customer(
@@ -82,16 +136,194 @@ class _CustomerFormPageState extends State<CustomerFormPage>
         phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
         address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
         isVip: _isVip,
+        avatarUrl: _currentAvatarUrl,
       );
 
       if (isCreate) {
         context.read<CustomerCubit>().addCustomer(customer);
+        // Update VIP status after customer is created with longer delay
+        Future.delayed(const Duration(milliseconds: 2000), () {
+          _vipService.updateCustomerVipStatus(customer.id);
+        });
       } else {
         context.read<CustomerCubit>().updateCustomer(customer);
+        // Update VIP status after customer is updated with longer delay
+        Future.delayed(const Duration(milliseconds: 2000), () {
+          _vipService.updateCustomerVipStatus(customer.id);
+        });
       }
 
       Navigator.of(context).pop(customer);
     }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        await _uploadImage(File(image.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _captureImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        await _uploadImage(File(image.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error capturing image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadImage(File imageFile) async {
+    setState(() {
+      _selectedImagePath = imageFile.path;
+      _isUploadingAvatar = true;
+    });
+    
+    try {
+      // Upload image and get URL
+      final customerId = widget.customer?.id ?? generateId();
+      final avatarUrl = await _imageUploadService.uploadCustomerAvatar(imageFile, customerId);
+      
+      if (mounted) {
+        setState(() {
+          _currentAvatarUrl = avatarUrl;
+          _isUploadingAvatar = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUploadingAvatar = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 5,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'Select Photo Source',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF1976D2)),
+              title: const Text('Take Photo'),
+              subtitle: const Text('Capture a new photo with camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _captureImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Color(0xFF1976D2)),
+              title: const Text('Choose from Gallery'),
+              subtitle: const Text('Select an existing photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removeAvatar() async {
+    setState(() {
+      _selectedImagePath = null;
+      _currentAvatarUrl = null;
+    });
+  }
+
+  Widget _buildDefaultAvatar() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: AvatarService.getAvatarColor(_nameController.text.isNotEmpty ? _nameController.text : 'Customer'),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0xFF1976D2),
+          width: 2,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          AvatarService.getInitials(_nameController.text.isNotEmpty ? _nameController.text : 'Customer'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -155,37 +387,103 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                   Center(
                     child: Column(
                       children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE3F2FD),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFF1976D2),
-                              width: 2,
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE3F2FD),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF1976D2),
+                                  width: 2,
+                                ),
+                              ),
+                              child: ClipOval(
+                                child: _selectedImagePath != null
+                                    ? Image.file(
+                                        File(_selectedImagePath!),
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : _currentAvatarUrl != null
+                                        ? Image.network(
+                                            _currentAvatarUrl!,
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return _buildDefaultAvatar();
+                                            },
+                                          )
+                                        : _buildDefaultAvatar(),
+                              ),
                             ),
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Color(0xFF1976D2),
-                            size: 50,
-                          ),
+                            // Camera icon
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: _isUploadingAvatar ? null : _showImageSourceDialog,
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1976D2),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: _isUploadingAvatar
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.camera_alt,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         GestureDetector(
-                          onTap: () {
-                            // Handle photo change
-                          },
-                          child: const Text(
-                            'Change Photo',
+                          onTap: _isUploadingAvatar ? null : _showImageSourceDialog,
+                          child: Text(
+                            _isUploadingAvatar ? 'Uploading...' : 'Change Photo',
                             style: TextStyle(
-                              color: Color(0xFF1976D2),
+                              color: _isUploadingAvatar ? Colors.grey : const Color(0xFF1976D2),
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
+                        if (_currentAvatarUrl != null || _selectedImagePath != null)
+                          const SizedBox(height: 8),
+                        if (_currentAvatarUrl != null || _selectedImagePath != null)
+                          GestureDetector(
+                            onTap: _removeAvatar,
+                            child: const Text(
+                              'Remove Photo',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -244,8 +542,8 @@ class _CustomerFormPageState extends State<CustomerFormPage>
                   
                   const SizedBox(height: 24),
                   
-                  // VIP Toggle
-                  _buildVipToggle(),
+                  // VIP Status Display
+                  _buildVipStatusDisplay(),
                   
                   const SizedBox(height: 40),
                   
@@ -310,113 +608,291 @@ class _CustomerFormPageState extends State<CustomerFormPage>
         ),
         
         // Text Field
-        AnimatedBuilder(
-          animation: focusNode,
-          builder: (context, child) {
-            final isFocused = focusNode.hasFocus;
-            
-            return Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isFocused ? const Color(0xFF1976D2) : Colors.grey[300]!,
-                  width: isFocused ? 2 : 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: isFocused ? const Color(0xFFF3F9FF) : Colors.white,
-              ),
-              child: TextFormField(
-                controller: controller,
-                focusNode: focusNode,
-                keyboardType: keyboardType,
-                validator: validator,
-                maxLines: maxLines,
-                textInputAction: textInputAction,
-                onFieldSubmitted: onSubmitted,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                ),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
-                  hintText: 'Enter ${label.toLowerCase()}',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            );
-          },
+        TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          keyboardType: keyboardType,
+          validator: validator,
+          maxLines: maxLines,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onSubmitted,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.all(16),
+            hintText: 'Enter ${label.toLowerCase()}',
+            hintStyle: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 16,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF1976D2), width: 2),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildVipToggle() {
+  Widget _buildVipStatusDisplay() {
+    if (widget.customer == null) {
+      // For new customers, show info about VIP threshold
+      return _buildVipInfoCard();
+    }
+
+    // For existing customers, show VIP status and revenue
+    return _buildVipStatusCard();
+  }
+
+  Widget _buildVipInfoCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.blue[50],
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: _isVip ? const Color(0xFF1976D2) : Colors.grey[300]!,
+          color: Colors.blue[200]!,
           width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _isVip ? const Color(0xFF1976D2).withValues(alpha: 0.1) : Colors.grey[100],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              Icons.star,
-              color: _isVip ? const Color(0xFF1976D2) : Colors.grey[600],
-              size: 20,
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: Colors.blue[600],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'VIP Status Information',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue[800],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'VIP status is automatically assigned based on total revenue. Customers become VIP when their total paid invoices reach the threshold amount.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.blue[700],
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'VIP Customer',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: _isVip ? const Color(0xFF1976D2) : Colors.black,
-                  ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              TextButton.icon(
+                onPressed: _showVipThresholdSettings,
+                icon: Icon(Icons.settings, size: 16, color: Colors.blue[600]),
+                label: Text(
+                  'Configure VIP Threshold',
+                  style: TextStyle(color: Colors.blue[600]),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Mark this customer as VIP for special treatment',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: _isVip,
-            onChanged: (value) {
-              setState(() {
-                _isVip = value;
-              });
-            },
-            activeColor: const Color(0xFF1976D2),
-            inactiveThumbColor: const Color(0xFF8E8E93),
-            inactiveTrackColor: const Color(0xFFE5E5EA),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildVipStatusCard() {
+    final progress = _vipThreshold > 0 ? (_customerRevenue / _vipThreshold).clamp(0.0, 1.0) : 0.0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _isVip ? Colors.green[50] : Colors.orange[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _isVip ? Colors.green[200]! : Colors.orange[200]!,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _isVip ? Icons.star : Icons.star_border,
+                color: _isVip ? Colors.green[600] : Colors.orange[600],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _isVip ? 'VIP Customer' : 'Regular Customer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: _isVip ? Colors.green[800] : Colors.orange[800],
+                ),
+              ),
+              const Spacer(),
+              if (_isVip)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'VIP',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green[800],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          if (_isLoadingVipData)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else ...[
+            // Revenue information
+            Row(
+              children: [
+                Icon(
+                  Icons.attach_money,
+                  color: Colors.grey[600],
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Total Revenue: ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                Text(
+                  CurrencyFormatter.format(_customerRevenue),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            
+            // Progress to VIP
+            if (!_isVip) ...[
+              Text(
+                'Progress to VIP:',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 4),
+              LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.grey[300],
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange[400]!),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${CurrencyFormatter.format(_customerRevenue)} / ${CurrencyFormatter.format(_vipThreshold)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+            
+            const SizedBox(height: 12),
+            
+            // Action buttons
+            Row(
+              children: [
+                TextButton.icon(
+                  onPressed: _showVipThresholdSettings,
+                  icon: Icon(Icons.settings, size: 16, color: Colors.blue[600]),
+                  label: Text(
+                    'Settings',
+                    style: TextStyle(color: Colors.blue[600]),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: _refreshVipData,
+                  icon: Icon(Icons.refresh, size: 16, color: Colors.grey[600]),
+                  label: Text(
+                    'Refresh',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showVipThresholdSettings() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 36,
+              height: 5,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: VipThresholdSettings(
+                  primaryColor: const Color(0xFF1976D2),
+                  onThresholdChanged: () {
+                    _loadVipData();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _refreshVipData() async {
+    await _loadVipData();
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:billora/src/core/services/user_service.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
+import 'package:billora/src/core/di/injection_container.dart';
 import 'package:billora/src/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:billora/src/features/profile/presentation/pages/settings_page.dart';
 
@@ -16,7 +18,7 @@ class _UserProfilePopupState extends State<UserProfilePopup>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   
-  final UserService _userService = UserService();
+  late final UserService _userService;
   UserProfile? _userProfile;
   UserStats? _userStats;
   bool _isLoading = true;
@@ -24,6 +26,7 @@ class _UserProfilePopupState extends State<UserProfilePopup>
   @override
   void initState() {
     super.initState();
+    _userService = sl<UserService>();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -69,6 +72,35 @@ class _UserProfilePopupState extends State<UserProfilePopup>
     } else {
       return amount.toStringAsFixed(0);
     }
+  }
+
+  Widget _buildDefaultAvatar() {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: _userProfile?.displayName != null 
+            ? AvatarService.getAvatarColor(_userProfile!.displayName)
+            : Colors.grey[400],
+        shape: BoxShape.circle,
+      ),
+      child: _userProfile?.displayName != null
+          ? Center(
+              child: Text(
+                AvatarService.getInitials(_userProfile!.displayName),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          : const Icon(
+              Icons.person,
+              color: Colors.white,
+              size: 40,
+            ),
+    );
   }
 
   @override
@@ -185,6 +217,7 @@ class _UserProfilePopupState extends State<UserProfilePopup>
       child: Row(
         children: [
           Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
                 width: 80,
@@ -194,10 +227,18 @@ class _UserProfilePopupState extends State<UserProfilePopup>
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.grey[300]!, width: 2),
                 ),
-                child: Icon(
-                  Icons.person,
-                  color: Colors.grey[600],
-                  size: 40,
+                child: ClipOval(
+                  child: _userProfile?.avatarUrl != null
+                      ? Image.network(
+                          _userProfile!.avatarUrl!,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildDefaultAvatar();
+                          },
+                        )
+                      : _buildDefaultAvatar(),
                 ),
               ),
               // Free badge at the bottom of avatar
@@ -379,8 +420,8 @@ class _UserProfilePopupState extends State<UserProfilePopup>
         color: Colors.green,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to dashboard tab
-          DefaultTabController.of(context).animateTo(1);
+          // Navigate to dashboard page
+          Navigator.pushReplacementNamed(context, '/dashboard');
         },
       ),
       _MenuItem(
@@ -493,45 +534,25 @@ class _UserProfilePopupState extends State<UserProfilePopup>
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
         border: Border.all(color: Colors.grey[200]!, width: 1),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                Navigator.pop(context);
-                await context.read<AuthCubit>().logout();
-                // AuthWrapper will automatically show LoginPage when state becomes unauthenticated
-              },
-              icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Logout'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+      child: Center(
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () async {
+              Navigator.pop(context);
+              await context.read<AuthCubit>().logout();
+            },
+            icon: const Icon(Icons.logout, size: 18),
+            label: const Text('Logout'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                _showComingSoon(context, 'Upgrade Plan');
-              },
-              icon: const Icon(Icons.upgrade, size: 18),
-              label: const Text('Upgrade'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

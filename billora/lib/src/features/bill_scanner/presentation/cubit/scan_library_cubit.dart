@@ -23,12 +23,18 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
   }) : super(const ScanLibraryState.initial());
 
   Future<void> loadScanItems() async {
-    emit(const ScanLibraryState.loading());
+    if (!isClosed) {
+      emit(const ScanLibraryState.loading());
+    }
     try {
       final items = await getScanItemsUseCase();
-      emit(ScanLibraryState.loaded(items));
+      if (!isClosed) {
+        emit(ScanLibraryState.loaded(items));
+      }
     } catch (e) {
-      emit(ScanLibraryState.error(e.toString()));
+      if (!isClosed) {
+        emit(ScanLibraryState.error(e.toString()));
+      }
     }
   }
 
@@ -46,11 +52,15 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
       if (currentState is ScanLibraryLoaded) {
         final updatedItems = List<ScanLibraryItem>.from(currentState.items);
         updatedItems.insert(0, item); // Add new item at the beginning
-        emit(ScanLibraryState.loaded(updatedItems));
-        emit(ScanLibraryState.itemSaved(item));
+        if (!isClosed) {
+          emit(ScanLibraryState.loaded(updatedItems));
+          emit(ScanLibraryState.itemSaved(item));
+        }
       } else {
         // If no items loaded yet, just emit saved state
-        emit(ScanLibraryState.itemSaved(item));
+        if (!isClosed) {
+          emit(ScanLibraryState.itemSaved(item));
+        }
         // Then load all items to refresh the list
         await loadScanItems();
       }
@@ -58,7 +68,9 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
       Logger.saveSuccess('scan item', itemId: item.id, itemName: item.fileName);
     } catch (e) {
       Logger.saveError('scan item', e, itemId: item.id);
-      emit(ScanLibraryState.error(e.toString()));
+      if (!isClosed) {
+        emit(ScanLibraryState.error(e.toString()));
+      }
     }
   }
 
@@ -76,17 +88,23 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
         final updatedItems = currentState.items.map((existingItem) {
           return existingItem.id == item.id ? item : existingItem;
         }).toList();
-        emit(ScanLibraryState.loaded(updatedItems));
-        emit(ScanLibraryState.itemUpdated(item));
+        if (!isClosed) {
+          emit(ScanLibraryState.loaded(updatedItems));
+          emit(ScanLibraryState.itemUpdated(item));
+        }
       } else {
-        emit(ScanLibraryState.itemUpdated(item));
+        if (!isClosed) {
+          emit(ScanLibraryState.itemUpdated(item));
+        }
         await loadScanItems();
       }
       
       Logger.saveSuccess('update scan item', itemId: item.id, itemName: item.fileName);
     } catch (e) {
       Logger.saveError('update scan item', e, itemId: item.id);
-      emit(ScanLibraryState.error(e.toString()));
+      if (!isClosed) {
+        emit(ScanLibraryState.error(e.toString()));
+      }
     }
   }
 
@@ -102,17 +120,23 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
       // If we have loaded items, remove the item from the list
       if (currentState is ScanLibraryLoaded) {
         final updatedItems = currentState.items.where((item) => item.id != id).toList();
-        emit(ScanLibraryState.loaded(updatedItems));
-        emit(ScanLibraryState.itemDeleted(id));
+        if (!isClosed) {
+          emit(ScanLibraryState.loaded(updatedItems));
+          emit(ScanLibraryState.itemDeleted(id));
+        }
       } else {
-        emit(ScanLibraryState.itemDeleted(id));
+        if (!isClosed) {
+          emit(ScanLibraryState.itemDeleted(id));
+        }
         await loadScanItems();
       }
       
       Logger.saveSuccess('delete scan item', itemId: id);
     } catch (e) {
       Logger.saveError('delete scan item', e, itemId: id);
-      emit(ScanLibraryState.error(e.toString()));
+      if (!isClosed) {
+        emit(ScanLibraryState.error(e.toString()));
+      }
     }
   }
 
@@ -120,7 +144,9 @@ class ScanLibraryCubit extends Cubit<ScanLibraryState> {
     try {
       return await getScanItemByIdUseCase(id);
     } catch (e) {
-      emit(ScanLibraryState.error(e.toString()));
+      if (!isClosed) {
+        emit(ScanLibraryState.error(e.toString()));
+      }
       return null;
     }
   }

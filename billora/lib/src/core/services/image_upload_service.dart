@@ -19,9 +19,9 @@ class ImageUploadService {
 
       // Create a unique filename
       final fileName = 'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final storageRef = _storage.ref().child('profiles/${user.uid}/$fileName');
+      final storageRef = _storage.ref().child('profiles/${user.uid}/user/$fileName');
 
-      // Upload the file
+      // Upload the file with public metadata
       final uploadTask = storageRef.putFile(
         imageFile,
         SettableMetadata(
@@ -29,6 +29,7 @@ class ImageUploadService {
           customMetadata: {
             'uploadedBy': user.uid,
             'uploadedAt': DateTime.now().toIso8601String(),
+            'public': 'true', // Set as public for profile images
           },
         ),
       );
@@ -70,6 +71,7 @@ class ImageUploadService {
                 'uploadedBy': user.uid,
                 'uploadedAt': DateTime.now().toIso8601String(),
                 'productId': productId,
+                'public': 'true', // Set as public for product images
               },
             ),
           );
@@ -93,36 +95,44 @@ class ImageUploadService {
       
       throw Exception('Failed to upload after $maxRetries attempts');
     } catch (e) {
-      // Provide more specific error messages
-      if (e.toString().contains('object-not-found')) {
-        throw Exception('Storage bucket not found. Please check Firebase Storage configuration.');
-      } else if (e.toString().contains('unauthorized')) {
-        throw Exception('Unauthorized access. Please check Firebase Storage rules.');
-      } else if (e.toString().contains('network')) {
-        throw Exception('Network error. Please check your internet connection.');
-      } else {
-        throw Exception('Failed to upload product image: $e');
+      throw Exception('Failed to upload product image: $e');
+    }
+  }
+
+  Future<String> uploadCustomerAvatar(File imageFile, String customerId) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
       }
-    }
-  }
 
-  Future<void> deleteProfileImage(String imageURL) async {
-    try {
-      final ref = _storage.refFromURL(imageURL);
-      await ref.delete();
-    } catch (e) {
-      // Ignore errors when deleting (image might not exist)
-      // Log error silently as this is expected behavior
-    }
-  }
+      // Create a unique filename
+      final fileName = 'customer_${customerId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storageRef = _storage.ref().child('profiles/${user.uid}/customers/$customerId/$fileName');
 
-  Future<void> deleteProductImage(String imageURL) async {
-    try {
-      final ref = _storage.refFromURL(imageURL);
-      await ref.delete();
+      // Upload the file with public metadata
+      final uploadTask = storageRef.putFile(
+        imageFile,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {
+            'uploadedBy': user.uid,
+            'uploadedAt': DateTime.now().toIso8601String(),
+            'customerId': customerId,
+            'public': 'true', // Set as public for customer avatars
+          },
+        ),
+      );
+
+      // Wait for upload to complete
+      final snapshot = await uploadTask;
+      
+      // Get download URL
+      final downloadURL = await snapshot.ref.getDownloadURL();
+      
+      return downloadURL;
     } catch (e) {
-      // Ignore errors when deleting (image might not exist)
-      // Log error silently as this is expected behavior
+      throw Exception('Failed to upload customer avatar: $e');
     }
   }
 } 

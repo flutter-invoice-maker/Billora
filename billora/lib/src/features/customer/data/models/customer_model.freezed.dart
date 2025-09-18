@@ -27,8 +27,10 @@ mixin _$CustomerModel {
   String? get phone => throw _privateConstructorUsedError;
   String? get address => throw _privateConstructorUsedError;
   bool get isVip => throw _privateConstructorUsedError;
+  String? get avatarUrl => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError;
   List<String> get searchKeywords => throw _privateConstructorUsedError;
+  DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this CustomerModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -54,8 +56,10 @@ abstract class $CustomerModelCopyWith<$Res> {
     String? phone,
     String? address,
     bool isVip,
+    String? avatarUrl,
     String userId,
     List<String> searchKeywords,
+    DateTime? createdAt,
   });
 }
 
@@ -80,8 +84,10 @@ class _$CustomerModelCopyWithImpl<$Res, $Val extends CustomerModel>
     Object? phone = freezed,
     Object? address = freezed,
     Object? isVip = null,
+    Object? avatarUrl = freezed,
     Object? userId = null,
     Object? searchKeywords = null,
+    Object? createdAt = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -115,6 +121,11 @@ class _$CustomerModelCopyWithImpl<$Res, $Val extends CustomerModel>
                     ? _value.isVip
                     : isVip // ignore: cast_nullable_to_non_nullable
                         as bool,
+            avatarUrl:
+                freezed == avatarUrl
+                    ? _value.avatarUrl
+                    : avatarUrl // ignore: cast_nullable_to_non_nullable
+                        as String?,
             userId:
                 null == userId
                     ? _value.userId
@@ -125,6 +136,11 @@ class _$CustomerModelCopyWithImpl<$Res, $Val extends CustomerModel>
                     ? _value.searchKeywords
                     : searchKeywords // ignore: cast_nullable_to_non_nullable
                         as List<String>,
+            createdAt:
+                freezed == createdAt
+                    ? _value.createdAt
+                    : createdAt // ignore: cast_nullable_to_non_nullable
+                        as DateTime?,
           )
           as $Val,
     );
@@ -147,8 +163,10 @@ abstract class _$$CustomerModelImplCopyWith<$Res>
     String? phone,
     String? address,
     bool isVip,
+    String? avatarUrl,
     String userId,
     List<String> searchKeywords,
+    DateTime? createdAt,
   });
 }
 
@@ -172,8 +190,10 @@ class __$$CustomerModelImplCopyWithImpl<$Res>
     Object? phone = freezed,
     Object? address = freezed,
     Object? isVip = null,
+    Object? avatarUrl = freezed,
     Object? userId = null,
     Object? searchKeywords = null,
+    Object? createdAt = freezed,
   }) {
     return _then(
       _$CustomerModelImpl(
@@ -207,6 +227,11 @@ class __$$CustomerModelImplCopyWithImpl<$Res>
                 ? _value.isVip
                 : isVip // ignore: cast_nullable_to_non_nullable
                     as bool,
+        avatarUrl:
+            freezed == avatarUrl
+                ? _value.avatarUrl
+                : avatarUrl // ignore: cast_nullable_to_non_nullable
+                    as String?,
         userId:
             null == userId
                 ? _value.userId
@@ -217,6 +242,11 @@ class __$$CustomerModelImplCopyWithImpl<$Res>
                 ? _value._searchKeywords
                 : searchKeywords // ignore: cast_nullable_to_non_nullable
                     as List<String>,
+        createdAt:
+            freezed == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                    as DateTime?,
       ),
     );
   }
@@ -232,8 +262,10 @@ class _$CustomerModelImpl implements _CustomerModel {
     this.phone,
     this.address,
     this.isVip = false,
+    this.avatarUrl,
     required this.userId,
     final List<String> searchKeywords = const [],
+    this.createdAt,
   }) : _searchKeywords = searchKeywords;
 
   factory _$CustomerModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -253,6 +285,8 @@ class _$CustomerModelImpl implements _CustomerModel {
   @JsonKey()
   final bool isVip;
   @override
+  final String? avatarUrl;
+  @override
   final String userId;
   final List<String> _searchKeywords;
   @override
@@ -264,8 +298,11 @@ class _$CustomerModelImpl implements _CustomerModel {
   }
 
   @override
+  final DateTime? createdAt;
+
+  @override
   String toString() {
-    return 'CustomerModel(id: $id, name: $name, email: $email, phone: $phone, address: $address, isVip: $isVip, userId: $userId, searchKeywords: $searchKeywords)';
+    return 'CustomerModel(id: $id, name: $name, email: $email, phone: $phone, address: $address, isVip: $isVip, avatarUrl: $avatarUrl, userId: $userId, searchKeywords: $searchKeywords, createdAt: $createdAt)';
   }
 
   @override
@@ -279,11 +316,15 @@ class _$CustomerModelImpl implements _CustomerModel {
             (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.address, address) || other.address == address) &&
             (identical(other.isVip, isVip) || other.isVip == isVip) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             const DeepCollectionEquality().equals(
               other._searchKeywords,
               _searchKeywords,
-            ));
+            ) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -296,8 +337,10 @@ class _$CustomerModelImpl implements _CustomerModel {
     phone,
     address,
     isVip,
+    avatarUrl,
     userId,
     const DeepCollectionEquality().hash(_searchKeywords),
+    createdAt,
   );
 
   /// Create a copy of CustomerModel
@@ -322,8 +365,10 @@ abstract class _CustomerModel implements CustomerModel {
     final String? phone,
     final String? address,
     final bool isVip,
+    final String? avatarUrl,
     required final String userId,
     final List<String> searchKeywords,
+    final DateTime? createdAt,
   }) = _$CustomerModelImpl;
 
   factory _CustomerModel.fromJson(Map<String, dynamic> json) =
@@ -342,9 +387,13 @@ abstract class _CustomerModel implements CustomerModel {
   @override
   bool get isVip;
   @override
+  String? get avatarUrl;
+  @override
   String get userId;
   @override
   List<String> get searchKeywords;
+  @override
+  DateTime? get createdAt;
 
   /// Create a copy of CustomerModel
   /// with the given fields replaced by the non-null parameter values.

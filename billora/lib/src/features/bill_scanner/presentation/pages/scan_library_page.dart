@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +21,8 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
   String _searchQuery = '';
   bool _selectionMode = false;
   final Set<String> _selectedIds = <String>{};
+  bool _initialItemsProcessed = false;
+  bool _isBatchSaving = false;
 
   @override
   void initState() {
@@ -37,9 +40,10 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null && args['initialItems'] != null) {
+    if (!_initialItemsProcessed && args != null && args['initialItems'] != null) {
       final initialItems = args['initialItems'] as List<ScanLibraryItem>;
       if (initialItems.isNotEmpty) {
+        _initialItemsProcessed = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             _saveInitialItems(initialItems);
@@ -52,6 +56,7 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
   Future<void> _saveInitialItems(List<ScanLibraryItem> items) async {
     try {
       final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
+      _isBatchSaving = true;
       
       // Save each item individually
       for (final item in items) {
@@ -74,6 +79,8 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
           message: 'Error saving initial items: $e',
         );
       }
+    } finally {
+      _isBatchSaving = false;
     }
   }
 
@@ -87,14 +94,6 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
     if (!mounted) return;
     try {
       final cubit = BlocProvider.of<ScanLibraryCubit>(context, listen: false);
-      
-      // Handle initial items if provided
-      if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
-        for (final item in widget.initialItems!) {
-          await cubit.saveScanItem(item);
-        }
-      }
-      
       // Load all scan items
       await cubit.loadScanItems();
     } catch (e) {
@@ -284,8 +283,9 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
     return BlocConsumer<ScanLibraryCubit, ScanLibraryState>(
       listener: (context, state) {
         if (state is ScanLibraryItemSaved) {
-          SnackBarHelper.showSuccess(context, message: 'Scan saved successfully: ${state.item.fileName}');
-          // Refresh the data to ensure the new item appears
+          if (!_isBatchSaving) {
+            SnackBarHelper.showSuccess(context, message: 'Scan saved successfully: ${state.item.fileName}');
+          }
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               _refreshData();
@@ -293,8 +293,18 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
           });
         } else if (state is ScanLibraryItemUpdated) {
           SnackBarHelper.showInfo(context, message: 'Scan updated successfully: ${state.item.fileName}');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _refreshData();
+            }
+          });
         } else if (state is ScanLibraryItemDeleted) {
           SnackBarHelper.showWarning(context, message: 'Scan deleted successfully');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _refreshData();
+            }
+          });
         } else if (state is ScanLibraryError) {
           SnackBarHelper.showError(context, message: 'Error: ${state.message}');
         }
@@ -367,23 +377,38 @@ class _ScanLibraryPageState extends State<ScanLibraryPage> {
   Widget _buildGrid(List<ScanLibraryItem> items) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const double maxCardWidth = 200; // target max width per card
-// minimum width per card
-        final double screenWidth = constraints.maxWidth;
-        int crossAxisCount = (screenWidth / maxCardWidth).floor().clamp(1, 6);
-        // ensure at least 2 columns on phones in landscape-wide cases
-        if (screenWidth > 480 && crossAxisCount < 2) crossAxisCount = 2;
-        final double cardWidth = (screenWidth - (12 * (crossAxisCount - 1)) - 24) / crossAxisCount; // 12 spacing + 12*2 outer padding
-        final double aspectRatio = (cardWidth / 320).clamp(0.55, 0.7); // tune height relative to width
+        // Calculate responsive grid similar to Product page
+        int crossAxisCount;
+        double cardWidth;
+        
+        final screenWidth = constraints.maxWidth;
+        const double minCardWidth = 140.0; // Minimum card width
+        const double maxCardWidth = 180.0; // Maximum card width
+        const double spacing = 12.0;
+        
+        // Calculate how many cards can fit with minimum width
+        crossAxisCount = ((screenWidth - 32 + spacing) / (minCardWidth + spacing)).floor();
+        crossAxisCount = math.max(2, crossAxisCount); // Minimum 2 columns
+        crossAxisCount = math.min(6, crossAxisCount); // Maximum 6 columns for very large screens
+        
+        // Calculate actual card width
+        cardWidth = (screenWidth - 32 - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+        
+        // Ensure card width is within reasonable bounds
+        cardWidth = math.max(minCardWidth, math.min(maxCardWidth, cardWidth));
+        
+        // Calculate aspect ratio to maintain consistent card height similar to Product cards
+        const double cardHeight = 275.0; // Increased to prevent bottom overflow
+        final double aspectRatio = cardWidth / cardHeight;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: GridView.builder(
             padding: const EdgeInsets.only(top: 8, bottom: 16),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
               childAspectRatio: aspectRatio,
             ),
             itemCount: items.length,
@@ -527,51 +552,51 @@ class _ScanCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: SizedBox(
-                    height: 92,
+                    height: 100,
                     width: double.infinity,
                     child: _buildThumbnail(item.imagePath),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   item.fileName,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const Spacer(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       _formatDate(item.createdAt),
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
                     ),
                     Text(
                       '\$${item.scannedBill.totalAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF2563EB), fontWeight: FontWeight.w800),
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF2563EB), fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: onTap,
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       side: const BorderSide(color: Color(0xFFE5E7EB)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       foregroundColor: const Color(0xFF1F2937),
                       backgroundColor: const Color(0xFFF8FAFC),
                     ),
                     child: const Text(
                       'View Details',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),

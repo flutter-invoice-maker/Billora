@@ -25,12 +25,13 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
   final List<SimpleChatMessage> _messages = [];
   bool _isLoading = false;
   bool _showQuickActions = true;
+  bool _showPresetQuestions = false;
   bool _showMenu = false;
   late ChatbotAIService _aiService;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   late AnimationController _quickActionsController;
   late AnimationController _menuController;
-  late Animation<double> _quickActionsAnimation;
+  // Removed legacy top quick actions animation
   late Animation<double> _menuAnimation;
 
   @override
@@ -45,10 +46,7 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
       duration: const Duration(milliseconds: 250),
       vsync: this,
     );
-    _quickActionsAnimation = CurvedAnimation(
-      parent: _quickActionsController,
-      curve: Curves.easeInOut,
-    );
+    // quick actions animation not used for top section anymore
     _menuAnimation = CurvedAnimation(
       parent: _menuController,
       curve: Curves.easeInOut,
@@ -80,74 +78,81 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
   }
 
   List<QuickAction> _getQuickActions(int currentTabIndex) {
+    // Messenger-style short questions focused on revenue/diagnostics/analysis (English only)
     switch (currentTabIndex) {
       case 0: // Dashboard
         return [
           QuickAction(
-            title: 'Revenue Analysis',
-            icon: '📊',
-            prompt: 'Can you analyze my revenue trends and provide insights?',
-            category: 'Financial',
+            title: 'This month\'s revenue',
+            icon: '💵',
+            prompt: 'Analyze this month\'s collected revenue vs last month, highlight trends and primary drivers.',
+            category: 'Revenue',
           ),
           QuickAction(
-            title: 'Business Performance',
-            icon: '🚀',
-            prompt: 'How is my business performing overall?',
-            category: 'Overview',
+            title: 'Revenue diagnosis',
+            icon: '🩺',
+            prompt: 'Diagnose recent revenue changes, identify the biggest impacting products/customers, and give recommendations.',
+            category: 'Diagnostics',
+          ),
+          QuickAction(
+            title: 'Cost & profit analysis',
+            icon: '📊',
+            prompt: 'Compute gross margin by product and suggest improvements.',
+            category: 'Analysis',
           ),
         ];
       case 1: // Customers
         return [
           QuickAction(
-            title: 'Customer Segmentation',
-            icon: '🎯',
-            prompt: 'How should I segment my customers for better targeting?',
-            category: 'Strategy',
+            title: 'Top revenue customers',
+            icon: '⭐',
+            prompt: 'List top customers by this month\'s revenue and churn risk.',
+            category: 'Revenue',
           ),
           QuickAction(
-            title: 'Customer Lifetime Value',
-            icon: '💰',
-            prompt: 'Which customers have the highest lifetime value?',
+            title: 'Customer segmentation',
+            icon: '🎯',
+            prompt: 'Segment customers by value and purchase frequency and suggest campaigns.',
             category: 'Analysis',
           ),
         ];
       case 2: // Products
         return [
           QuickAction(
-            title: 'Top Selling Products',
+            title: 'Key revenue products',
             icon: '🏆',
-            prompt: 'What are my top selling products and why?',
-            category: 'Performance',
+            prompt: 'Identify products contributing the most revenue this month and the trend.',
+            category: 'Revenue',
           ),
           QuickAction(
-            title: 'Inventory Optimization',
-            icon: '📦',
-            prompt: 'How can I optimize my inventory management?',
-            category: 'Operations',
+            title: 'Pricing & inventory optimization',
+            icon: '⚙️',
+            prompt: 'Analyze pricing and inventory turns and provide optimization suggestions.',
+            category: 'Analysis',
           ),
         ];
       case 3: // Invoices
         return [
           QuickAction(
-            title: 'Invoice Analysis',
-            icon: '📄',
-            prompt: 'Can you analyze my invoicing patterns and trends?',
-            category: 'Analysis',
+            title: 'Monthly invoice revenue',
+            icon: '🧾',
+            prompt: 'Summarize invoice revenue for this month, reconcile receivables and payment rate.',
+            category: 'Revenue',
           ),
           QuickAction(
-            title: 'Payment Status',
+            title: 'Cash flow forecast',
             icon: '💳',
-            prompt: 'What\'s the status of my outstanding payments?',
-            category: 'Financial',
+            prompt: 'Forecast expected cash inflow based on current invoice due dates.',
+            category: 'Analysis',
           ),
         ];
       default:
         return [
           QuickAction(
-            title: 'Business Overview',
-            icon: '🏢',
-            prompt: 'Can you give me an overview of my business?',
-            category: 'General',
+            title: 'Revenue overview',
+            icon: '📈',
+            prompt: 'Provide a revenue overview, period-over-period comparison, and suggested actions.',
+            category: 'Revenue',
           ),
         ];
     }
@@ -161,10 +166,10 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
         children: [
           _buildHeader(),
           if (_showMenu) _buildMenuDropdown(),
-          if (_showQuickActions) _buildQuickActions(),
           Expanded(
             child: _buildMessagesList(),
           ),
+          if (_showPresetQuestions) _buildBottomSuggestions(),
           _buildInputSection(),
         ],
       ),
@@ -365,70 +370,45 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
     );
   }
 
-  Widget _buildQuickActions() {
+  // Legacy top quick actions removed (now using bottom suggestions)
+
+  Widget _buildBottomSuggestions() {
     final quickActions = _getQuickActions(widget.currentTabIndex);
-    
-    return SizeTransition(
-      sizeFactor: _quickActionsAnimation,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Quick Actions',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: quickActions.map((action) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Center(
+              child: GestureDetector(
+                onTap: () => _handleQuickAction(action),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: widget.primaryColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    action.title,
+                    style: TextStyle(
+                      color: widget.primaryColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: quickActions.map((action) => _buildQuickActionChip(action)).toList(),
-            ),
-          ],
-        ),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildQuickActionChip(QuickAction action) {
-    return GestureDetector(
-      onTap: () => _handleQuickAction(action),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: widget.primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: widget.primaryColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              action.icon,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              action.title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: widget.primaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Removed unused top quick action chip builder
 
   Widget _buildMessagesList() {
     return ListView.builder(
@@ -560,7 +540,7 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
       color: Colors.white,
       child: Row(
         children: [
-          // Attachment button
+          // Burger menu button for preset questions
           Container(
             width: 36,
             height: 36,
@@ -569,9 +549,9 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
               borderRadius: BorderRadius.circular(18),
             ),
             child: IconButton(
-              onPressed: _showAttachmentOptions,
+              onPressed: _togglePresetQuestions,
               icon: Icon(
-                Icons.attach_file,
+                Icons.menu,
                 color: Colors.grey.shade600,
                 size: 18,
               ),
@@ -649,7 +629,24 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
     );
   }
 
+  void _togglePresetQuestions() {
+    setState(() {
+      _showPresetQuestions = !_showPresetQuestions;
+      _showQuickActions = _showPresetQuestions; // reuse quick actions as preset list
+    });
+    if (_showPresetQuestions) {
+      _quickActionsController.forward();
+    } else {
+      _quickActionsController.reverse();
+    }
+  }
+
   void _handleQuickAction(QuickAction action) {
+    // Hide preset questions immediately and send the prompt without creating a user bubble
+    setState(() {
+      _showPresetQuestions = false;
+      _showQuickActions = false;
+    });
     _messageController.text = action.prompt;
     _sendMessage();
   }
@@ -728,121 +725,11 @@ class _EnhancedAIChatWidgetState extends State<EnhancedAIChatWidget>
     });
   }
 
-  void _showAttachmentOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Attach File',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildAttachmentOption(
-                  icon: Icons.image,
-                  label: 'Photo',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _attachImage();
-                  },
-                ),
-                _buildAttachmentOption(
-                  icon: Icons.videocam,
-                  label: 'Video',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _attachVideo();
-                  },
-                ),
-                _buildAttachmentOption(
-                  icon: Icons.insert_drive_file,
-                  label: 'Document',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _attachDocument();
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
+  // Attachment options removed in favor of preset questions menu
 
-  Widget _buildAttachmentOption({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: widget.primaryColor),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Legacy attachment option UI removed
 
-  void _attachImage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Image attachment feature coming soon!')),
-    );
-  }
-
-  void _attachVideo() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Video attachment feature coming soon!')),
-    );
-  }
-
-  void _attachDocument() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Document attachment feature coming soon!')),
-    );
-  }
+  // Legacy attachment handlers removed
 
   void _exportChat() {
     if (_messages.isEmpty) {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_cubit.dart';
 import 'package:billora/src/features/customer/presentation/cubit/customer_state.dart';
 import 'package:billora/src/features/customer/domain/entities/customer.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
 
 class CustomerSelectionWidget extends StatefulWidget {
   final String? selectedCustomerId;
@@ -235,19 +236,28 @@ class _CustomerSelectionWidgetState extends State<CustomerSelectionWidget> {
                                 ),
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  leading: CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: widget.primaryColor.withValues(alpha: 0.2),
-                                    child: Text(
-                                      customer.name.isNotEmpty 
-                                          ? customer.name[0].toUpperCase()
-                                          : '?',
-                                      style: TextStyle(
-                                        color: widget.primaryColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
+                                  leading: ClipOval(
+                                    child: customer.avatarUrl != null
+                                        ? Image.network(
+                                            customer.avatarUrl!,
+                                            width: 40,
+                                            height: 40,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stack) {
+                                              return AvatarService.buildAvatar(
+                                                name: customer.name,
+                                                size: 40.0,
+                                                backgroundColor: widget.primaryColor.withValues(alpha: 0.2),
+                                                textColor: widget.primaryColor,
+                                              );
+                                            },
+                                          )
+                                        : AvatarService.buildAvatar(
+                                            name: customer.name,
+                                            size: 40.0,
+                                            backgroundColor: widget.primaryColor.withValues(alpha: 0.2),
+                                            textColor: widget.primaryColor,
+                                          ),
                                   ),
                                   title: Text(
                                     customer.name,

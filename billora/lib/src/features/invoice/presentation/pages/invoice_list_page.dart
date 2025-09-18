@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../cubit/invoice_cubit.dart';
 import '../cubit/invoice_state.dart';
 import '../../domain/entities/invoice.dart';
@@ -14,6 +15,7 @@ import 'package:billora/src/features/invoice/presentation/pages/invoice_preview_
 import 'package:billora/src/features/suggestions/presentation/cubit/suggestions_cubit.dart';
 import 'package:billora/src/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:billora/src/core/widgets/delete_dialog.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
 
 class InvoiceListPage extends StatefulWidget {
   const InvoiceListPage({super.key});
@@ -137,6 +139,61 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
     });
   }
 
+  /// Simple date search - check if search term matches any date in invoice
+  bool _isDateMatch(Invoice invoice, String searchTerm) {
+    if (searchTerm.isEmpty) return false;
+    
+    // Check if search term contains numbers (potential date)
+    final hasNumbers = RegExp(r'\d').hasMatch(searchTerm);
+    if (!hasNumbers) return false;
+    
+    // Get all dates from invoice
+    final dates = [
+      invoice.createdAt,
+      if (invoice.dueDate != null) invoice.dueDate!,
+      if (invoice.paidAt != null) invoice.paidAt!,
+    ];
+    
+    for (final date in dates) {
+      // Check day, month, year components
+      final day = date.day.toString();
+      final month = date.month.toString();
+      final year = date.year.toString();
+      final shortYear = year.substring(2);
+      
+      // Check exact matches
+      if (day == searchTerm || month == searchTerm || year == searchTerm || shortYear == searchTerm) {
+        return true;
+      }
+      
+      // Check if search term is contained in any component
+      if (day.contains(searchTerm) || month.contains(searchTerm) || year.contains(searchTerm) || shortYear.contains(searchTerm)) {
+        return true;
+      }
+      
+      // Check formatted dates
+      final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+      if (formattedDate.contains(searchTerm)) {
+        return true;
+      }
+      
+      // Check other common formats
+      final formats = ['dd-MM-yyyy', 'dd.MM.yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd'];
+      for (final format in formats) {
+        try {
+          final formatted = DateFormat(format).format(date);
+          if (formatted.contains(searchTerm)) {
+            return true;
+          }
+        } catch (e) {
+          // Continue to next format
+        }
+      }
+    }
+    
+    return false;
+  }
+
   void _deleteSelectedInvoices() {
     if (_selectedInvoices.isNotEmpty) {
       showDialog(
@@ -180,25 +237,9 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _getCustomerColor(invoice.customerName),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        invoice.customerName.isNotEmpty
-                            ? invoice.customerName[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                  AvatarService.buildAvatar(
+                    name: invoice.customerName,
+                    size: 40.0,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -378,7 +419,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                                   invoice.status == _selectedStatus;
                               final searchMatch = searchLower.isEmpty ||
                                   invoice.customerName.toLowerCase().contains(searchLower) ||
-                                  invoice.id.toLowerCase().contains(searchLower);
+                                  invoice.id.toLowerCase().contains(searchLower) ||
+                                  _isDateMatch(invoice, _searchTerm);
                               final tagMatch = _selectedTag == null || invoice.tags.contains(_selectedTag);
                               return statusMatch && searchMatch && tagMatch;
                             }).toList(),
@@ -457,11 +499,11 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                       curve: Curves.easeInOut,
                     ),
                     child: SizedBox(
-                      height: 86,
+                      height: 100,
                       child: _categoriesAnimationCompleted || _categoryAnimationController.value > 0.8
                           ? _buildCategories()
                           : Container(
-                              height: 86,
+                              height: 100,
                               color: Colors.white,
                             ),
                     ),
@@ -504,7 +546,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
                               invoice.status == _selectedStatus;
                           final searchMatch = searchLower.isEmpty ||
                               invoice.customerName.toLowerCase().contains(searchLower) ||
-                              invoice.id.toLowerCase().contains(searchLower);
+                              invoice.id.toLowerCase().contains(searchLower) ||
+                              _isDateMatch(invoice, _searchTerm);
                           final tagMatch = _selectedTag == null || invoice.tags.contains(_selectedTag);
                           return statusMatch && searchMatch && tagMatch;
                         }).toList();
@@ -548,8 +591,8 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
 
   Widget _buildCategories() {
     return Container(
-      height: 86,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      height: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -571,57 +614,49 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
               });
             },
             child: Container(
-              margin: const EdgeInsets.only(right: 20),
-              child: Stack(
-                alignment: Alignment.center,
+              margin: const EdgeInsets.only(right: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Base circle with icon only
+                  // Icon circle
                   Container(
-                    width: 54,
-                    height: 54,
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: isSelected ? const Color(0xFF2196F3) : Colors.grey[100],
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isSelected ? const Color(0xFF2196F3) : Colors.grey[300]!,
                         width: isSelected ? 2 : 1,
                       ),
+                      boxShadow: isSelected ? [
+                        BoxShadow(
+                          color: const Color(0xFF2196F3).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ] : null,
                     ),
                     child: Icon(
                       _getStatusIcon(category['value']),
-                      color: isSelected ? const Color(0xFF2196F3) : Colors.grey[600],
-                      size: 28,
+                      color: isSelected ? Colors.white : Colors.grey[600],
+                      size: 24,
                     ),
                   ),
-                  // Animated overlay with label
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    bottom: isSelected ? 0 : -54,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: isSelected ? 1.0 : 0.0,
-                      child: Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            category['label'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                  const SizedBox(height: 6),
+                  // Label text
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 70),
+                    child: Text(
+                      category['label'],
+                      style: TextStyle(
+                        color: isSelected ? const Color(0xFF2196F3) : Colors.grey[600],
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -773,25 +808,9 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
               Row(
                 children: [
                   // Avatar
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _getCustomerColor(invoice.customerName),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        invoice.customerName.isNotEmpty
-                            ? invoice.customerName[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                  AvatarService.buildAvatar(
+                    name: invoice.customerName,
+                    size: 40.0,
                   ),
                   
                   const SizedBox(width: 12),
@@ -973,17 +992,6 @@ class _InvoiceListPageState extends State<InvoiceListPage> with TickerProviderSt
   }
 
   // Helper Methods
-  Color _getCustomerColor(String name) {
-    final colors = [
-      const Color(0xFF4A90E2),
-      const Color(0xFF7ED321),
-      const Color(0xFFF5A623),
-      const Color(0xFFD0021B),
-      const Color(0xFF9013FE),
-      const Color(0xFF50E3C2),
-    ];
-    return colors[name.hashCode % colors.length];
-  }
 
   Color _getStatusColor(InvoiceStatus status) {
     switch (status) {
@@ -1410,7 +1418,7 @@ class _InvoiceHeaderSearch extends StatelessWidget implements PreferredSizeWidge
               child: TextField(
                 onChanged: onChanged,
                 decoration: InputDecoration(
-                  hintText: 'Search invoices...',
+                  hintText: 'Search invoices by name, ID, or date...',
                   hintStyle: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 15,

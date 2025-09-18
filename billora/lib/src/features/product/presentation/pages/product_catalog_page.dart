@@ -276,11 +276,11 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                       curve: Curves.easeInOut,
                     ),
                     child: SizedBox(
-                      height: 120,
+                      height: 100,
                       child: _categoriesAnimationCompleted || _categoryAnimationController.value > 0.8
                           ? _buildCategories()
                           : Container(
-                              height: 120,
+                              height: 100,
                               color: Colors.white,
                             ),
                     ),
@@ -366,8 +366,8 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
 
   Widget _buildCategories() {
     return Container(
-      height: 120,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      height: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -395,8 +395,8 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                 children: [
                   // Icon circle
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
                       color: isSelected ? const Color(0xFF2196F3) : Colors.grey[100],
                       shape: BoxShape.circle,
@@ -415,18 +415,18 @@ class _ProductCatalogPageState extends State<ProductCatalogPage>
                     child: Icon(
                       category['icon'],
                       color: isSelected ? Colors.white : Colors.grey[600],
-                      size: 28,
+                      size: 24,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   // Label text
                   Container(
-                    constraints: const BoxConstraints(maxWidth: 80),
+                    constraints: const BoxConstraints(maxWidth: 70),
                     child: Text(
                       category['label'],
                       style: TextStyle(
                         color: isSelected ? const Color(0xFF2196F3) : Colors.grey[600],
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,

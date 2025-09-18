@@ -2,14 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:injectable/injectable.dart';
+import 'package:billora/src/core/services/image_upload_service.dart';
+import 'dart:io';
 
 @LazySingleton()
 class UserService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final ImageUploadService _imageUploadService;
+
+  // Simple in-memory cache to avoid flicker from repeated loads
+  UserProfile? _cachedProfile;
+  DateTime? _cachedAt;
+  static const Duration _cacheTtl = Duration(minutes: 5);
+
+  UserService(this._imageUploadService);
 
   User? get currentUser => _auth.currentUser;
+
+  bool _isCacheValid() {
+    if (_cachedProfile == null || _cachedAt == null) return false;
+    return DateTime.now().difference(_cachedAt!) < _cacheTtl;
+  }
+
+  Future<UserProfile?> getUserProfileCached() async {
+    if (_isCacheValid()) return _cachedProfile;
+    final profile = await getUserProfile();
+    _cachedProfile = profile;
+    _cachedAt = DateTime.now();
+    return profile;
+  }
 
   // Get user profile data from Firestore
   Future<UserProfile?> getUserProfile() async {
@@ -30,7 +53,7 @@ class UserService {
       }
 
       final data = doc.data()!;
-      return UserProfile(
+      final profile = UserProfile(
         uid: user.uid,
         email: user.email ?? '',
         displayName: data['displayName'] ?? user.displayName ?? 'User',
@@ -45,7 +68,11 @@ class UserService {
         phone: data['phone'],
         company: data['company'],
         address: data['address'],
+        avatarUrl: data['avatarUrl'],
       );
+      _cachedProfile = profile;
+      _cachedAt = DateTime.now();
+      return profile;
     } catch (e) {
       debugPrint('Error getting user profile: $e');
       return null;
@@ -119,6 +146,10 @@ class UserService {
       plan: 'Free',
       createdAt: DateTime.now(),
       lastLoginAt: DateTime.now(),
+      phone: null,
+      company: null,
+      address: null,
+      avatarUrl: null,
     );
   }
 
@@ -137,6 +168,7 @@ class UserService {
         'phone': profile.phone,
         'company': profile.company,
         'address': profile.address,
+        'avatarUrl': profile.avatarUrl,
       });
     } catch (e) {
       debugPrint('Error creating profile in Firestore: $e');
@@ -174,6 +206,7 @@ class UserService {
     String? phone,
     String? company,
     String? address,
+    String? avatarUrl,
   }) async {
     try {
       final user = _auth.currentUser;
@@ -187,13 +220,46 @@ class UserService {
       if (phone != null) updateData['phone'] = phone;
       if (company != null) updateData['company'] = company;
       if (address != null) updateData['address'] = address;
+      if (avatarUrl != null) updateData['avatarUrl'] = avatarUrl;
 
       await _firestore
           .collection('users')
           .doc(user.uid)
           .set(updateData, SetOptions(merge: true));
+      // update cache
+      if (_cachedProfile != null) {
+        _cachedProfile = UserProfile(
+          uid: _cachedProfile!.uid,
+          email: _cachedProfile!.email,
+          displayName: displayName ?? _cachedProfile!.displayName,
+          photoURL: _cachedProfile!.photoURL,
+          plan: _cachedProfile!.plan,
+          createdAt: _cachedProfile!.createdAt,
+          lastLoginAt: DateTime.now(),
+          phone: phone ?? _cachedProfile!.phone,
+          company: company ?? _cachedProfile!.company,
+          address: address ?? _cachedProfile!.address,
+          avatarUrl: avatarUrl ?? _cachedProfile!.avatarUrl,
+        );
+        _cachedAt = DateTime.now();
+      }
     } catch (e) {
       debugPrint('Error updating user profile: $e');
+    }
+  }
+
+  // Upload avatar image
+  Future<String?> uploadAvatar(File imageFile) async {
+    try {
+      final avatarUrl = await _imageUploadService.uploadProfileImage(imageFile);
+      
+      // Update user profile with new avatar URL
+      await updateUserProfile(avatarUrl: avatarUrl);
+      
+      return avatarUrl;
+    } catch (e) {
+      debugPrint('Error uploading avatar: $e');
+      return null;
     }
   }
 
@@ -221,6 +287,7 @@ class UserProfile {
   final String? phone;
   final String? company;
   final String? address;
+  final String? avatarUrl;
 
   UserProfile({
     required this.uid,
@@ -233,6 +300,7 @@ class UserProfile {
     this.phone,
     this.company,
     this.address,
+    this.avatarUrl,
   });
 }
 

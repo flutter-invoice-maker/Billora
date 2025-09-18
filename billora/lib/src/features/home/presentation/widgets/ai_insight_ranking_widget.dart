@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:billora/src/core/services/customer_ranking_service.dart';
 import 'package:billora/src/core/services/data_refresh_service.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
+//
+// no-op
 
 class AIInsightRankingWidget extends StatefulWidget {
   const AIInsightRankingWidget({super.key});
@@ -30,6 +33,9 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
     
     // Refresh all data from Firestore
     DataRefreshService().refreshAllData();
+    
+    // Load customer rankings specifically
+    _rankingService.loadCustomerRankings();
   }
 
   @override
@@ -47,7 +53,7 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
 
   @override
   Widget build(BuildContext context) {
-    final rankings = _rankingService.rankings.take(8).toList();
+    final rankings = _rankingService.rankings.take(10).toList();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,80 +89,26 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
           ],
         ),
         const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.shade100),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
+        if (rankings.isEmpty)
+          _buildEmptyState()
+        else if (rankings.length < 3)
+          _buildInsufficientDataState(rankings.length)
+        else
+          Column(
             children: [
-              _buildHeader(),
-              const SizedBox(height: 20),
-              if (rankings.isEmpty)
-                _buildEmptyState()
-              else
-                _buildRankingsList(rankings),
+              // Top 3 rankings with podium layout
+              _buildTopThreeRankings(rankings.take(3).toList()),
+              
+              // Other rankings (4-10) as list items
+              if (rankings.length > 3) ...[
+                const SizedBox(height: 20),
+                ...rankings.asMap().entries
+                    .where((entry) => entry.key >= 3)
+                    .take(7)
+                    .map((entry) => _buildListRankingItem(entry.value, entry.key + 1)),
+              ],
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue[500]!, Colors.blue[700]!],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Icon(
-            Icons.emoji_events,
-            color: Colors.white,
-            size: 28,
-          ),
-        ),
-        const SizedBox(width: 16),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Customer Rankings',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Top performing customers based on AI analysis',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -164,6 +116,10 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
   Widget _buildEmptyState() {
     return Container(
       padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         children: [
           Icon(
@@ -182,86 +138,189 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
           ),
           const SizedBox(height: 8),
           Text(
-            'Customer rankings will appear here once you have paid invoices',
+            'Customer rankings will appear here once you have at least 3 customers with invoices',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],
             ),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Need: 3 customers minimum',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRankingsList(List<CustomerRanking> rankings) {
-    return Column(
-      children: [
-        // Top 3 rankings with special layout
-        if (rankings.length >= 3) _buildTopThreeRankings(rankings.take(3).toList()),
-        
-        // Other rankings
-        if (rankings.length > 3) ...[
-          const SizedBox(height: 20),
-          ...rankings.skip(3).map((ranking) => _buildRankingItem(ranking, rankings.indexOf(ranking) + 1)),
+  Widget _buildInsufficientDataState(int currentCount) {
+    final remaining = 3 - currentCount;
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.blue[200]!,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue[100],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.people_outline,
+              size: 48,
+              color: Colors.blue[600],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Almost there!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.blue[800],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You have $currentCount customer${currentCount == 1 ? '' : 's'}. Need $remaining more to see rankings.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.blue[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.blue[200],
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Progress: $currentCount/3',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue[800],
+              ),
+            ),
+          ),
         ],
-      ],
+      ),
     );
   }
 
   Widget _buildTopThreeRankings(List<CustomerRanking> topThree) {
-    return Row(
-      children: [
-        // 2nd place
-        if (topThree.length >= 2)
-          Expanded(
-            child: _buildTopRankingItem(topThree[1], 2),
-          ),
-        
-        // 1st place
-        if (topThree.isNotEmpty)
-          Expanded(
-            child: _buildTopRankingItem(topThree[0], 1),
-          ),
-        
-        // 3rd place
-        if (topThree.length >= 3)
-          Expanded(
-            child: _buildTopRankingItem(topThree[2], 3),
-          ),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // 2nd place (left)
+          if (topThree.length >= 2)
+            Expanded(
+              child: _buildPodiumItem(topThree[1], 2, height: 120),
+            ),
+          
+          // 1st place (center) - highest
+          if (topThree.isNotEmpty)
+            Expanded(
+              child: _buildPodiumItem(topThree[0], 1, height: 150),
+            ),
+          
+          // 3rd place (right)
+          if (topThree.length >= 3)
+            Expanded(
+              child: _buildPodiumItem(topThree[2], 3, height: 100),
+            ),
+        ],
+      ),
     );
   }
 
-  Widget _buildTopRankingItem(CustomerRanking ranking, int position) {
-    final colors = [
-      const Color(0xFF4A90E2), // Blue
-      const Color(0xFF7ED321), // Green
-      const Color(0xFFF5A623), // Orange
-    ];
-    
+  Widget _buildPodiumItem(CustomerRanking ranking, int position, {required double height}) {
+    Color getCrownColor() {
+      switch (position) {
+        case 1: return const Color(0xFFFFD700); // Gold
+        case 2: return const Color(0xFFC0C0C0); // Silver  
+        case 3: return const Color(0xFFCD7F32); // Bronze
+        default: return Colors.grey;
+      }
+    }
+
+
+    Color getBorderColor() {
+      switch (position) {
+        case 1: return const Color(0xFFFFD700); // Gold border
+        case 2: return const Color(0xFFC0C0C0); // Silver border
+        case 3: return const Color(0xFFCD7F32); // Bronze border
+        default: return Colors.grey;
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _rankingService.getRankingColor(position).withValues(alpha: 0.3),
-          width: 2,
+          color: getBorderColor(),
+          width: position == 1 ? 3 : 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: getBorderColor().withValues(alpha: 0.2),
+            blurRadius: position == 1 ? 15 : 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           // Crown icon
           Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: _rankingService.getRankingColor(position),
+              color: getCrownColor(),
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: getCrownColor().withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: Icon(
+            child: const Icon(
               Icons.emoji_events,
               color: Colors.white,
               size: 18,
@@ -269,56 +328,61 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
           ),
           const SizedBox(height: 8),
           
-          // Avatar
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: colors[position - 1],
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: _rankingService.getRankingColor(position),
-                width: 3,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                ranking.customerName.isNotEmpty
-                    ? ranking.customerName[0].toUpperCase()
-                    : '?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+          // Avatar (prefer ranking.avatarUrl when available)
+          Builder(
+            builder: (context) {
+              final String? avatarUrl = ranking.avatarUrl;
+              final avatarSize = position == 1 ? 60.0 : 50.0;
+              if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                return ClipOval(
+                  child: Image.network(
+                    avatarUrl,
+                    width: avatarSize,
+                    height: avatarSize,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) {
+                      return AvatarService.buildAvatar(
+                        name: ranking.customerName,
+                        size: avatarSize,
+                      );
+                    },
+                  ),
+                );
+              }
+              return AvatarService.buildAvatar(
+                name: ranking.customerName,
+                size: avatarSize,
+              );
+            },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           
           // Customer name
-          Text(
-            ranking.customerName,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              ranking.customerName,
+              style: TextStyle(
+                fontSize: position == 1 ? 14 : 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           
-          // Level badge
+          // Level
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: _rankingService.getLevelColor(ranking.level),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              'Lv.${ranking.level}',
+              'Lv${ranking.level}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 10,
@@ -326,41 +390,56 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           
           // Score
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                ranking.formattedScore,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  ranking.formattedScore,
+                  style: TextStyle(
+                    fontSize: position == 1 ? 14 : 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.orange[700],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.local_fire_department,
-                color: Colors.red[600],
-                size: 12,
-              ),
-            ],
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.local_fire_department,
+                  color: Colors.orange[700],
+                  size: position == 1 ? 14 : 12,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRankingItem(CustomerRanking ranking, int position) {
+  Widget _buildListRankingItem(CustomerRanking ranking, int position) {
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -375,38 +454,44 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
             child: Center(
               child: Text(
                 position.toString(),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.blue[100],
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                ranking.customerName.isNotEmpty
-                    ? ranking.customerName[0].toUpperCase()
-                    : '?',
                 style: TextStyle(
-                  color: Colors.blue[700],
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey[700],
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
+          
+          // Avatar (prefer ranking.avatarUrl when available)
+          Builder(
+            builder: (context) {
+              final String? avatarUrl = ranking.avatarUrl;
+              const double avatarSize = 40.0;
+              if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                return ClipOval(
+                  child: Image.network(
+                    avatarUrl,
+                    width: avatarSize,
+                    height: avatarSize,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) {
+                      return AvatarService.buildAvatar(
+                        name: ranking.customerName,
+                        size: avatarSize,
+                      );
+                    },
+                  ),
+                );
+              }
+              return AvatarService.buildAvatar(
+                name: ranking.customerName,
+                size: avatarSize,
+              );
+            },
+          ),
+          const SizedBox(width: 12),
           
           // Customer info
           Expanded(
@@ -416,12 +501,14 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
                 Text(
                   ranking.customerName,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: Colors.black87,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     Container(
@@ -431,20 +518,24 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Lv.${ranking.level}',
+                        'Lv${ranking.level}',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Alone raho useme khusi he ahoa...',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
+                    Expanded(
+                      child: Text(
+                        'Top customer',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -454,37 +545,36 @@ class _AIInsightRankingWidgetState extends State<AIInsightRankingWidget>
           ),
           
           // Score
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    ranking.formattedScore,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  ranking.formattedScore,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.orange[700],
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.local_fire_department,
-                    color: Colors.red[600],
-                    size: 14,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Icon(
-                Icons.diamond,
-                color: Colors.grey[400],
-                size: 12,
-              ),
-            ],
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.local_fire_department,
+                  color: Colors.orange[700],
+                  size: 12,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+// Removed _safeCustomerCubit; avatars now resolve from ranking data directly

@@ -11,6 +11,8 @@ import 'package:flutter/foundation.dart';
 import 'package:billora/src/core/services/notification_service.dart';
 import 'package:billora/src/core/services/activity_service.dart';
 import 'package:billora/src/core/services/customer_ranking_service.dart';
+import 'package:billora/src/core/services/data_refresh_service.dart';
+import 'package:billora/src/core/services/vip_threshold_service.dart';
 import 'invoice_state.dart';
 
 class InvoiceCubit extends Cubit<InvoiceState> {
@@ -57,9 +59,10 @@ class InvoiceCubit extends Cubit<InvoiceState> {
     result.fold(
       (failure) => emit(InvoiceState.error(failure.message)),
       (_) {
-        fetchInvoices(); // Refresh invoices list
-        // Add activity for invoice creation
+        // Add activity for invoice creation first
         ActivityService().addInvoiceCreatedActivity(invoice);
+        // Then refresh invoices list which will trigger dashboard refresh
+        fetchInvoices();
         // Notify other cubits to refresh their data
         _notifyDataChanged();
       },
@@ -68,8 +71,11 @@ class InvoiceCubit extends Cubit<InvoiceState> {
 
   void _notifyDataChanged() {
     // This method can be used to notify other cubits that data has changed
-    // For now, we'll just refresh the current data
     debugPrint('🔄 Invoice data changed, notifying other components');
+    // Refresh dashboard data immediately
+    DataRefreshService().refreshDashboard();
+    // Update VIP status for all customers
+    VipThresholdService().updateAllCustomersVipStatus();
   }
 
   Future<void> deleteInvoice(String id) async {

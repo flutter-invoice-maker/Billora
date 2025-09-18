@@ -41,54 +41,54 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCav9xXYxTZChKpX8B3lAu51PkPCAUtPmk',
-    appId: '1:1018575120402:web:3c10646dd3b3ed3cd190cb',
-    messagingSenderId: '1018575120402',
-    projectId: 'billora-invoice-maker',
-    authDomain: 'billora-invoice-maker.firebaseapp.com',
-    storageBucket: 'billora-invoice-maker.firebasestorage.app',
-    measurementId: 'G-MXY3Y64C5L',
-    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
+    apiKey: 'AIzaSyCwcPBStTwaO3N0fIacbHnApbZw8ZhjEjM',
+    appId: '1:51733160680:web:db9067803bd5983d861f5d',
+    messagingSenderId: '51733160680',
+    projectId: 'invoice-marker',
+    authDomain: 'invoice-marker.firebaseapp.com',
+    storageBucket: 'invoice-marker.firebasestorage.app',
+    measurementId: 'G-E6Q98E78HZ',
+    databaseURL: 'https://invoice-marker.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBceKMe6jFiD9TuuRogHv2EqMPXtPP3KE4',
-    appId: '1:1018575120402:android:a0c31a6d5a51630fd190cb',
-    messagingSenderId: '1018575120402',
-    projectId: 'billora-invoice-maker',
-    storageBucket: 'billora-invoice-maker.firebasestorage.app',
-    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
+    apiKey: 'AIzaSyCwcPBStTwaO3N0fIacbHnApbZw8ZhjEjM',
+    appId: '1:51733160680:android:1db1b0227a780b6b861f5d',
+    messagingSenderId: '51733160680',
+    projectId: 'invoice-marker',
+    storageBucket: 'invoice-marker.firebasestorage.app',
+    databaseURL: 'https://invoice-marker.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDi4mYkGbyzFvlOtAPHi1FraaQoerLlLvY',
-    appId: '1:1018575120402:ios:3806aa2780e0152bd190cb',
-    messagingSenderId: '1018575120402',
-    projectId: 'billora-invoice-maker',
-    storageBucket: 'billora-invoice-maker.firebasestorage.app',
-    iosBundleId: 'com.example.billora',
-    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
+    apiKey: 'AIzaSyCwcPBStTwaO3N0fIacbHnApbZw8ZhjEjM',
+    appId: '1:51733160680:ios:877d19fee3e90108861f5d',
+    messagingSenderId: '51733160680',
+    projectId: 'invoice-marker',
+    storageBucket: 'invoice-marker.firebasestorage.app',
+    iosBundleId: 'billora',
+    databaseURL: 'https://invoice-marker.firebaseio.com',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDi4mYkGbyzFvlOtAPHi1FraaQoerLlLvY',
-    appId: '1:1018575120402:ios:3806aa2780e0152bd190cb',
-    messagingSenderId: '1018575120402',
-    projectId: 'billora-invoice-maker',
-    storageBucket: 'billora-invoice-maker.firebasestorage.app',
-    iosBundleId: 'com.example.billora',
-    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
+    apiKey: 'AIzaSyCwcPBStTwaO3N0fIacbHnApbZw8ZhjEjM',
+    appId: '1:51733160680:ios:877d19fee3e90108861f5d',
+    messagingSenderId: '51733160680',
+    projectId: 'invoice-marker',
+    storageBucket: 'invoice-marker.firebasestorage.app',
+    iosBundleId: 'billora',
+    databaseURL: 'https://invoice-marker.firebaseio.com',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCav9xXYxTZChKpX8B3lAu51PkPCAUtPmk',
-    appId: '1:1018575120402:web:437e83eabe88956ed190cb',
-    messagingSenderId: '1018575120402',
-    projectId: 'billora-invoice-maker',
-    authDomain: 'billora-invoice-maker.firebaseapp.com',
-    storageBucket: 'billora-invoice-maker.firebasestorage.app',
-    measurementId: 'G-F8LK4ERNB4',
-    databaseURL: 'https://billora-invoice-maker.firebaseio.com',
+    apiKey: 'AIzaSyCwcPBStTwaO3N0fIacbHnApbZw8ZhjEjM',
+    appId: '1:51733160680:web:db9067803bd5983d861f5d',
+    messagingSenderId: '51733160680',
+    projectId: 'invoice-marker',
+    authDomain: 'invoice-marker.firebaseapp.com',
+    storageBucket: 'invoice-marker.firebasestorage.app',
+    measurementId: 'G-E6Q98E78HZ',
+    databaseURL: 'https://invoice-marker.firebaseio.com',
   );
 
 }

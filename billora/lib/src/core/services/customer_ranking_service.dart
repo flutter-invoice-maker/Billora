@@ -63,6 +63,7 @@ class CustomerRankingService {
         .map((stats) => CustomerRanking(
               customerId: stats.customerId,
               customerName: stats.customerName,
+              avatarUrl: stats.avatarUrl,
               totalAmount: stats.totalAmount,
               invoiceCount: stats.invoiceCount,
               lastPurchaseDate: stats.lastPurchaseDate,
@@ -81,20 +82,43 @@ class CustomerRankingService {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
 
-      // Load all invoices for the user first
-      final snapshot = await _firestore
-          .collection('invoices')
+      // Load all customers first
+      final customersSnapshot = await _firestore
+          .collection('customers')
           .where('userId', isEqualTo: userId)
           .get();
       
       final customerStats = <String, CustomerStats>{};
       
-      for (final doc in snapshot.docs) {
+      // Initialize all customers with zero stats and capture avatarUrl
+      for (final doc in customersSnapshot.docs) {
+        final data = doc.data();
+        final customerId = doc.id;
+        final customerName = data['name'] as String? ?? 'Unknown';
+        final avatarUrl = data['avatarUrl'] as String?;
+        
+        customerStats[customerId] = CustomerStats(
+          customerId: customerId,
+          customerName: customerName,
+          avatarUrl: avatarUrl,
+          totalAmount: 0,
+          invoiceCount: 0,
+          lastPurchaseDate: DateTime.now(),
+        );
+      }
+      
+      // Load all invoices and update stats
+      final invoicesSnapshot = await _firestore
+          .collection('invoices')
+          .where('userId', isEqualTo: userId)
+          .get();
+      
+      for (final doc in invoicesSnapshot.docs) {
         final data = doc.data();
         final status = data['status'] as String?;
         
-        // Process all invoices (not just paid ones) for ranking
-        if (status == 'sent' || status == 'paid') {
+        // Process all invoices for ranking (including draft)
+        if (status == 'draft' || status == 'sent' || status == 'paid') {
           final customerId = data['customerId'] as String?;
           final customerName = data['customerName'] as String?;
           final total = (data['total'] ?? 0).toDouble();
@@ -122,6 +146,7 @@ class CustomerRankingService {
             // Use createdAt as lastPurchaseDate if no paidAt
             final finalPaidAt = parsedPaidAt ?? finalCreatedAt;
             
+            // Create customer if not exists
             if (!customerStats.containsKey(customerId)) {
               customerStats[customerId] = CustomerStats(
                 customerId: customerId,
@@ -148,6 +173,7 @@ class CustomerRankingService {
           .map((stats) => CustomerRanking(
                 customerId: stats.customerId,
                 customerName: stats.customerName,
+                avatarUrl: stats.avatarUrl,
                 totalAmount: stats.totalAmount,
                 invoiceCount: stats.invoiceCount,
                 lastPurchaseDate: stats.lastPurchaseDate,
@@ -226,6 +252,7 @@ class CustomerRankingService {
 class CustomerStats {
   final String customerId;
   final String customerName;
+  String? avatarUrl;
   double totalAmount;
   int invoiceCount;
   DateTime lastPurchaseDate;
@@ -233,6 +260,7 @@ class CustomerStats {
   CustomerStats({
     required this.customerId,
     required this.customerName,
+    this.avatarUrl,
     required this.totalAmount,
     required this.invoiceCount,
     required this.lastPurchaseDate,
@@ -242,6 +270,7 @@ class CustomerStats {
 class CustomerRanking {
   final String customerId;
   final String customerName;
+  final String? avatarUrl;
   final double totalAmount;
   final int invoiceCount;
   final DateTime lastPurchaseDate;
@@ -251,6 +280,7 @@ class CustomerRanking {
   CustomerRanking({
     required this.customerId,
     required this.customerName,
+    this.avatarUrl,
     required this.totalAmount,
     required this.invoiceCount,
     required this.lastPurchaseDate,

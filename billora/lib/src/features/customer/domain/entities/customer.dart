@@ -5,6 +5,7 @@ class Customer {
   final String? phone;
   final String? address;
   final bool isVip;
+  final String? avatarUrl;
 
   Customer({
     required this.id,
@@ -13,6 +14,7 @@ class Customer {
     this.phone,
     this.address,
     this.isVip = false,
+    this.avatarUrl,
   });
 
   Customer copyWith({
@@ -22,6 +24,7 @@ class Customer {
     String? phone,
     String? address,
     bool? isVip,
+    String? avatarUrl,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -30,6 +33,7 @@ class Customer {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       isVip: isVip ?? this.isVip,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 
@@ -42,6 +46,7 @@ class Customer {
       'phone': phone,
       'address': address,
       'isVip': isVip,
+      'avatarUrl': avatarUrl,
     };
   }
 } 

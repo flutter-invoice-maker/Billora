@@ -73,3 +73,10 @@ coverage/
 
 # Keep build scripts for Vercel
 !vercel-build.sh
+
+# Ignore all modules folders
+modules/
+**/modules/
+
+# Node.js related
+functions/node_modules/

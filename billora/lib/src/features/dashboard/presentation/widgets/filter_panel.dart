@@ -116,7 +116,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
                   end: Alignment.bottomRight,
                   colors: [
                     Colors.white,
-                    Colors.purple.shade50,
+                    Colors.blue.shade50,
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
@@ -193,12 +193,12 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.purple.shade400, Colors.purple.shade600],
+              colors: [Colors.blue.shade400, Colors.blue.shade600],
             ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.purple.withValues(alpha: 0.3),
+                color: Colors.blue.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -270,7 +270,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
             children: [
               Icon(
                 Icons.date_range,
-                color: Colors.purple.shade600,
+                color: Colors.blue.shade600,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -312,7 +312,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
             children: [
               Icon(
                 Icons.local_offer,
-                color: Colors.purple.shade600,
+                color: Colors.blue.shade600,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -328,13 +328,13 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.purple.shade100,
+                    color: Colors.blue.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${_selectedTags.length} selected',
                     style: TextStyle(
-                      color: Colors.purple.shade700,
+                      color: Colors.blue.shade700,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -369,7 +369,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
-                          colors: [Colors.purple.shade400, Colors.purple.shade600],
+                          colors: [Colors.blue.shade400, Colors.blue.shade600],
                         )
                       : null,
                   color: isSelected ? null : Colors.grey.shade100,
@@ -380,7 +380,7 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.purple.withValues(alpha: 0.3),
+                            color: Colors.blue.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -606,13 +606,13 @@ class _FilterPanelState extends State<FilterPanel> with TickerProviderStateMixin
             onPressed: _isApplying ? null : _applyFilters,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: Colors.purple.shade600,
+              backgroundColor: Colors.blue.shade600,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              shadowColor: Colors.purple.withValues(alpha: 0.3),
+              shadowColor: Colors.blue.withValues(alpha: 0.3),
             ),
             child: _isApplying
                 ? Row(

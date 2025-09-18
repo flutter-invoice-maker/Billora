@@ -1,4 +1,4 @@
-package com.example.billora
+package billora.invoice_maker
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine

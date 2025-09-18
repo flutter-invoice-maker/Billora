@@ -6,6 +6,7 @@ import '../../domain/entities/customer.dart';
 import 'customer_form_page.dart';
 import 'package:billora/src/features/home/presentation/widgets/app_scaffold.dart';
 import 'package:billora/src/core/widgets/delete_dialog.dart';
+import 'package:billora/src/core/services/avatar_service.dart';
 import 'dart:math';
 
 class CustomerListPage extends StatefulWidget {
@@ -564,23 +565,26 @@ class _CustomerListPageState extends State<CustomerListPage>
                     ],
                     
                     // Avatar
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: _getAvatarColor(customer.name),
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: Center(
-                        child: Text(
-                          _getInitials(customer.name),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                    ClipOval(
+                      child: customer.avatarUrl != null
+                          ? Image.network(
+                              customer.avatarUrl!,
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stack) {
+                                return AvatarService.buildVipAvatar(
+                                  name: customer.name,
+                                  size: 44.0,
+                                  isVip: customer.isVip,
+                                );
+                              },
+                            )
+                          : AvatarService.buildVipAvatar(
+                              name: customer.name,
+                              size: 44.0,
+                              isVip: customer.isVip,
+                            ),
                     ),
                     
                     const SizedBox(width: 12),
@@ -771,28 +775,6 @@ class _CustomerListPageState extends State<CustomerListPage>
     );
   }
 
-  String _getInitials(String name) {
-    List<String> names = name.split(' ');
-    String initials = '';
-    for (int i = 0; i < names.length && i < 2; i++) {
-      if (names[i].isNotEmpty) {
-        initials += names[i][0].toUpperCase();
-      }
-    }
-    return initials.isEmpty ? 'C' : initials;
-  }
-
-  Color _getAvatarColor(String name) {
-    final colors = [
-      const Color(0xFF007AFF),
-      const Color(0xFF34C759),
-      const Color(0xFFFF9500),
-      const Color(0xFFFF3B30),
-      const Color(0xFF5856D6),
-      const Color(0xFFAF52DE),
-    ];
-    return colors[name.hashCode % colors.length];
-  }
 
 }
 

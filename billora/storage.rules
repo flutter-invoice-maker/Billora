@@ -1,44 +1,51 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow authenticated users to upload invoice PDFs
-    match /invoices/{userId}/{invoiceId}.pdf {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == userId
-        && request.resource.size < 10 * 1024 * 1024 // 10MB limit
-        && request.resource.contentType.matches('application/pdf');
+
+    // Invoice PDFs: owner can write; read if owner OR file metadata public == "true"
+    match /invoices/{ownerUid}/{invoiceId}/{fileName} {
+      allow write: if request.auth != null
+                   && request.auth.uid == ownerUid
+                   && request.resource != null
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('application/pdf');
+      allow read: if (request.auth != null && request.auth.uid == ownerUid)
+                  || (resource != null && resource.metadata.public == "true");
     }
-    
-    // Allow public read access to uploaded PDFs (for sharing)
-    match /invoices/{userId}/{invoiceId}.pdf {
-      allow read: if true; // Public read access for sharing
+
+    // Product images: owner read/write; or public read if metadata.public == "true"
+    match /products/{ownerUid}/{productId}/{fileName} {
+      allow write: if request.auth != null
+                   && request.auth.uid == ownerUid
+                   && request.resource != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow read: if (request.auth != null && request.auth.uid == ownerUid)
+                  || (resource != null && resource.metadata.public == "true");
     }
-    
-    // Allow authenticated users to upload product images
-    match /products/{userId}/{productId}/{fileName} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == userId
-        && request.resource.size < 5 * 1024 * 1024 // 5MB limit
-        && request.resource.contentType.matches('image/.*');
+
+    // User profile image (the app user's own avatar): only owner read/write
+    match /profiles/{ownerUid}/user/{fileName} {
+      allow write, read: if request.auth != null && request.auth.uid == ownerUid
+                         && (request.method != "update" ? request.resource != null : true)
+                         && (request.resource == null || request.resource.size < 5 * 1024 * 1024)
+                         && (request.resource == null || request.resource.contentType.matches('image/.*'));
     }
-    
-    // Allow authenticated users to upload profile images
-    match /profiles/{userId}/{fileName} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == userId
-        && request.resource.size < 5 * 1024 * 1024 // 5MB limit
-        && request.resource.contentType.matches('image/.*');
+
+    // Customer avatars: only the app owner can read/write; can be made public via metadata
+    match /profiles/{ownerUid}/customers/{customerId}/{fileName} {
+      allow write: if request.auth != null
+                   && request.auth.uid == ownerUid
+                   && request.resource != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow read: if (request.auth != null && request.auth.uid == ownerUid)
+                  || (resource != null && resource.metadata.public == "true");
     }
-    
-    // Allow public read access to profile images
-    match /profiles/{userId}/{fileName} {
-      allow read: if true; // Public read access for profile images
-    }
-    
-    // Default rule - deny all other access
+
+    // Deny everything else
     match /{allPaths=**} {
       allow read, write: if false;
     }
   }
-} 
+}

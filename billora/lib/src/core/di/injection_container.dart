@@ -2,7 +2,9 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'injection_container.config.dart'; // import file config được sinh ra
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:billora/src/core/services/user_service.dart';
+import 'package:billora/src/core/services/image_upload_service.dart';
 import 'package:billora/src/features/customer/domain/usecases/get_customers_usecase.dart';
 import 'package:billora/src/features/customer/domain/usecases/create_customer_usecase.dart';
 import 'package:billora/src/features/customer/domain/usecases/update_customer_usecase.dart';
@@ -43,8 +45,6 @@ import 'package:billora/src/core/services/pdf_service.dart';
 import 'package:billora/src/core/services/email_service.dart';
 import 'package:billora/src/core/services/firebase_email_service.dart';
 import 'package:billora/src/core/services/storage_service.dart';
-import 'package:billora/src/core/services/image_upload_service.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:billora/src/features/invoice/domain/usecases/generate_pdf_usecase.dart';
 import 'package:billora/src/features/invoice/domain/usecases/send_invoice_email_usecase.dart';
@@ -187,6 +187,16 @@ Future<void> configureDependencies() async {
   if (!sl.isRegistered<UpdateProductInventoryUseCase>()) {
     sl.registerLazySingleton<UpdateProductInventoryUseCase>(
       () => UpdateProductInventoryUseCase(sl()),
+    );
+  }
+  if (!sl.isRegistered<ImageUploadService>()) {
+    sl.registerLazySingleton<ImageUploadService>(
+      () => ImageUploadService(sl<FirebaseStorage>(), sl<FirebaseAuth>()),
+    );
+  }
+  if (!sl.isRegistered<UserService>()) {
+    sl.registerLazySingleton<UserService>(
+      () => UserService(sl<ImageUploadService>()),
     );
   }
   if (!sl.isRegistered<AuthRemoteDataSource>()) {
@@ -563,7 +573,9 @@ abstract class FirebaseModule {
   FirebaseAuth get firebaseAuth => FirebaseAuth.instance;
 
   @lazySingleton
-  GoogleSignIn get googleSignIn => GoogleSignIn();
+  GoogleSignIn get googleSignIn => GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
   
   @lazySingleton
   FirebaseFirestore get firebaseFirestore => FirebaseFirestore.instance;
